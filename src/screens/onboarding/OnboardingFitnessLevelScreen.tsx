@@ -1,0 +1,200 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  SafeAreaView,
+} from 'react-native';
+import GradientBackground from '../../components/GradientBackground';
+import Button from '../../components/Button';
+
+const fitnessLevels = [
+  {
+    id: 'beginner',
+    title: 'Beginner',
+    subtitle: 'Just starting my wellness journey',
+    image: require('../../assets/images/community.jpg'),
+  },
+  {
+    id: 'intermediate',
+    title: 'Intermediate',
+    subtitle: 'I exercise regularly',
+    image: require('../../assets/images/intermidiate.png'),
+  },
+  {
+    id: 'advanced',
+    title: 'Advanced',
+    subtitle: 'Very active and experienced',
+    image: require('../../assets/images/advanced.jpg'),
+  },
+];
+
+const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
+  const [selectedLevel, setSelectedLevel] = useState('intermediate'); // Default selection
+
+  const FitnessCard = ({ level, isSelected, onPress }: any) => (
+    <TouchableOpacity
+      style={[styles.card, isSelected && styles.selectedCard]}
+      onPress={onPress}
+    >
+      <Image source={level.image} style={styles.cardImagePlaceholder} />
+      <View style={styles.cardTextContainer}>
+        <Text style={styles.cardTitle}>{level.title}</Text>
+        <Text style={styles.cardSubtitle}>{level.subtitle}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <GradientBackground>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Image
+                source={require('../../assets/images/back-arrow.png')}
+                style={{ width: 16, height: 16, marginHorizontal: 16 }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+oi
+            <View style={styles.progressTrack}>
+              <View style={styles.progressFill} />
+            </View>
+
+            <View style={{ width: 24 }} />
+          </View>
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>What’s your fitness level?</Text>
+            <Text style={styles.subtitle}>
+              We’ll recommend the right classes for you
+            </Text>
+          </View>
+
+          <View style={styles.cardsGroup}>
+            {fitnessLevels.map(level => (
+              <FitnessCard
+                key={level.id}
+                level={level}
+                isSelected={selectedLevel === level.id}
+                onPress={() => setSelectedLevel(level.id)}
+              />
+            ))}
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Continue"
+              onPress={() => navigation.navigate('OnboardingHabits')}
+            />
+          </View>
+        </View>
+      </SafeAreaView>
+    </GradientBackground>
+  );
+};
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 2,
+    paddingBottom: 24,
+  },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 110,
+    paddingHorizontal: 16,
+  },
+  backIcon: {
+    fontSize: 28,
+    color: '#3A3A3A',
+  },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#E6E6E6',
+    borderRadius: 3,
+    marginHorizontal: 72,
+  },
+  progressFill: {
+    width: '75%', // later step than inspiration screen
+    height: '100%',
+    backgroundColor: '#3A3A3A',
+    borderRadius: 3,
+  },
+  headerContainer: {
+    marginTop: 24,
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: '700',
+    color: '#3D4C5E', // dark gray
+    textAlign: 'center',
+    lineHeight: 26 * 1.25,
+  },
+  subtitle: {
+    marginTop: 10,
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#494949', // medium gray
+    textAlign: 'center',
+  },
+  cardsGroup: {
+    marginTop: 42,
+  },
+  card: {
+    flexDirection: 'row',
+    width: '100%',
+    height: 90,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#ECECEC', // very light gray
+    marginBottom: 15,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.08,
+    // shadowRadius: 5,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  selectedCard: {
+    borderColor: '#B95E82',
+    borderWidth: 1.5,
+  },
+  cardImagePlaceholder: {
+    width: '33%',
+    height: '100%',
+  },
+  cardTextContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000', // dark gray
+  },
+  cardSubtitle: {
+    marginTop: 5,
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#8A95A5', // medium gray
+  },
+  buttonContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+});
+
+export default OnboardingFitnessLevelScreen;

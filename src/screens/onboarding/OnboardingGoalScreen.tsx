@@ -1,0 +1,168 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
+import Button from '../../components/Button';
+import { useOnboardingStore } from '../../store/onboardingSlice';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/AppNavigator';
+import { useDispatch } from 'react-redux';
+import { setOnboardingCompleted } from '../../store/authSlice';
+import GradientBackground from '../../components/GradientBackground';
+
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  'OnboardingGoal'
+>;
+
+const GOALS = [
+  'Attend my first session',
+  'Build a 7-day streak',
+  'Try something new each week',
+  'Join a group challenge',
+  "I'll decide later",
+];
+
+export default function OnboardingGoalScreen({ navigation }: Props) {
+  const [selected, setSelected] = useState<string>('Join a group challenge');
+  const { setFirstGoal } = useOnboardingStore();
+  const dispatch = useDispatch();
+
+  const next = () => {
+    setFirstGoal(selected);
+    dispatch(setOnboardingCompleted(true));
+    navigation.replace('OnboardingFitnessLevel');
+  };
+
+  return (
+    <GradientBackground>
+      <View style={styles.screen}>
+        {/* HEADER */}
+        <View style={styles.header}>
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Image
+                      source={require('../../assets/images/back-arrow.png')}
+                      style={{ width: 16, height: 16, marginHorizontal: 16 }}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+
+          <View style={styles.progressTrack}>
+            <View style={styles.progressFill} />
+          </View>
+
+          <View style={{ width: 24 }} />
+        </View>
+
+        {/* CONTENT */}
+        <View style={styles.container}>
+          <Text style={styles.title}>Set Your First Goal!</Text>
+
+          <View style={styles.options}>
+            {GOALS.map((goal) => {
+              const isSelected = selected === goal;
+              return (
+                <TouchableOpacity
+                  key={goal}
+                  style={[
+                    styles.optionCard,
+                    isSelected && styles.optionSelected,
+                  ]}
+                  onPress={() => setSelected(goal)}
+                >
+                  <Text style={styles.optionText}>{goal}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* CTA */}
+          <View style={styles.footer}>
+            <Button title="Continue" onPress={next} />
+          </View>
+        </View>
+      </View>
+    </GradientBackground >
+  );
+}
+
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  header: {
+     minHeight: 120,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 70,
+    paddingBottom: 12,
+  },
+  backIcon: {
+    fontSize: 28,
+    color: '#3A3A3A',
+  },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#DADADA',
+    borderRadius: 30,
+    marginHorizontal: 72,
+  },
+  progressFill: {
+    width: '35%', // later step than inspiration screen
+    height: '100%',
+    backgroundColor: '#494949',
+    borderRadius: 30,
+  },
+  container: {
+    paddingHorizontal: 22,
+    paddingTop: 20,
+    flex: 1,
+  },
+  title: {
+     fontSize: 30,
+    fontWeight: '700',
+    color: '#494949',
+    marginBottom: 38,
+    lineHeight: 34,
+    textAlign: 'center',
+
+  },
+  options: {
+    flex: 1,
+  },
+  optionCard: {
+    width: '100%',
+    paddingVertical: 17,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    minHeight: 59,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 10,
+    borderStyle: 'solid',
+    borderColor: '#ECECEC',
+    borderWidth: 1,
+    fontWeight: '500',
+    color: '#000000',
+  },
+  optionSelected: {
+   backgroundColor: '#FFE8E8',
+    borderWidth: 1,
+    borderColor: '#B95E82',
+  },
+  optionText: {
+     fontSize: 14,
+    fontWeight: '500',
+    color: '#000000',
+  },
+  footer: {
+    paddingHorizontal: 6,
+    paddingBottom: 24,
+    // marginTop: 'auto',
+  },
+});

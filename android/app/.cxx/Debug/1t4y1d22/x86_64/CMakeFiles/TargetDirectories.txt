@@ -1,0 +1,12 @@
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/CMakeFiles/appmodules.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/CMakeFiles/edit_cache.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/CMakeFiles/rebuild_cache.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/rnasyncstorage_autolinked_build/CMakeFiles/edit_cache.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/rnasyncstorage_autolinked_build/CMakeFiles/rebuild_cache.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/safeareacontext_autolinked_build/CMakeFiles/edit_cache.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/safeareacontext_autolinked_build/CMakeFiles/rebuild_cache.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/rnscreens_autolinked_build/CMakeFiles/edit_cache.dir
+/home/developer/Downloads/rn-code/android/app/.cxx/Debug/1t4y1d22/x86_64/rnscreens_autolinked_build/CMakeFiles/rebuild_cache.dir
