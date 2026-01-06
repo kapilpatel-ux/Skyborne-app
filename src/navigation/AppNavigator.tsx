@@ -14,6 +14,7 @@ import OnboardingMotivationScreen from '../screens/onboarding/OnboardingMotivati
 import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import PricingScreen from '../screens/onboarding/PricingScreen';
+import GetStartedScreen from '../screens/onboarding/GetStartedScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -30,6 +31,7 @@ export type RootStackParamList = {
   WelcomeScreen: undefined;
   Pricing: undefined;
   Home: undefined;
+  GetStarted: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -51,6 +53,7 @@ export default function AppNavigator() {
       <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
       <Stack.Screen name="Pricing" component={PricingScreen} />
       <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="GetStarted" component={GetStartedScreen} />
     </Stack.Navigator>
   );
 }

@@ -27,14 +27,14 @@ const styles = StyleSheet.create({
     borderRadius: 28, // Default for pill shape, can be overridden
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3, // For Android shadow
+    // shadowColor: '#000',
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 2,
+    // },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // elevation: 3, // For Android shadow
   },
   primary: {
     backgroundColor: '#B5647E', // Muted rose / mauve
