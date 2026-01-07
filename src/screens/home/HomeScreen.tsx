@@ -3,6 +3,18 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollVi
 import GradientBackground from '../../components/GradientBackground';
 import { HomeImages } from '../../assets/images/home';
 const HomeScreen = () => {
+
+  const SessionImages = [{
+    title:'Yoga Morning Flow',
+    image: require('../../assets/images/home/session-image.png'),
+    subtitle: 'Gentle energy boost for your day'
+  },
+  {
+    title:'Strength Training',
+    image: require('../../assets/images/home/session-image.png'),
+    subtitle: 'Build muscle and strength'
+  }
+  ]
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
@@ -77,39 +89,35 @@ const HomeScreen = () => {
             style={styles.sessionsContainer}
           >
             {/* Session Card 1 */}
-            <View style={styles.sessionCard}>
-              <Image
-                // source={require('../../assets/images/yoga-morning.png')}
-                style={styles.sessionImage}
-                resizeMode="cover"
-              />
-              <View style={styles.sessionContent}>
-                <Text style={styles.sessionTitle}>Yoga Morning Flow</Text>
-                <Text style={styles.sessionSubtitle}>Gentle energy boost for your day</Text>
-              </View>
-              <TouchableOpacity style={styles.joinButton}>
-                <Text style={styles.joinButtonText}>Join now</Text>
-                <View style={styles.arrowIcon}>
-                  <Text style={styles.arrow}>→</Text>
+            {
+              SessionImages.map((session, index) => (
+                <View key={index} style={styles.sessionCard}>
+                    <View style={styles.sessionContent}>
+                    <Text style={styles.sessionTitle}>{session.title}</Text>
+                    <Text style={styles.sessionSubtitle}>{session.subtitle}</Text>
+                  </View>
+                  <Image
+                    source={session.image}
+                    style={styles.sessionImage}
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity style={styles.joinButton}>
+                    <Text style={styles.joinButtonText}>Join now</Text>
+
+
+<View style={styles.arrowContainer}>
+  <Image 
+    source={require('../../assets/images/arrow-black.png')} 
+    style={styles.arrow} 
+  />
+</View>
+                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
-            </View>
+              ))
+            }
 
             {/* Session Card 2 */}
-            <View style={styles.sessionCard}>
-              <Image
-                // source={require('../../assets/images/strength.png')}
-                style={styles.sessionImage}
-                resizeMode="cover"
-              />
-              <View style={styles.sessionContent}>
-                <Text style={styles.sessionTitle}>Strength</Text>
-                <Text style={styles.sessionSubtitle}>30-minute full body</Text>
-              </View>
-              <TouchableOpacity style={styles.joinButton}>
-                <Text style={styles.joinButtonText}>Join now</Text>
-              </TouchableOpacity>
-            </View>
+         
           </ScrollView>
 
           {/* Upcoming Classes Section */}
@@ -118,7 +126,7 @@ const HomeScreen = () => {
             
             <View style={styles.classCard}>
               <Image
-                // source={require('../../assets/images/yoga-flow.png')}
+                source={require('../../assets/images/home/yoga-flow.png')}
                 style={styles.classImage}
                 resizeMode="cover"
               />
@@ -128,7 +136,10 @@ const HomeScreen = () => {
                   <Text style={styles.classTime}>Today • 9:00 AM (Los Angeles)</Text>
                 </View>
                 <TouchableOpacity style={styles.classPlayButton}>
-                  <Text style={styles.playIcon}>▶</Text>
+                  <Image 
+    source={require('../../assets/images/arrow-white.png')} 
+    style={styles.arrow} 
+  />
                 </TouchableOpacity>
               </View>
             </View>
@@ -201,24 +212,36 @@ const HomeScreen = () => {
         </ScrollView>
 
         {/* Bottom Navigation Bar */}
-        <View style={styles.bottomNavBar}>
-          <TouchableOpacity style={styles.navItem}>
-            <Text style={styles.navIcon}>🏠</Text>
-            <Text style={styles.navLabel}>Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <Text style={styles.navIcon}>🔍</Text>
-            <Text style={styles.navLabelInactive}>Explore</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <Text style={styles.navIcon}>📅</Text>
-            <Text style={styles.navLabelInactive}>Schedule</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <Text style={styles.navIcon}>👤</Text>
-            <Text style={styles.navLabelInactive}>Profile</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.bottomNavBar}>
+  <TouchableOpacity style={styles.navItem}>
+    <Image 
+      source={require('../../assets/images/home.png')} 
+      style={styles.navIcon} 
+    />
+    <Text style={styles.navLabel}>Home</Text>
+  </TouchableOpacity>
+  <TouchableOpacity style={styles.navItem}>
+    <Image 
+      source={require('../../assets/images/search.png')} 
+      style={styles.navIcon} 
+    />
+    <Text style={styles.navLabelInactive}>Explore</Text>
+  </TouchableOpacity>
+  <TouchableOpacity style={styles.navItem}>
+    <Image 
+      source={require('../../assets/images/calender.png')} 
+      style={styles.navIcon} 
+    />
+    <Text style={styles.navLabelInactive}>Schedule</Text>
+  </TouchableOpacity>
+  <TouchableOpacity style={styles.navItem}>
+    <Image 
+      source={require('../../assets/images/user.png')} 
+      style={styles.navIcon} 
+    />
+    <Text style={styles.navLabelInactive}>Profile</Text>
+  </TouchableOpacity>
+</View>
       </SafeAreaView>
     </GradientBackground>
   );
@@ -239,7 +262,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 72,
-    marginBottom: 24,
+    marginBottom: 40,
   },
   headerTitle: {
     flex: 1,
@@ -247,6 +270,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Medium',
     fontSize: 15,
     color: '#494949',
+  },
+  arrowContainer:{
+    width: 28,
+    height: 28,
+    backgroundColor:"#FFFFFF",
+    borderRadius:100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    display:'flex'
   },
   hamburgerContainer: {
     width: 36,
@@ -305,8 +337,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 16,
+    marginTop: 40,
+    marginBottom: 25,
   },
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
@@ -518,29 +550,37 @@ const styles = StyleSheet.create({
   },
   // Session Card
   sessionCard: {
-    width: 280,
-    borderRadius: 16,
+    width: 265,
+    borderRadius: 12,
+    borderColor: '#ECECEC',
+    borderWidth: 1,
+    borderStyle: 'solid',
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
   },
   sessionImage: {
-    width: '100%',
-    height: 160,
+    width: '88%',
+    marginRight:15,
+    marginHorizontal:15,
+    marginTop:19,
+    height: 150,
+    borderRadius: 10,
   },
   sessionContent: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: 15,
+    paddingTop: 26,
   },
   sessionTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#3A3A3A',
+    color: '#494949',
+    
   },
   sessionSubtitle: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '400',
-    color: '#999999',
-    marginTop: 4,
+    color: '#050505',
+    marginTop: 3,
   },
   joinButton: {
     flexDirection: 'row',
@@ -549,38 +589,39 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 16,
+    marginTop: 19,
+    marginBottom: 19,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   joinButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   arrowIcon: {
     marginLeft: 8,
   },
   arrow: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: 24,
+    marginBottom: 0,
+    color: '#000000',
     fontWeight: '600',
   },
   // Upcoming Classes
   upcomingSection: {
-    marginTop: 28,
+    marginTop: 40,
   },
   upcomingTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#3A3A3A',
+    color: '#494949',
     marginBottom: 16,
   },
   classCard: {
     width: '100%',
-    height: 320,
-    borderRadius: 16,
+    height: 335,
+    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
   },
@@ -590,13 +631,22 @@ const styles = StyleSheet.create({
   },
   classOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: '#fff',
     // justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
+    bottom:12,
+    width:'93%',
+    marginHorizontal:12,
+    height:82,
+    top:'auto',
+    left:0,
+    right:0,
+    borderRadius: 12,
   },
   classContent: {
     flex: 1,
@@ -604,21 +654,22 @@ const styles = StyleSheet.create({
   className: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#3A3A3A',
+    color: '#494949',
   },
   classTime: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '400',
-    color: '#666666',
+    color: '#050505',
     marginTop: 4,
   },
   classPlayButton: {
-    width: 44,
-    height: 44,
+    width: 28,
+    height: 28,
     borderRadius: 22,
     backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
+    display: 'flex',
   },
   playIcon: {
     fontSize: 18,
@@ -627,60 +678,64 @@ const styles = StyleSheet.create({
   },
   // Health Section
   healthSection: {
-    marginTop: 28,
+    paddingTop: 40,
     marginBottom: 28,
   },
   healthTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#3A3A3A',
-    marginBottom: 16,
+    color: '#494949',
+    marginBottom: 25,
   },
   hydrationCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 10,
+    padding: 20,
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderColor: '#ECECEC',
   },
   hydrationContent: {
     flex: 1,
   },
   hydrationLabel: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#3A3A3A',
+    color: '#494949',
   },
   hydrationValue: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '400',
     color: '#B95E82',
     marginTop: 4,
   },
   hydrationButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
-    gap: 8,
+    marginTop: 60,
+    gap: 14,
+    display: 'flex',
   },
   minusButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFF3E8',
+    backgroundColor: '#FFF7DD',
     justifyContent: 'center',
     alignItems: 'center',
   },
   minusIcon: {
     fontSize: 20,
-    color: '#999999',
+    color: '#B95E82',
     fontWeight: '600',
   },
   waterAmount: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#666666',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#707070',
   },
   plusButton: {
     width: 40,
@@ -696,75 +751,79 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   percentageBox: {
-    width: 100,
-    height: 100,
-    borderRadius: 16,
+    width: 150,
+    height: 160,
+    borderRadius: 20,
     backgroundColor: 'rgba(185, 94, 130, 0.2)',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#B95E82',
+    borderStyle: 'solid',
     justifyContent: 'center',
     alignItems: 'center',
+    // background: 'linear-gradient(0deg,rgba(185, 94, 130, 1) 0%, rgba(185, 94, 130, 1) 80%, rgba(255, 255, 255, 1) 100%)',
   },
   percentageValue: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
-    color: '#B95E82',
+    color: '#707070',
   },
   // This Week Activity Section
   weekActivitySection: {
     marginBottom: 28,
+    marginTop: 47,
   },
   weekActivityTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#3A3A3A',
+    color: '#494949',
     marginBottom: 16,
   },
   weekActivityCard: {
-    backgroundColor: '#3A3A3A',
-    borderRadius: 16,
+    backgroundColor: '#494949',
+    borderRadius: 10,
     padding: 16,
   },
   weekHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   weekLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '500',
     color: '#FFFFFF',
   },
   weekCompleted: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
-    color: '#CCCCCC',
+    color: '#FFFFFF',
   },
   progressBar: {
     width: '100%',
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 4,
-    marginBottom: 16,
+    height: 12,
+    backgroundColor: '#FFF7DD',
+    borderRadius: 8,
+    marginBottom: 10,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     width: '65%',
     backgroundColor: '#B95E82',
-    borderRadius: 4,
+    borderRadius: 8,
   },
   weekDays: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 4,
+    display: 'flex',
   },
   dayButton: {
     flex: 1,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#F0E6E6',
+    backgroundColor: '#FFF7DD',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -772,13 +831,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#B95E82',
   },
   dayButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#666666',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#707070',
   },
   dayButtonTextActive: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
     color: '#FFFFFF',
   },
   // Bottom Navigation Bar
@@ -789,7 +848,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#ECECEC',
+    borderTopColor: '#E1E1E1',
+    borderStyle:'solid',
   },
   navItem: {
     alignItems: 'center',
@@ -798,17 +858,18 @@ const styles = StyleSheet.create({
   },
   navIcon: {
     fontSize: 24,
-    marginBottom: 4,
+    marginBottom: 5,
   },
   navLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
     color: '#B95E82',
   },
   navLabelInactive: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#CCCCCC',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#707070',
+    opacity:0.4,
   },
 
   
