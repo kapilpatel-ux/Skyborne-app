@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  SafeAreaView,
 } from 'react-native';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
@@ -49,23 +48,21 @@ const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
 
   return (
     <GradientBackground>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Image
-                source={require('../../assets/images/back-arrow.png')}
-                style={{ width: 16, height: 16, marginHorizontal: 16 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-oi
-            <View style={styles.progressTrack}>
-              <View style={styles.progressFill} />
-            </View>
-
-            <View style={{ width: 24 }} />
+      <View style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Image
+              source={require('../../assets/images/back-arrow.png')}
+              style={{ width: 16, height: 16, marginHorizontal: 16 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          <View style={styles.progressTrack}>
+            <View style={styles.progressFill} />
           </View>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.container}>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>What’s your fitness level?</Text>
             <Text style={styles.subtitle}>
@@ -91,7 +88,7 @@ oi
             />
           </View>
         </View>
-      </SafeAreaView>
+      </View>
     </GradientBackground>
   );
 };
@@ -108,10 +105,11 @@ const styles = StyleSheet.create({
   },
 
   header: {
+    minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 110,
-    paddingHorizontal: 16,
+    paddingTop: 70,
+    paddingBottom: 12,
   },
   backIcon: {
     fontSize: 28,

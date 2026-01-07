@@ -38,8 +38,8 @@ const PricingScreen = ({ navigation }:{navigation:any}) => {
 
   const PlanCard = ({ plan, isSelected, onPress }:any) => {
     const Badge = () => (
-      <View style={[styles.badge, plan.badgeType === 'premium' ? styles.premiumBadge : styles.valueBadge]}>
-        <Text style={[styles.badgeText, plan.badgeType === 'premium' ? styles.premiumBadgeText : styles.valueBadgeText]}>
+      <View style={[styles.badge, isSelected ? styles.premiumBadge : styles.valueBadge]}>
+        <Text style={[styles.badgeText, isSelected ? styles.premiumBadgeText : styles.valueBadgeText]}>
           {plan.badge}
         </Text>
       </View>

@@ -63,23 +63,22 @@ const OnboardingMotivationScreen = ({ navigation }: Props) => {
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Image
-                source={require('../../assets/images/back-arrow.png')}
-                style={{ width: 16, height: 16, marginHorizontal: 16 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Image
+              source={require('../../assets/images/back-arrow.png')}
+              style={{ width: 16, height: 16, marginHorizontal: 16 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
 
-            <View style={styles.progressTrack}>
-              <View style={styles.progressFill} />
-            </View>
-
-            <View style={{ width: 24 }} />
+          <View style={styles.progressTrack}>
+            <View style={styles.progressFill} />
           </View>
 
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.container}>
           <View style={styles.headerSection}>
             <Text style={styles.title}>What motivates you most?</Text>
           </View>
@@ -117,12 +116,12 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 24,
   },
-
   header: {
+    minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 110,
-    paddingHorizontal: 16,
+    paddingTop: 70,
+    paddingBottom: 12,
   },
   backIcon: {
     fontSize: 28,

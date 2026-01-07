@@ -13,7 +13,6 @@ const OnboardingHabitsScreen = ({ navigation }:any) => {
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollView}>
-          <View style={styles.container}>
             <View style={styles.header}>
               <TouchableOpacity onPress={() => navigation.goBack()}>
                            <Image
@@ -28,6 +27,7 @@ const OnboardingHabitsScreen = ({ navigation }:any) => {
 
               <View style={{ width: 24 }} />
             </View>
+          <View style={styles.container}>
             <View style={styles.headerSection}>
               <Text style={styles.title}>Your current habits</Text>
               <Text style={styles.subtitle}>Help us understand your starting point</Text>
@@ -111,11 +111,12 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
-  header: {
+header: {
+    minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 110,
-    paddingHorizontal: 16,
+    paddingTop: 70,
+    paddingBottom: 12,
   },
   backIcon: {
     fontSize: 28,

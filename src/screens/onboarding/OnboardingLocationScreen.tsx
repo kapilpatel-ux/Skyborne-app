@@ -6,9 +6,12 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
+import { getData } from 'country-list';
+import * as ct from 'countries-and-timezones';
 
 type DropdownInputProps = {
   label: string;
@@ -32,50 +35,141 @@ const DropdownInput = ({ label, value, placeholder }: DropdownInputProps) => (
 );
 
 const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
-  const [country, _setCountry] = useState<string | null>(null);
-  const [timezone, _setTimezone] = useState<string | null>(null);
+  const countries = getData();
+  const [selectedCountry, setSelectedCountry] = useState<{
+    name: string;
+    code: string;
+  } | null>(null);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [timezone, setTimezone] = useState<string | null>(null);
+  const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
+
+  const timezones = selectedCountry
+    ? ct.getTimezonesForCountry(selectedCountry.code)
+    : [];
 
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Image
-                source={require('../../assets/images/back-arrow.png')}
-                style={{ width: 16, height: 16, marginHorizontal: 16, marginTop: 20}}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>Where are you located?</Text>
-            </View>
-
-            <View style={{ width: 28 }} />
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Image
+              source={require('../../assets/images/back-arrow.png')}
+              style={{ width: 16, height: 16, marginHorizontal: 16 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Where are you located?</Text>
           </View>
 
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.container}>
           <View style={styles.formSection}>
-            <DropdownInput
-              label="Select Country"
-              value={country}
-              placeholder="Select an option"
-            />
+            <View style={{ position: 'relative' }}>
+              <Text style={styles.fieldLabel}>Select Country</Text>
+
+              <TouchableOpacity
+                style={styles.dropdownInput}
+                onPress={() => setShowCountryDropdown(!showCountryDropdown)}
+              >
+                <Text
+                  style={
+                    selectedCountry
+                      ? styles.dropdownText
+                      : styles.dropdownPlaceholder
+                  }
+                >
+                  {selectedCountry
+                    ? `${selectedCountry.name} (${selectedCountry.code})`
+                    : 'Select an option'}
+                </Text>
+
+                <Image
+                  source={require('../../assets/icons/down-arrow.png')}
+                  style={styles.dropdownIcon}
+                />
+              </TouchableOpacity>
+
+              {/* SMALL SCROLLABLE DROPDOWN */}
+              {showCountryDropdown && (
+                <View style={styles.countryDropdown}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled
+                  >
+                    {countries.map(item => (
+                      <TouchableOpacity
+                        key={item.code}
+                        style={styles.countryItem}
+                        onPress={() => {
+                          setSelectedCountry(item);
+                          setTimezone(null);
+                          setShowCountryDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownText}>
+                          {item.name} ({item.code})
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
 
             <View style={{ height: 28 }} />
 
-            <View style={{ marginTop: 20 }}>
-              <DropdownInput
-                label="Timezone"
-                value={timezone}
-                placeholder="Select an option"
-              />
+            <View style={{ marginTop: 20, position: 'relative' }}>
+              <Text style={styles.fieldLabel}>Timezone</Text>
+
+              <TouchableOpacity
+                style={styles.dropdownInput}
+                onPress={() => setShowTimezoneDropdown(!showTimezoneDropdown)}
+                disabled={!selectedCountry} // country ke bina disable
+              >
+                <Text
+                  style={
+                    timezone ? styles.dropdownText : styles.dropdownPlaceholder
+                  }
+                >
+                  {timezone || 'Select an option'}
+                </Text>
+
+                <Image
+                  source={require('../../assets/icons/down-arrow.png')}
+                  style={styles.dropdownIcon}
+                />
+              </TouchableOpacity>
+
+              {showTimezoneDropdown && timezones!.length > 0 && (
+                <View style={styles.timezoneDropdown}>
+                  <ScrollView showsVerticalScrollIndicator={false}>
+                    {timezones!.map(tz => (
+                      <TouchableOpacity
+                        key={tz.name}
+                        style={styles.countryItem}
+                        onPress={() => {
+                          setTimezone(`${tz.name} (${tz.utcOffsetStr})`);
+                          setShowTimezoneDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownText}>
+                          {tz.name} ({tz.utcOffsetStr})
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
             </View>
           </View>
 
           <View style={styles.ctaButtonContainer}>
             <Button
               title="Complete Profile"
-              onPress={() => navigation.navigate('Pricing')}
+              onPress={() => navigation.navigate('GetStarted')}
             />
           </View>
         </View>
@@ -95,29 +189,34 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   header: {
-    marginTop: 45,
+    minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingTop: 70,
+    paddingBottom: 12,
   },
   backIcon: {
     fontSize: 28,
     color: '#3A3A3A',
   },
   title: {
+    width: 263,
+    height: 66,
     fontFamily: 'Satoshi-Bold',
-    fontSize: 30,
     fontWeight: '700',
-    color: '#494949',
-    textAlign: 'center',
+    fontSize: 30,
     lineHeight: 33,
+    letterSpacing: 0,
+    textAlign: 'center',
+    color: '#494949',
+    opacity: 1,
+    alignSelf: 'center',
     maxWidth: 263,
   },
   titleContainer: {
     position: 'absolute',
-    left: 55,
-    top: 25,
+    left: 70,
+    top: 70,
     height: 66,
     width: 263,
     alignItems: 'center',
@@ -176,6 +275,48 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: 40,
     paddingBottom: 24,
+  },
+  countryDropdown: {
+    position: 'absolute',
+    top: 78,
+    maxHeight: 180,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 12,
+    marginTop: 6,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 2,
+  },
+  timezoneDropdown: {
+    position: 'absolute',
+    top: 78,
+    width: '100%',
+    left: 0,
+    maxHeight: 180,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 12,
+    marginTop: 6,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    zIndex: 1,
+  },
+  countryItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F2',
   },
 });
 
