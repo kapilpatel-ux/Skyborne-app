@@ -2,7 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollView } from 'react-native';
 import GradientBackground from '../../components/GradientBackground';
 import { HomeImages } from '../../assets/images/home';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/AppNavigator';
+
 const HomeScreen = () => {
+
+  const navigation =
+  useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const SessionImages = [{
     title:'Yoga Morning Flow',
@@ -220,14 +227,20 @@ const HomeScreen = () => {
     />
     <Text style={styles.navLabel}>Home</Text>
   </TouchableOpacity>
-  <TouchableOpacity style={styles.navItem}>
+  <TouchableOpacity
+    style={styles.navItem}
+    onPress={() => navigation.navigate('Explore')}
+  >
     <Image 
       source={require('../../assets/images/search.png')} 
       style={styles.navIcon} 
     />
     <Text style={styles.navLabelInactive}>Explore</Text>
   </TouchableOpacity>
-  <TouchableOpacity style={styles.navItem}>
+  <TouchableOpacity
+    style={styles.navItem}
+    onPress={() => navigation.navigate('Schedule')}
+  >
     <Image 
       source={require('../../assets/images/calender.png')} 
       style={styles.navIcon} 
