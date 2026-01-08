@@ -15,8 +15,8 @@ import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import PricingScreen from '../screens/onboarding/PricingScreen';
 import GetStartedScreen from '../screens/onboarding/GetStartedScreen';
-import ExploreScreen from '../screens/home/ExploreScreen';
-import ScheduleScreen from '../screens/home/ScheduleScreen';
+import ExploreScreen from '../screens/onboarding/ExploreScreen';
+// import ScheduleScreen from '../screens/home/ScheduleScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -59,7 +59,7 @@ export default function AppNavigator() {
       <Stack.Screen name="GetStarted" component={GetStartedScreen} />
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Explore" component={ExploreScreen} />
-      <Stack.Screen name="Schedule" component={ScheduleScreen} />
+      {/* <Stack.Screen name="Schedule" component={ScheduleScreen} /> */}
     </Stack.Navigator>
   );
 }
