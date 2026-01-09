@@ -18,12 +18,13 @@ import GetStartedScreen from '../screens/onboarding/GetStartedScreen';
 import ExploreScreen from '../screens/home/ExploreScreen';
 import ScheduleScreen from '../screens/home/ScheduleScreen';
 import ProfileScreen from '../screens/home/ProfileScreen';
+import { SignupProvider } from '../store/SignupContext';
 
 export type RootStackParamList = {
   Splash: undefined;
   AuthOptions: undefined;
   Signup: undefined;
-  OTP: { phone?: string } | undefined;
+  OTP: { phone?: string,email?:string } | undefined;
   OnboardingInspiration: undefined;
   OnboardingGoal: undefined;
   OnboardingTimeCommitment: undefined;
@@ -43,6 +44,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   return (
+      <SignupProvider>
+
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="AuthOptions" component={AuthOptionsScreen} />
@@ -63,5 +66,6 @@ export default function AppNavigator() {
       <Stack.Screen name="Schedule" component={ScheduleScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
     </Stack.Navigator>
+      </SignupProvider>
   );
 }

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { Formik, FormikHelpers } from 'formik';
+import * as Yup from 'yup';
 import TextInput from '../../components/TextInput';
 import Button from '../../components/Button';
 import { useAuthViewModel } from '../../viewmodels/useAuthViewModel';
@@ -8,36 +9,78 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import GradientBackground from '../../components/GradientBackground';
 import { FontFamilies } from '../../constants/fonts';
+import { useSignup } from '../../store/SignupContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
 type FormData = {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
-  country: string;
+  agreeTerms: boolean;
 };
 
+const validationSchema = Yup.object().shape({
+  firstName: Yup.string().required('First name is required'),
+  lastName: Yup.string()
+    .notRequired()
+    .min(2, 'Last name must have at least 2 characters'),
+  email: Yup.string()
+    .trim()
+    .required('Email is required')
+    .email('Invalid email format')
+    .matches(
+      /^[^\s@]+@[^\s@]+\.(com|net|org|in|co|io|ai|edu|gov|ae)$/i,
+      'Enter a valid email'
+    ),
+  password: Yup.string()
+    .required('Password is required')
+    .min(8, 'Password must be at least 8 characters long')
+    .matches(/[A-Z]/, 'Password must contain uppercase letter')
+    .matches(/[a-z]/, 'Password must contain lowercase letter')
+    .matches(/\d/, 'Password must contain number')
+    .matches(
+      /[@$!%*?&]/,
+      'Password must contain special character (@, $, !, %, *, ?, &)'
+    ),
+  agreeTerms: Yup.boolean().oneOf(
+    [true],
+    'You must agree to terms before continuing'
+  ),
+});
+
 export default function SignupScreen({ navigation }: Props) {
-  const { control, handleSubmit } = useForm<FormData>({
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      country: '',
-    },
-  });
-
   const { signup } = useAuthViewModel();
-  const [agree, setAgree] = useState(false);
+  const { formData, updateStepData, setCurrentStep } = useSignup();
 
-  const onSubmit = async (data: FormData) => {
-    navigation.navigate('OTP', { phone: data.email });
-    // if (!agree) return;
-    // const res = await signup(data);
-    // if (res?.success) {
-    // navigation.navigate('OTP', { phone: data.email });
-    // }
+  const initialValues: FormData = {
+    firstName: formData.step2?.firstName || '',
+    lastName: formData.step2?.lastName || '',
+    email: formData.step2?.email || '',
+    password: formData.step2?.password || '',
+    agreeTerms: formData.step2?.agreeTerms || false,
+  };
+
+  const onSubmit = async (
+    data: FormData,
+    { setSubmitting }: FormikHelpers<FormData>
+  ) => {
+    try {
+      updateStepData('step2', {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        agreeTerms: data.agreeTerms,
+        authProvider: 'email',
+      });
+
+      setCurrentStep(3);
+      navigation.navigate('OTP', { email: data.email });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -68,62 +111,100 @@ export default function SignupScreen({ navigation }: Props) {
         <View style={styles.container}>
           <Text style={styles.title}>Create Your Skyborne Account</Text>
 
-          {/* First Name */}
-          <Text style={styles.label}>First Name*</Text>
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { onChange, value } }) => (
-              <TextInput value={value} onChangeText={onChange} />
-            )}
-          />
-
-          {/* Email */}
-          <Text style={styles.label}>Email Address*</Text>
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                keyboardType="email-address"
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-
-          {/* Password */}
-          <Text style={styles.label}>Password*</Text>
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                secureTextEntry
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-
-          {/* Country */}
-          <Text style={styles.label}>Country*</Text>
-          <TextInput placeholder="Select an option" />
-
-          {/* Terms */}
-          <TouchableOpacity
-            style={styles.checkboxRow}
-            onPress={() => setAgree(!agree)}
+          <Formik<FormData>
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={onSubmit}
           >
-            <View style={[styles.checkbox, agree && styles.checkboxChecked]} />
-            <Text style={styles.termsText}>
-              I agree to Skyborne’s <Text style={styles.link}>Terms</Text> and{' '}
-              <Text style={styles.link}>Data Policy</Text>
-            </Text>
-          </TouchableOpacity>
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleBlur,
+              setFieldValue,
+              handleSubmit,
+              isSubmitting,
+            }) => (
+              <View>
+                {/* First Name */}
+                <Text style={styles.label}>First Name*</Text>
+                <TextInput
+                  value={values.firstName}
+                  onChangeText={handleChange('firstName')}
+                  onBlur={handleBlur('firstName')}
+                  placeholder="Enter first name"
+                />
+                {touched.firstName && errors.firstName && (
+                  <Text style={styles.errorText}>{errors.firstName}</Text>
+                )}
 
-          {/* CTA */}
-          <Button title="Login" onPress={handleSubmit(onSubmit)} />
+                {/* Last Name */}
+                <Text style={styles.label}>Last Name</Text>
+                <TextInput
+                  value={values.lastName}
+                  onChangeText={handleChange('lastName')}
+                  onBlur={handleBlur('lastName')}
+                  placeholder="Enter last name"
+                />
+                {touched.lastName && errors.lastName && (
+                  <Text style={styles.errorText}>{errors.lastName}</Text>
+                )}
+
+                {/* Email */}
+                <Text style={styles.label}>Email Address*</Text>
+                <TextInput
+                  keyboardType="email-address"
+                  value={values.email}
+                  onChangeText={handleChange('email')}
+                  onBlur={handleBlur('email')}
+                  placeholder="Enter email"
+                />
+                {touched.email && errors.email && (
+                  <Text style={styles.errorText}>{errors.email}</Text>
+                )}
+
+                {/* Password */}
+                <Text style={styles.label}>Password*</Text>
+                <TextInput
+                  secureTextEntry
+                  value={values.password}
+                  onChangeText={handleChange('password')}
+                  onBlur={handleBlur('password')}
+                  placeholder="Enter password"
+                />
+                {touched.password && errors.password && (
+                  <Text style={styles.errorText}>{errors.password}</Text>
+                )}
+
+                {/* Terms */}
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  onPress={() => setFieldValue('agreeTerms', !values.agreeTerms)}
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      values.agreeTerms && styles.checkboxChecked,
+                    ]}
+                  />
+                  <Text style={styles.termsText}>
+                    I agree to Skyborne's <Text style={styles.link}>Terms</Text> and{' '}
+                    <Text style={styles.link}>Data Policy</Text>
+                  </Text>
+                </TouchableOpacity>
+                {touched.agreeTerms && errors.agreeTerms && (
+                  <Text style={styles.errorText}>{errors.agreeTerms}</Text>
+                )}
+
+                {/* CTA */}
+                <Button
+                  title={isSubmitting ? 'Loading...' : 'Signup'}
+                  onPress={() => handleSubmit()}
+                />
+              </View>
+            )}
+          </Formik>
         </View>
       </View>
     </GradientBackground>
@@ -210,5 +291,10 @@ const styles = StyleSheet.create({
   link: {
     color: '#B95E82',
     fontWeight: '500',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
   },
 });

@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Regular',
     fontWeight: '400',
     fontSize: 14,
-    lineHeight: 14,          
+    lineHeight: 20,          
     textAlign: 'center',
     color: '#050505',
   },

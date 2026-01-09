@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,19 +6,94 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import GradientBackground from '../../components/GradientBackground';
 import { useAuthViewModel } from '../../viewmodels/useAuthViewModel';
+import Toast from 'react-native-toast-message';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OTP'>;
 
 export default function OTPVerificationScreen({ navigation, route }: Props) {
-  const { verifyOtp } = useAuthViewModel();
+  const { sendOtp, verifyOtp } = useAuthViewModel();
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [timer, setTimer] = useState(30);
+  const [canResend, setCanResend] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
   const inputs = useRef<TextInput[]>([]);
+  const otpSentRef = useRef(false);
+
+  const userEmail = route.params?.email;
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    Toast.show({
+      type,
+      position: 'top',
+      text1: type === 'success' ? '✓ Success' : type === 'error' ? '✗ Error' : 'ℹ Info',
+      text2: message,
+      topOffset: 60,
+    });
+  };
+
+  // Auto-send OTP on mount
+  useEffect(() => {
+    if (userEmail && !otpSentRef.current) {
+      otpSentRef.current = true;
+      handleSendOtp();
+    }
+  }, [userEmail]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (!canResend && timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [timer, canResend]);
+
+  const handleSendOtp = async () => {
+    setIsSendingOtp(true);
+    try {
+      const payload: { email?: string; phone?: string } = {};
+      if (userEmail) payload.email = userEmail;
+
+      const res = await sendOtp(payload);
+
+      if (res?.success) {
+        showToast('OTP sent successfully!', 'success');
+        setCanResend(false);
+        setTimer(30);
+      } else {
+        showToast(res?.message || 'Failed to send OTP', 'error');
+      }
+    } catch (err: any) {
+      console.error('Send OTP Error:', err);
+      showToast(err?.message || 'Failed to send OTP', 'error');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setCanResend(false);
+    setTimer(30);
+    setOtp(['', '', '', '', '', '']);
+    inputs.current[0]?.focus();
+    await handleSendOtp();
+  };
 
   const handleChange = (text: string, index: number) => {
     const newOtp = [...otp];
@@ -30,15 +105,44 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     }
   };
 
+  const handleKeyPress = (e: any, index: number) => {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
+      inputs.current[index - 1]?.focus();
+    }
+  };
+
   const onVerify = async () => {
     const code = otp.join('');
-    const res = await verifyOtp({
-      code,
-      phone: route.params?.phone,
-    });
 
-    if (res?.success) {
-      navigation.replace('OnboardingInspiration');
+    if (code.length !== 6) {
+      showToast('Please enter all 6 digits', 'error');
+      return;
+    }
+
+    setIsVerifying(true);
+
+    try {
+      const payload: { phone?: string; email?: string; code: string } = { code };
+      if (userEmail) payload.email = userEmail;
+
+      const res = await verifyOtp(payload);
+
+      if (res?.success) {
+        showToast('OTP verified successfully!', 'success');
+        setTimeout(() => {
+          navigation.replace('OnboardingInspiration');
+        }, 1000);
+      } else {
+        showToast(res?.message || 'Invalid OTP', 'error');
+        setOtp(['', '', '', '', '', '']);
+        inputs.current[0]?.focus();
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'OTP verification failed', 'error');
+      setOtp(['', '', '', '', '', '']);
+      inputs.current[0]?.focus();
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -61,7 +165,6 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
           <Text style={styles.appBarTitle}>Skyborne Drop</Text>
         </View>
 
-        {/* Spacer to balance back button */}
         <View style={{ width: 24 }} />
       </View>
 
@@ -72,33 +175,60 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
           {otp.map((digit, index) => (
             <TextInput
               key={index}
-              ref={ref => {
+              ref={(ref) => {
                 if (ref) inputs.current[index] = ref;
               }}
               style={styles.otpBox}
               keyboardType="number-pad"
               maxLength={1}
               value={digit}
-              onChangeText={text => handleChange(text, index)}
+              onChangeText={(text) => handleChange(text, index)}
+              onKeyPress={(e) => handleKeyPress(e, index)}
+              editable={!isVerifying && !isSendingOtp}
             />
           ))}
         </View>
 
-        <Text style={styles.infoText}>
-          OTP Sent to XXXXXXX{route.params?.phone?.slice(-2) ?? '00'}
-        </Text>
+        <Text style={styles.infoText}>OTP Sent to {userEmail}</Text>
 
         <Text style={styles.resendText}>
-          Didn’t receive it? <Text style={styles.resendLink}>Resend code</Text>
+          {!canResend ? (
+            <>Resend in 00:{timer < 10 ? '0' : ''}{timer}s</>
+          ) : (
+            <>
+              Didn't receive it?{' '}
+              <Text 
+                style={styles.resendLink} 
+                onPress={handleResendOtp}
+                disabled={isSendingOtp}
+              >
+                Resend code
+              </Text>
+            </>
+          )}
         </Text>
 
-        <TouchableOpacity style={styles.continueButton} onPress={onVerify}>
-          <Text style={styles.continueText}>Continue</Text>
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            (isVerifying || isSendingOtp) && { opacity: 0.6 },
+          ]}
+          onPress={onVerify}
+          disabled={isVerifying || isSendingOtp}
+        >
+          {isVerifying ? (
+            <ActivityIndicator color="#FFF" size="small" />
+          ) : (
+            <Text style={styles.continueText}>Continue</Text>
+          )}
         </TouchableOpacity>
       </View>
+
+      <Toast />
     </GradientBackground>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -133,7 +263,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#3A3A3A',
   },
-
   title: {
     fontSize: 30,
     fontWeight: '700',
@@ -187,3 +316,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+// ... rest of your styles remain the same
