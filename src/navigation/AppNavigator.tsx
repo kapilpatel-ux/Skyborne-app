@@ -15,8 +15,9 @@ import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import PricingScreen from '../screens/onboarding/PricingScreen';
 import GetStartedScreen from '../screens/onboarding/GetStartedScreen';
-import ExploreScreen from '../screens/onboarding/ExploreScreen';
-// import ScheduleScreen from '../screens/home/ScheduleScreen';
+import ExploreScreen from '../screens/home/ExploreScreen';
+import ScheduleScreen from '../screens/home/ScheduleScreen';
+import ProfileScreen from '../screens/home/ProfileScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -36,13 +37,14 @@ export type RootStackParamList = {
   Home: undefined;
   Explore: undefined;     
   Schedule: undefined;  
+  Profile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName='Profile' screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="AuthOptions" component={AuthOptionsScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
@@ -59,7 +61,8 @@ export default function AppNavigator() {
       <Stack.Screen name="GetStarted" component={GetStartedScreen} />
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Explore" component={ExploreScreen} />
-      {/* <Stack.Screen name="Schedule" component={ScheduleScreen} /> */}
+      <Stack.Screen name="Schedule" component={ScheduleScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
     </Stack.Navigator>
   );
 }

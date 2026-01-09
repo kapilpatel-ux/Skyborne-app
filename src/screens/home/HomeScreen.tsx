@@ -247,7 +247,10 @@ const HomeScreen = () => {
     />
     <Text style={styles.navLabelInactive}>Schedule</Text>
   </TouchableOpacity>
-  <TouchableOpacity style={styles.navItem}>
+  <TouchableOpacity 
+    style={styles.navItem}
+    onPress={() => navigation.navigate('Profile')}
+  >
     <Image 
       source={require('../../assets/images/user.png')} 
       style={styles.navIcon} 
