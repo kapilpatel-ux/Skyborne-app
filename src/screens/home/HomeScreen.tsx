@@ -2,15 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollView } from 'react-native';
 import GradientBackground from '../../components/GradientBackground';
 import { HomeImages } from '../../assets/images/home';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/AppNavigator';
+import BottomNav from '../../components/BottomNav';
 
 const HomeScreen = () => {
-
-  const navigation =
-  useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
+  
   const SessionImages = [{
     title:'Yoga Morning Flow',
     image: require('../../assets/images/home/session-image.png'),
@@ -217,47 +212,7 @@ const HomeScreen = () => {
             </View>
           </View>
         </ScrollView>
-
-        {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNavBar}>
-  <TouchableOpacity style={styles.navItem}>
-    <Image 
-      source={require('../../assets/images/home.png')} 
-      style={styles.navIcon} 
-    />
-    <Text style={styles.navLabel}>Home</Text>
-  </TouchableOpacity>
-  <TouchableOpacity
-    style={styles.navItem}
-    onPress={() => navigation.navigate('Explore')}
-  >
-    <Image 
-      source={require('../../assets/images/search.png')} 
-      style={styles.navIcon} 
-    />
-    <Text style={styles.navLabelInactive}>Explore</Text>
-  </TouchableOpacity>
-  <TouchableOpacity
-    style={styles.navItem}
-    onPress={() => navigation.navigate('Schedule')}
-  >
-    <Image 
-      source={require('../../assets/images/calender.png')} 
-      style={styles.navIcon} 
-    />
-    <Text style={styles.navLabelInactive}>Schedule</Text>
-  </TouchableOpacity>
-  <TouchableOpacity 
-    style={styles.navItem}
-    onPress={() => navigation.navigate('Profile')}
-  >
-    <Image 
-      source={require('../../assets/images/user.png')} 
-      style={styles.navIcon} 
-    />
-    <Text style={styles.navLabelInactive}>Profile</Text>
-  </TouchableOpacity>
-</View>
+        <BottomNav active="Home" />
       </SafeAreaView>
     </GradientBackground>
   );

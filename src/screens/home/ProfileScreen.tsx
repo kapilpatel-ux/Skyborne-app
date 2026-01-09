@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient'; // You'll need to install this
 import { ProfileImages } from '../../assets/images/profile';
+import BottomNav from '../../components/BottomNav';
 
 interface StatCard {
   id: number;
@@ -47,7 +48,7 @@ const ProfileScreen = () => {
     {
       id: 2,
       value: '12',
-      label: 'Total Sessions',
+      label: 'Total Hours',
       backgroundColor: '#FFE8E8',
       icon: ProfileImages.ArrowIcon1,
     },
@@ -194,7 +195,7 @@ const ProfileScreen = () => {
                   <Text style={styles.settingTitle}>{item.title}</Text>
                   <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
                 </View>
-                <Image style={styles.settingArrow} source={ProfileImages.ArrowIcon2} />
+                <Image source={ProfileImages.ArrowIcon2} />
               </TouchableOpacity>
               {index < settingItems.length - 1 && <View style={styles.divider} />}
             </View>
@@ -209,6 +210,7 @@ const ProfileScreen = () => {
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
+      <BottomNav active="Profile" />
     </SafeAreaView>
   );
 };
@@ -341,6 +343,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 19,
     marginBottom: 26,
   },
   statCardLeft: {
@@ -390,7 +393,7 @@ const styles = StyleSheet.create({
   },
   progressCard: {
     height: 84,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFE8E8',
     borderWidth: 1,
     borderColor: '#ECECEC',
     borderRadius: 10,
@@ -483,8 +486,8 @@ const styles = StyleSheet.create({
     borderColor: '#ECECEC',
     borderRadius: 17.52,
     paddingHorizontal: 22,
-    paddingVertical: 1,
-    marginBottom: 48,
+    paddingVertical: 23,
+    marginBottom: 44,
   },
   settingItem: {
     flexDirection: 'row',
@@ -497,7 +500,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   settingIcon: {
     width: 24,
@@ -517,18 +520,21 @@ const styles = StyleSheet.create({
   },
   settingSubtitle: {
     fontFamily: 'Satoshi-Regular',
+    fontWeight: '400',
     fontSize: 13,
     lineHeight: 18,
     color: 'rgba(5, 5, 5, 0.5)',
   },
   settingArrow: {
-    width: 6.57,
-    height: 15.33,
+    width: 17.52,
+    height: 17.52,
   },
   divider: {
     height: 1,
     backgroundColor: '#494949',
     opacity: 0.1,
+    marginTop: 15,
+    marginBottom: 20,
   },
   // Logout Button
   logoutButton: {

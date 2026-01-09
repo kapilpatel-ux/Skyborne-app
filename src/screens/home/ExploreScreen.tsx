@@ -10,6 +10,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { ExploreImages } from '../../assets/images/explore';
+import BottomNav from '../../components/BottomNav';
 
 const ExploreScreen = () => {
   const categories = [
@@ -209,7 +210,10 @@ const ExploreScreen = () => {
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
+      <BottomNav active="Explore" />
+
     </SafeAreaView>
+    
   );
 };
 

@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { ScheduleImages } from '../../assets/images/schedule';
+import BottomNav from '../../components/BottomNav';
 
 const ScheduleScreen = () => {
   const [selectedDate, setSelectedDate] = useState(10);
@@ -212,6 +213,7 @@ const ScheduleScreen = () => {
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
+      <BottomNav active="Schedule" />
     </SafeAreaView>
   );
 };
