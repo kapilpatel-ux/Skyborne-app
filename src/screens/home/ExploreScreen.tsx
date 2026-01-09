@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   // Header - exact Figma position top: 87px
   header: {
     paddingHorizontal: 16,
-    marginTop: 25,
+    marginTop: 35,
     marginBottom: 25,
   },
   headerTitle: {
