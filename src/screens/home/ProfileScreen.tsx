@@ -207,8 +207,6 @@ const ProfileScreen = () => {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacer} />
       </ScrollView>
       <BottomNav active="Profile" />
     </SafeAreaView>
@@ -229,7 +227,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 84,
+    paddingTop: 50,
     paddingBottom: 39,
   },
   headerLeft: {
@@ -553,9 +551,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#FFFFFF',
     textAlign: 'center',
-  },
-  bottomSpacer: {
-    height: 20,
   },
 });
 

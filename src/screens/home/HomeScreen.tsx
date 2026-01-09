@@ -1,11 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollView } from 'react-native';
 import GradientBackground from '../../components/GradientBackground';
 import { HomeImages } from '../../assets/images/home';
 import BottomNav from '../../components/BottomNav';
 
 const HomeScreen = () => {
-  
+
+  const MAX_WATER = 2.5; // liters
+  const STEP = 0.25; // 250ml
+
+  const [currentWater, setCurrentWater] = useState(2.0);
+  const percentage = Math.round((currentWater / MAX_WATER) * 100);
+
+  const increaseWater = () => {
+    setCurrentWater(prev =>
+      prev + STEP <= MAX_WATER ? +(prev + STEP).toFixed(2) : prev
+    );
+  };
+
+  const decreaseWater = () => {
+    setCurrentWater(prev =>
+      prev - STEP >= 0 ? +(prev - STEP).toFixed(2) : prev
+    );
+  };
+
   const SessionImages = [{
     title:'Yoga Morning Flow',
     image: require('../../assets/images/home/session-image.png'),
@@ -155,19 +173,22 @@ const HomeScreen = () => {
             <View style={styles.hydrationCard}>
               <View style={styles.hydrationContent}>
                 <Text style={styles.hydrationLabel}>Hydration</Text>
-                <Text style={styles.hydrationValue}>2.0L / 2.5L</Text>
+                {/* <Text style={styles.hydrationValue}>2.0L / 2.5L</Text> */}
+                <Text style={styles.hydrationValue}>
+                  {currentWater}L / {MAX_WATER}L
+                </Text>
                 <View style={styles.hydrationButtons}>
-                  <TouchableOpacity style={styles.minusButton}>
+                  <TouchableOpacity style={styles.minusButton} onPress={decreaseWater}>
                     <Text style={styles.minusIcon}>−</Text>
                   </TouchableOpacity>
                   <Text style={styles.waterAmount}>250ml</Text>
-                  <TouchableOpacity style={styles.plusButton}>
+                  <TouchableOpacity style={styles.plusButton} onPress={increaseWater}>
                     <Text style={styles.plusIcon}>+</Text>
                   </TouchableOpacity>
                 </View>
               </View>
               <View style={styles.percentageBox}>
-                <Text style={styles.percentageValue}>80%</Text>
+                <Text style={styles.percentageValue}>{percentage}%</Text>
               </View>
             </View>
           </View>
@@ -232,7 +253,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 72,
+    marginTop: 50,
     marginBottom: 40,
   },
   headerTitle: {

@@ -39,7 +39,6 @@ export type RootStackParamList = {
   Schedule: undefined;  
   Profile: undefined;
 };
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {

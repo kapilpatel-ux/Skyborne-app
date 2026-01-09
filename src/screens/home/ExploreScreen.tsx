@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Pressable,
   ImageBackground,
 } from 'react-native';
 import { ExploreImages } from '../../assets/images/explore';
@@ -144,7 +145,7 @@ const ExploreScreen = () => {
           contentContainerStyle={styles.categoriesContent}
         >
           {categories.map((category, index) => (
-            <TouchableOpacity
+            <Pressable
               key={category.id}
               style={[
                 styles.categoryCard,
@@ -166,22 +167,22 @@ const ExploreScreen = () => {
                 </View>
                 </ImageBackground>
               </View>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </ScrollView>
 
         {/* Trending Sessions Section - top: 888px */}
         <View style={styles.sectionHeaderWithAction}>
           <Text style={styles.sectionTitle}>Trending for You</Text>
-          <TouchableOpacity>
+          <Pressable>
             <Text style={styles.viewAllText}>View all</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Session List - starts at top: 944px */}
         <View style={styles.sessionsList}>
           {trendingSessions.map((session) => (
-            <TouchableOpacity key={session.id} style={styles.sessionCard}>
+            <Pressable key={session.id} style={styles.sessionCard}>
               <View style={styles.sessionImageContainer}>
                 <ImageBackground
                   source={session.image}
@@ -193,7 +194,7 @@ const ExploreScreen = () => {
               <View style={styles.sessionInfo}>
                 <Text style={styles.sessionTitle}>{session.title}</Text>
                 <Text style={styles.sessionDuration}>{session.duration}</Text>
-                  <TouchableOpacity style={styles.sessionPlayButton}>
+                  <Pressable style={styles.sessionPlayButton}>
                   <View style={styles.playButtonCircle}>
                     <View style={styles.playIcon}>
                       <View style={styles.playLineMiddle} />
@@ -201,17 +202,13 @@ const ExploreScreen = () => {
                       <View style={styles.playLineBottom} />
                     </View>
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               </View>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
-
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacer} />
       </ScrollView>
       <BottomNav active="Explore" />
-
     </SafeAreaView>
     
   );
@@ -229,7 +226,7 @@ const styles = StyleSheet.create({
   // Header - exact Figma position top: 87px
   header: {
     paddingHorizontal: 16,
-    marginTop: 87,
+    marginTop: 50,
     marginBottom: 25,
   },
   headerTitle: {
@@ -507,10 +504,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 3,
     left: 5.5,
-  },
-  // Bottom Spacer
-  bottomSpacer: {
-    height: 80, // Extra space before bottom nav
   },
 });
 

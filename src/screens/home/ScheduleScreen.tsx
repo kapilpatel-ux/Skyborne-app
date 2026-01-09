@@ -209,9 +209,6 @@ const ScheduleScreen = () => {
             })}
           </View>
         </View>
-
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacer} />
       </ScrollView>
       <BottomNav active="Schedule" />
     </SafeAreaView>
@@ -229,7 +226,7 @@ const styles = StyleSheet.create({
 
   header: {
     paddingHorizontal: 16,
-    marginTop: 87,
+    marginTop: 50,
     marginBottom: 25,
   },
   headerTitle: {
@@ -541,11 +538,6 @@ const styles = StyleSheet.create({
   },
   playButtonCircleDark: {
     backgroundColor: '#000000',
-  },
-
-  // Bottom Spacer
-  bottomSpacer: {
-    height: 80,
   },
 });
 
