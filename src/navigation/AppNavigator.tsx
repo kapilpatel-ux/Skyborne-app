@@ -19,6 +19,10 @@ import ExploreScreen from '../screens/home/ExploreScreen';
 import ScheduleScreen from '../screens/home/ScheduleScreen';
 import ProfileScreen from '../screens/home/ProfileScreen';
 import { SignupProvider } from '../store/SignupContext';
+import ManageSubscriptionScreen from '../screens/home/ManageSubscription';
+import SessionHistoryScreen from '../screens/home/SessionHistory';
+import SupportScreen from '../screens/home/Support';
+import FeedbackScreen from '../screens/home/Feedback';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -39,6 +43,10 @@ export type RootStackParamList = {
   Explore: undefined;     
   Schedule: undefined;  
   Profile: undefined;
+  ManageSubscription: undefined;
+  SessionHistory: undefined;
+  Support: undefined;
+  Feedback: undefined;
 };
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -65,6 +73,10 @@ export default function AppNavigator() {
       <Stack.Screen name="Explore" component={ExploreScreen} />
       <Stack.Screen name="Schedule" component={ScheduleScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="ManageSubscription" component={ManageSubscriptionScreen} />
+      <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} />
+      <Stack.Screen name="Support" component={SupportScreen} />
+      <Stack.Screen name="Feedback" component={FeedbackScreen} />
     </Stack.Navigator>
       </SignupProvider>
   );
