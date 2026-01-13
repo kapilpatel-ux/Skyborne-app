@@ -68,7 +68,7 @@ export default function AuthOptionsScreen({ navigation }: Props) {
 
           <TouchableOpacity
             style={styles.loginButton}
-            onPress={() => navigation.navigate('WelcomeScreen')}
+            onPress={() => navigation.navigate('Login')}
           >
             <ThemedText weight="medium" style={styles.loginButtonText}>
               Login

@@ -26,6 +26,25 @@ export interface SignupResponse {
   };
 }
 
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: {
+      id: string;
+      email: string;
+      phone?: string;
+      firstName?: string;
+      lastName?: string;
+      country?: string;
+      timezone?: string;
+      [key: string]: any;
+    };
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
 class AuthService {
   private api: AxiosInstance;
   private authTokenKey = '@auth_token';
@@ -81,6 +100,36 @@ class AuthService {
         error.response?.data?.message ||
         error.message ||
         'Signup failed';
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Login - Authenticate user with email and password
+   */
+  async loginService(payload: {
+    email: string;
+    password: string;
+  }): Promise<LoginResponse> {
+    try {
+      console.log('Login payload:', payload);
+
+      const response = await this.api.post('/login', payload);
+      
+      if (response.data?.success && response.data?.data?.accessToken) {
+        // Store tokens in AsyncStorage
+        await this.setAuthToken(response.data.data.accessToken);
+        if (response.data.data.refreshToken) {
+          await this.setRefreshToken(response.data.data.refreshToken);
+        }
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Login failed';
       throw new Error(errorMessage);
     }
   }
@@ -185,6 +234,9 @@ export const authService = new AuthService();
 // Export functions for backward compatibility with Redux thunks
 export const signupService = (payload: SignupPayload) =>
   authService.signupService(payload);
+
+export const loginService = (payload: { email: string; password: string }) =>
+  authService.loginService(payload);
 
 export const sendOtpService = (payload: { email?: string; phone?: string }) =>
   authService.sendOtpService(payload);

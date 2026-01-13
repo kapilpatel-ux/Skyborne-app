@@ -12,7 +12,7 @@ import {
   Image,
   ImageSourcePropType,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient'; // You'll need to install this
+import LinearGradient from 'react-native-linear-gradient'; 
 import { ProfileImages } from '../../assets/images/profile';
 import BottomNav from '../../components/BottomNav';
 
@@ -149,7 +149,10 @@ const ProfileScreen = () => {
           <View style={styles.premiumBadge}>
             <Text style={styles.premiumText}>Premium</Text>
           </View>
-          <TouchableOpacity style={styles.editButton}>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
             <Image style={styles.editIcon} source={ProfileImages.pencilIcon} />
           </TouchableOpacity>
         </View>

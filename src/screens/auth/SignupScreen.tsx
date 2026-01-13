@@ -51,7 +51,7 @@ const validationSchema = Yup.object().shape({
 });
 
 export default function SignupScreen({ navigation }: Props) {
-  const { signup } = useAuthViewModel();
+  // const { signup } = useAuthViewModel();
   const { formData, updateStepData, setCurrentStep } = useSignup();
 
   const initialValues: FormData = {
@@ -202,6 +202,14 @@ export default function SignupScreen({ navigation }: Props) {
                   title={isSubmitting ? 'Loading...' : 'Signup'}
                   onPress={() => handleSubmit()}
                 />
+
+                {/* Signup Link */}
+                <View style={styles.loginContainer}>
+                  <Text style={styles.loginText}>Already have an account? </Text>
+                  <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                    <Text style={styles.loginLink}>Login</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           </Formik>
@@ -296,5 +304,23 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontSize: 12,
     marginTop: 4,
+  },
+   loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  loginText: {
+    fontSize: 14,
+    color: '#0A0A0A',
+    fontWeight: '400',
+    fontFamily: FontFamilies.SatoshiRegular,
+  },
+  loginLink: {
+    fontSize: 14,
+    color: '#B95E82',
+    fontWeight: '600',
+    fontFamily: FontFamilies.SatoshiMedium,
   },
 });

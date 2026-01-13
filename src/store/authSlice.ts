@@ -3,6 +3,7 @@ import {
   signupService, 
   sendOtpService,
   verifyOtpService,
+  loginService,
   setAuthToken,
   removeAuthToken 
 } from '../services/authService';
@@ -162,6 +163,39 @@ export const verifyOtp = createAsyncThunk(
   }
 );
 
+export const login = createAsyncThunk(
+  'auth/login',
+  async (payload: { email: string; password: string }, { rejectWithValue }) => {
+    try {
+      const res = await loginService(payload);
+
+      if (!res.success) {
+        return rejectWithValue(res.message || 'Login failed');
+      }
+
+      const { user, accessToken, refreshToken } = res.data;
+
+      // Store tokens
+      if (accessToken) {
+        await setAuthToken(accessToken);
+      }
+
+      return {
+        success: true,
+        message: res.message,
+        data: {
+          user,
+          accessToken,
+          refreshToken,
+        },
+      };
+    } catch (error: any) {
+      console.error('Login error:', error);
+      return rejectWithValue(error.message || 'Login failed');
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -206,6 +240,27 @@ const authSlice = createSlice({
         state.onboardingCompleted = true;
       })
       .addCase(signup.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload as string;
+        state.loggedIn = false;
+      })
+
+       // ============ LOGIN CASES ============
+      .addCase(login.pending, (state) => {
+        state.status = 'loading';
+        state.error = undefined;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.status = 'idle';
+        state.loggedIn = true;
+        state.user = action.payload.data?.user;
+        state.accessToken = action.payload.data?.accessToken;
+        state.refreshToken = action.payload.data?.refreshToken;
+        state.email = action.payload.data?.user?.email;
+        state.phone = action.payload.data?.user?.phone;
+        state.onboardingCompleted = true;
+      })
+      .addCase(login.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload as string;
         state.loggedIn = false;

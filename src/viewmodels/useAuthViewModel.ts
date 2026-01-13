@@ -3,8 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { 
   signup as signupThunk, 
   sendOtp as sendOtpThunk,
-  verifyOtp as verifyOtpThunk 
+  verifyOtp as verifyOtpThunk ,
+  login as loginThunk
 } from '../store/authSlice';
+
 import { RootState } from '../store';
 
 export interface SignupPayload {
@@ -61,6 +63,45 @@ export function useAuthViewModel() {
         return {
           success: false,
           message: error?.message || 'An error occurred during signup',
+        };
+      }
+    },
+    [dispatch]
+  );
+
+   /**
+   * Login with email and password
+   */
+  const login = useCallback(
+    async (email: string, password: string): Promise<ApiResponse> => {
+      try {
+        if (!email || !password) {
+          return {
+            success: false,
+            message: 'Email and password are required',
+          };
+        }
+
+        const result = await dispatch(loginThunk({ email, password }));
+        console.log('login result:', result);
+
+        if (result.meta.requestStatus === 'fulfilled') {
+          return {
+            success: true,
+            message: 'Login successful',
+            data: result.payload,
+          };
+        } else {
+          return {
+            success: false,
+            message: result.payload?.message || result.payload || 'Login failed',
+          };
+        }
+      } catch (error: any) {
+        console.error('Login error:', error);
+        return {
+          success: false,
+          message: error?.message || 'An error occurred during login',
         };
       }
     },
@@ -166,6 +207,7 @@ export function useAuthViewModel() {
 
   return {
     signup,
+    login,
     sendOtp,
     verifyOtp,
     authState,
