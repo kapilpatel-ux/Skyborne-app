@@ -22,10 +22,12 @@ const OPTIONS = [
 
 export default function OnboardingInspirationScreen({ navigation }: Props) {
   const { setInspiration } = useOnboardingStore();
-  const [selected, setSelected] = useState<string>('Reduce stress');
+  const [selectedIndex, setSelectedIndex] = useState<number>(3); // Default to 'Reduce stress' (index 3)
 
   const next = () => {
-    setInspiration(selected);
+    // Convert selected index to 1-based number (1-6) and store
+    const inspirationValue = selectedIndex + 1;
+    setInspiration(inspirationValue);
     navigation.navigate('OnboardingGoal');
   };
 
@@ -55,12 +57,12 @@ export default function OnboardingInspirationScreen({ navigation }: Props) {
             What inspired you{'\n'}to join Skyborne?
           </Text>
 
-          {OPTIONS.map(item => {
-            const isSelected = item === selected;
+          {OPTIONS.map((item, index) => {
+            const isSelected = index === selectedIndex;
             return (
               <TouchableOpacity
                 key={item}
-                onPress={() => setSelected(item)}
+                onPress={() => setSelectedIndex(index)}
                 style={[styles.optionCard, isSelected && styles.optionSelected]}
               >
                 <Text style={styles.optionText}>{item}</Text>

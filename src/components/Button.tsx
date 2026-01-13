@@ -7,9 +7,10 @@ interface ButtonProps {
   variant?: 'primary' | 'ghost';
   style?: ViewStyle;
   textStyle?: TextStyle;
+  disabled?:boolean;
 }
 
-export default function Button({ title, onPress, variant, style, textStyle }: ButtonProps) {
+export default function Button({ title, onPress, variant, style, textStyle ,disabled}: ButtonProps) {
   const buttonVariantStyle: ViewStyle = variant === 'ghost' ? styles.ghost : styles.primary;
   const textVariantStyle: TextStyle = variant === 'ghost' ? styles.ghostText : styles.text;
 

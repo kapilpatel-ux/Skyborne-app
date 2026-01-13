@@ -28,12 +28,14 @@ const GOALS = [
 ];
 
 export default function OnboardingGoalScreen({ navigation }: Props) {
-  const [selected, setSelected] = useState<string>('Join a group challenge');
+  const [selectedIndex, setSelectedIndex] = useState<number>(3); // Default to 'Join a group challenge' (index 3)
   const { setFirstGoal } = useOnboardingStore();
   const dispatch = useDispatch();
 
   const next = () => {
-    setFirstGoal(selected);
+    // Convert selected index to 1-based number (1-5) and store
+    const goalValue = selectedIndex + 1;
+    setFirstGoal(goalValue);
     dispatch(setOnboardingCompleted(true));
     navigation.replace('OnboardingFitnessLevel');
   };
@@ -63,8 +65,8 @@ export default function OnboardingGoalScreen({ navigation }: Props) {
           <Text style={styles.title}>Set Your First Goal!</Text>
 
           <View style={styles.options}>
-            {GOALS.map((goal) => {
-              const isSelected = selected === goal;
+            {GOALS.map((goal, index) => {
+              const isSelected = selectedIndex === index;
               return (
                 <TouchableOpacity
                   key={goal}
@@ -72,7 +74,7 @@ export default function OnboardingGoalScreen({ navigation }: Props) {
                     styles.optionCard,
                     isSelected && styles.optionSelected,
                   ]}
-                  onPress={() => setSelected(goal)}
+                  onPress={() => setSelectedIndex(index)}
                 >
                   <Text style={styles.optionText}>{goal}</Text>
                 </TouchableOpacity>

@@ -64,10 +64,6 @@ export default function AuthOptionsScreen({ navigation }: Props) {
               icon={require('../../assets/icons/google.png')}
               text="Continue with Google"
             />
-            <AuthButton
-              icon={require('../../assets/icons/facebook.png')}
-              text="Continue with Facebook"
-            />
           </View>
 
           <TouchableOpacity

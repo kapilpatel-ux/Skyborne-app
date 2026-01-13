@@ -7,11 +7,18 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
 import { getData } from 'country-list';
 import * as ct from 'countries-and-timezones';
+import { useAuthViewModel } from '../../viewmodels/useAuthViewModel';
+import { useOnboardingStore } from '../../store/onboardingSlice';
+import { RootState } from '../../store';
+import Toast from 'react-native-toast-message';
+import { useSignup } from '../../store/SignupContext';
 
 type DropdownInputProps = {
   label: string;
@@ -35,6 +42,18 @@ const DropdownInput = ({ label, value, placeholder }: DropdownInputProps) => (
 );
 
 const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
+  const dispatch = useDispatch();
+  const { signup } = useAuthViewModel();
+  const authState = useSelector((state: RootState) => state.auth);
+
+  // Zustand store for onboarding data
+  const { inspiration, firstGoal, fitnessLevel, habits } =
+    useOnboardingStore();
+
+  // Get signup form data from Redux or context
+  const tempUserId = authState.tempUserId;
+  const phone = authState.phone;
+  const { formData } = useSignup();
   const countries = getData();
   const [selectedCountry, setSelectedCountry] = useState<{
     name: string;
@@ -43,10 +62,108 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [timezone, setTimezone] = useState<string | null>(null);
   const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const timezones = selectedCountry
     ? ct.getTimezonesForCountry(selectedCountry.code)
     : [];
+
+  const showToast = (
+    message: string,
+    type: 'success' | 'error' | 'info' = 'info',
+  ) => {
+    Toast.show({
+      type,
+      text1:
+        type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info',
+      text2: message,
+      position: 'top',
+      visibilityTime: 3000,
+    });
+  };
+
+  const handleCompleteProfile = async () => {
+    // Validation
+    if (!selectedCountry) {
+      showToast('Please select a country', 'error');
+      return;
+    }
+    if (!timezone) {
+      showToast('Please select a timezone', 'error');
+      return;
+    }
+    if (!tempUserId) {
+      showToast('Invalid session. Please restart signup.', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Prepare the complete signup payload
+      const signupPayload = {
+        tempUserId,
+        phoneNumber: phone,
+        country: selectedCountry.name,
+        countryCode: selectedCountry.code,
+        timezone,
+        firstName: formData?.step2?.firstName,
+        lastName: formData?.step2?.lastName,
+        email: formData?.step2?.email,
+        password: formData?.step2?.password,
+        authProvider: formData?.step2?.authProvider,
+        // Onboarding data from Zustand store
+        motivation: inspiration,
+        goal: firstGoal,
+        fitnessLevel: fitnessLevel ? Number(fitnessLevel) : null,
+        habits: habits
+          ? {
+              waterIntake: habits.waterIntake
+                ? Number(habits.waterIntake)
+                : null,
+              sleepQuality: habits.sleepQuality
+                ? Number(habits.sleepQuality)
+                : null,
+              exerciseFrequency: habits.exerciseFrequency
+                ? Number(habits.exerciseFrequency)
+                : null,
+            }
+          : {
+              waterIntake: null,
+              sleepQuality: null,
+              exerciseFrequency: null,
+            },
+      };
+
+      console.log('Signup payload:', JSON.stringify(signupPayload, null, 2));
+
+      // Call signup API
+      const response = await signup(signupPayload);
+
+      if (response?.success || response?.data) {
+        // API was successful
+        const { user, accessToken, refreshToken } = response?.data || response;
+
+        // Store tokens and user data
+        // This depends on your AsyncStorage setup
+        // You can also dispatch Redux actions here if needed
+
+        showToast('Profile completed successfully!', 'success');
+
+        // Navigate to next screen or dashboard
+        setTimeout(() => {
+          navigation.navigate('Pricing'); // or your home screen
+        }, 500);
+      } else {
+        showToast(response?.message || 'Failed to complete profile', 'error');
+      }
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      showToast(error?.message || 'An error occurred during signup', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <GradientBackground>
@@ -66,114 +183,129 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.container}>
-          <View style={styles.formSection}>
-            <View style={{ position: 'relative' }}>
-              <Text style={styles.fieldLabel}>Select Country</Text>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={styles.formSection}>
+              <View style={{ position: 'relative' }}>
+                <Text style={styles.fieldLabel}>Select Country</Text>
 
-              <TouchableOpacity
-                style={styles.dropdownInput}
-                onPress={() => setShowCountryDropdown(!showCountryDropdown)}
-              >
-                <Text
-                  style={
-                    selectedCountry
-                      ? styles.dropdownText
-                      : styles.dropdownPlaceholder
-                  }
+                <TouchableOpacity
+                  style={styles.dropdownInput}
+                  onPress={() => setShowCountryDropdown(!showCountryDropdown)}
                 >
-                  {selectedCountry
-                    ? `${selectedCountry.name} (${selectedCountry.code})`
-                    : 'Select an option'}
-                </Text>
-
-                <Image
-                  source={require('../../assets/icons/down-arrow.png')}
-                  style={styles.dropdownIcon}
-                />
-              </TouchableOpacity>
-
-              {/* SMALL SCROLLABLE DROPDOWN */}
-              {showCountryDropdown && (
-                <View style={styles.countryDropdown}>
-                  <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    nestedScrollEnabled
+                  <Text
+                    style={
+                      selectedCountry
+                        ? styles.dropdownText
+                        : styles.dropdownPlaceholder
+                    }
                   >
-                    {countries.map(item => (
-                      <TouchableOpacity
-                        key={item.code}
-                        style={styles.countryItem}
-                        onPress={() => {
-                          setSelectedCountry(item);
-                          setTimezone(null);
-                          setShowCountryDropdown(false);
-                        }}
-                      >
-                        <Text style={styles.dropdownText}>
-                          {item.name} ({item.code})
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
-            </View>
+                    {selectedCountry
+                      ? `${selectedCountry.name} (${selectedCountry.code})`
+                      : 'Select an option'}
+                  </Text>
 
-            <View style={{ height: 28 }} />
+                  <Image
+                    source={require('../../assets/icons/down-arrow.png')}
+                    style={styles.dropdownIcon}
+                  />
+                </TouchableOpacity>
 
-            <View style={{ marginTop: 20, position: 'relative' }}>
-              <Text style={styles.fieldLabel}>Timezone</Text>
+                {showCountryDropdown && (
+                  <View style={styles.countryDropdown}>
+                    <ScrollView
+                      showsVerticalScrollIndicator={false}
+                      nestedScrollEnabled
+                    >
+                      {countries.map(item => (
+                        <TouchableOpacity
+                          key={item.code}
+                          style={styles.countryItem}
+                          onPress={() => {
+                            setSelectedCountry(item);
+                            setTimezone(null);
+                            setShowCountryDropdown(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownText}>
+                            {item.name} ({item.code})
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
 
-              <TouchableOpacity
-                style={styles.dropdownInput}
-                onPress={() => setShowTimezoneDropdown(!showTimezoneDropdown)}
-                disabled={!selectedCountry} // country ke bina disable
-              >
-                <Text
-                  style={
-                    timezone ? styles.dropdownText : styles.dropdownPlaceholder
-                  }
+              <View style={{ height: 28 }} />
+
+              <View style={{ marginTop: 20, position: 'relative' }}>
+                <Text style={styles.fieldLabel}>Timezone</Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownInput,
+                    !selectedCountry && styles.dropdownInputDisabled,
+                  ]}
+                  onPress={() => setShowTimezoneDropdown(!showTimezoneDropdown)}
+                  disabled={!selectedCountry}
                 >
-                  {timezone || 'Select an option'}
-                </Text>
+                  <Text
+                    style={
+                      timezone
+                        ? styles.dropdownText
+                        : styles.dropdownPlaceholder
+                    }
+                  >
+                    {timezone || 'Select an option'}
+                  </Text>
 
-                <Image
-                  source={require('../../assets/icons/down-arrow.png')}
-                  style={styles.dropdownIcon}
-                />
-              </TouchableOpacity>
+                  <Image
+                    source={require('../../assets/icons/down-arrow.png')}
+                    style={styles.dropdownIcon}
+                  />
+                </TouchableOpacity>
 
-              {showTimezoneDropdown && timezones!.length > 0 && (
-                <View style={styles.timezoneDropdown}>
-                  <ScrollView showsVerticalScrollIndicator={false}>
-                    {timezones!.map(tz => (
-                      <TouchableOpacity
-                        key={tz.name}
-                        style={styles.countryItem}
-                        onPress={() => {
-                          setTimezone(`${tz.name} (${tz.utcOffsetStr})`);
-                          setShowTimezoneDropdown(false);
-                        }}
-                      >
-                        <Text style={styles.dropdownText}>
-                          {tz.name} ({tz.utcOffsetStr})
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
+                {showTimezoneDropdown && timezones!.length > 0 && (
+                  <View style={styles.timezoneDropdown}>
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                      {timezones!.map(tz => (
+                        <TouchableOpacity
+                          key={tz.name}
+                          style={styles.countryItem}
+                          onPress={() => {
+                            setTimezone(`${tz.name} (${tz.utcOffsetStr})`);
+                            setShowTimezoneDropdown(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownText}>
+                            {tz.name} ({tz.utcOffsetStr})
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
             </View>
-          </View>
+          </ScrollView>
 
           <View style={styles.ctaButtonContainer}>
             <Button
-              title="Complete Profile"
-              onPress={() => navigation.navigate('GetStarted')}
+              title={isLoading ? 'Completing...' : 'Complete Profile'}
+              onPress={handleCompleteProfile}
+              disabled={isLoading}
             />
+            {isLoading && (
+              <ActivityIndicator
+                size="large"
+                color="#007AFF"
+                style={{ marginTop: 16 }}
+              />
+            )}
           </View>
         </View>
       </SafeAreaView>
+      <Toast />
     </GradientBackground>
   );
 };
@@ -251,6 +383,9 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
+  dropdownInputDisabled: {
+    opacity: 0.5,
+  },
   dropdownText: {
     fontFamily: 'Satoshi-Medium',
     fontWeight: '500',
@@ -271,8 +406,6 @@ const styles = StyleSheet.create({
     tintColor: '#8A95A5',
   },
   ctaButtonContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
     marginTop: 40,
     paddingBottom: 24,
   },
@@ -280,6 +413,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 78,
     maxHeight: 180,
+    width: '100%',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#EAEAEA',

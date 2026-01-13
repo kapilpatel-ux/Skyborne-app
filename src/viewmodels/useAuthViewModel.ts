@@ -7,88 +7,170 @@ import {
 } from '../store/authSlice';
 import { RootState } from '../store';
 
+export interface SignupPayload {
+  tempUserId: string;
+  email?: string;
+  phone?: string;
+  country: string;
+  countryCode: string;
+  timezone: string;
+  inspiration?: number;
+  firstGoal?: number;
+  fitnessLevel?: number | undefined | null;
+  habits?: {
+    waterIntake?: number | null;
+    sleepQuality?: number | null;
+    exerciseFrequency?: number | null;
+  };
+  pricingPlan?: string;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
 export function useAuthViewModel() {
   const dispatch = useDispatch<any>();
   const authState = useSelector((state: RootState) => state.auth);
 
+  /**
+   * Complete signup with all onboarding data
+   * Includes: location, timezone, onboarding preferences, pricing plan
+   */
   const signup = useCallback(
-    async (payload: { name: string; phone: string; email?: string }) => {
+    async (payload: SignupPayload): Promise<ApiResponse> => {
       try {
         const result = await dispatch(signupThunk(payload));
-        // Check if it was fulfilled or rejected
+        
         if (result.meta.requestStatus === 'fulfilled') {
-          return result.payload;
+          return {
+            success: true,
+            message: 'Signup completed successfully',
+            data: result.payload,
+          };
         } else {
-          return { 
-            success: false, 
-            message: result.payload || 'Signup failed' 
+          return {
+            success: false,
+            message: result.payload?.message || result.payload || 'Signup failed',
           };
         }
       } catch (error: any) {
         console.error('Signup error:', error);
-        return { 
-          success: false, 
-          message: error.message || 'Signup failed' 
-        };
-      }
-    }, 
-    [dispatch]
-  );
-
-  const sendOtp = useCallback(
-    async (payload: { email?: string; phone?: string }) => {
-      try {
-        const result = await dispatch(sendOtpThunk(payload));
-        console.log('sendOtp result:', result);
-        
-        if (result.meta.requestStatus === 'fulfilled') {
-          return result.payload;
-        } else {
-          return { 
-            success: false, 
-            message: result.payload || 'Failed to send OTP' 
-          };
-        }
-      } catch (error: any) {
-        console.error('SendOtp error:', error);
-        return { 
-          success: false, 
-          message: error.message || 'Failed to send OTP' 
+        return {
+          success: false,
+          message: error?.message || 'An error occurred during signup',
         };
       }
     },
     [dispatch]
   );
 
-  const verifyOtp = useCallback(
-    async (payload: { phone?: string; email?: string; code?: string }) => {
+  /**
+   * Send OTP to email or phone
+   */
+  const sendOtp = useCallback(
+    async (payload: { email?: string; phone?: string }): Promise<ApiResponse> => {
       try {
+        if (!payload.email && !payload.phone) {
+          return {
+            success: false,
+            message: 'Email or phone number is required',
+          };
+        }
+
+        const result = await dispatch(sendOtpThunk(payload));
+        console.log('sendOtp result:', result);
+
+        if (result.meta.requestStatus === 'fulfilled') {
+          return {
+            success: true,
+            message: 'OTP sent successfully',
+            data: result.payload,
+          };
+        } else {
+          return {
+            success: false,
+            message: result.payload?.message || result.payload || 'Failed to send OTP',
+          };
+        }
+      } catch (error: any) {
+        console.error('SendOtp error:', error);
+        return {
+          success: false,
+          message: error?.message || 'Failed to send OTP',
+        };
+      }
+    },
+    [dispatch]
+  );
+
+  /**
+   * Verify OTP and get tempUserId
+   * Returns tempUserId needed for final signup
+   */
+  const verifyOtp = useCallback(
+    async (payload: {
+      phone?: string;
+      email?: string;
+      otp?: string;
+    }): Promise<ApiResponse> => {
+      try {
+        if (!payload.otp) {
+          return {
+            success: false,
+            message: 'OTP code is required',
+          };
+        }
+
+        if (!payload.email && !payload.phone) {
+          return {
+            success: false,
+            message: 'Email or phone number is required',
+          };
+        }
+
         const result = await dispatch(verifyOtpThunk(payload));
         console.log('verifyOtp result:', result);
-        
+
         if (result.meta.requestStatus === 'fulfilled') {
-          return result.payload;
+          const { data } = result.payload;
+          return {
+            success: true,
+            message: 'OTP verified successfully',
+            data: {
+              tempUserId: data?.tempUserId,
+              token: data?.token,
+              refreshToken: data?.refreshToken,
+              ...data,
+            },
+          };
         } else {
-          return { 
-            success: false, 
-            message: result.payload || 'OTP verification failed' 
+          return {
+            success: false,
+            message:
+              result.payload?.message || result.payload || 'OTP verification failed',
           };
         }
       } catch (error: any) {
         console.error('VerifyOtp error:', error);
-        return { 
-          success: false, 
-          message: error.message || 'OTP verification failed' 
+        return {
+          success: false,
+          message: error?.message || 'OTP verification failed',
         };
       }
-    }, 
+    },
     [dispatch]
   );
 
-  return { 
-    signup, 
+  return {
+    signup,
     sendOtp,
     verifyOtp,
-    authState 
+    authState,
+    isLoading: authState.status === 'loading',
+    isError: authState.status === 'failed',
+    errorMessage: authState.error,
   };
 }

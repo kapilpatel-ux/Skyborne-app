@@ -1,54 +1,87 @@
-
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  SafeAreaView,
+  ScrollView,
+} from 'react-native';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
+import { useOnboardingStore } from '../../store/onboardingSlice';
 
-const OnboardingHabitsScreen = ({ navigation }:any) => {
-  const [waterIntake, setWaterIntake] = useState<null | string>(null);
-  const [sleepQuality, setSleepQuality] = useState<any>(null);
-  const [exerciseFrequency, setExerciseFrequency] = useState<any>(null);
+const OnboardingHabitsScreen = ({ navigation }: any) => {
+  const [waterIntakeIndex, setWaterIntakeIndex] = useState<number | null>(null);
+  const [sleepQualityIndex, setSleepQualityIndex] = useState<number | null>(null);
+  const [exerciseFrequencyIndex, setExerciseFrequencyIndex] = useState<number | null>(null);
+  const { setHabits } = useOnboardingStore();
+
+  const waterOptions = ['Yes', 'No'];
+  const sleepOptions = ['Poor', 'Okay', 'Good'];
+  const exerciseOptions = ['Rarely', 'Weekly', 'Regular'];
+
+  // Check if all fields are selected
+  const isAllSelected = waterIntakeIndex !== null && sleepQualityIndex !== null && exerciseFrequencyIndex !== null;
+
+  const handleContinue = () => {
+    if (isAllSelected) {
+      // Convert indices to 1-based numbers and store
+      const habitsValue = {
+        waterIntake: waterIntakeIndex + 1,     // 1-2
+        sleepQuality: sleepQualityIndex + 1,   // 1-3
+        exerciseFrequency: exerciseFrequencyIndex + 1, // 1-3
+      };
+      setHabits(habitsValue);
+      navigation.navigate('OnboardingLocation');
+    }
+  };
 
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollView}>
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.goBack()}>
-                           <Image
-                             source={require('../../assets/images/back-arrow.png')}
-                             style={{ width: 16, height: 16, marginHorizontal: 16 }}
-                             resizeMode="contain"
-                           />
-                         </TouchableOpacity>
-              <View style={styles.progressTrack}>
-                <View style={styles.progressFill} />
-              </View>
-
-              <View style={{ width: 24 }} />
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Image
+                source={require('../../assets/images/back-arrow.png')}
+                style={{ width: 16, height: 16, marginHorizontal: 16 }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+            <View style={styles.progressTrack}>
+              <View style={styles.progressFill} />
             </View>
+
+            <View style={{ width: 24 }} />
+          </View>
           <View style={styles.container}>
             <View style={styles.headerSection}>
               <Text style={styles.title}>Your current habits</Text>
-              <Text style={styles.subtitle}>Help us understand your starting point</Text>
+              <Text style={styles.subtitle}>
+                Help us understand your starting point
+              </Text>
             </View>
 
             {/* Question Block 1 — Water Intake */}
             <View style={styles.questionBlock}>
-              <Text style={styles.questionLabel}>Do you drink enough water?</Text>
+              <Text style={styles.questionLabel}>
+                Do you drink enough water?
+              </Text>
               <View style={styles.binarySelectionContainer}>
-                <TouchableOpacity
-                  style={[styles.binaryButton, waterIntake === 'yes' && styles.selectedBinaryButton]}
-                  onPress={() => setWaterIntake('yes')}
-                >
-                  <Text style={styles.binaryButtonText}>Yes</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.binaryButton, waterIntake === 'no' && styles.selectedBinaryButton]}
-                  onPress={() => setWaterIntake('no')}
-                >
-                  <Text style={styles.binaryButtonText}>No</Text>
-                </TouchableOpacity>
+                {waterOptions.map((option, index) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.binaryButton,
+                      waterIntakeIndex === index && styles.selectedBinaryButton,
+                    ]}
+                    onPress={() => setWaterIntakeIndex(index)}
+                  >
+                    <Text style={styles.binaryButtonText}>{option}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 
@@ -56,11 +89,14 @@ const OnboardingHabitsScreen = ({ navigation }:any) => {
             <View style={styles.questionBlock}>
               <Text style={styles.questionLabel}>How is your sleep?</Text>
               <View style={styles.gridContainer}>
-                {['Poor', 'Okay', 'Good'].map((option) => (
+                {sleepOptions.map((option, index) => (
                   <TouchableOpacity
                     key={option}
-                    style={[styles.gridCard, sleepQuality === option && styles.selectedCard]}
-                    onPress={() => setSleepQuality(option)}
+                    style={[
+                      styles.gridCard,
+                      sleepQualityIndex === index && styles.selectedCard,
+                    ]}
+                    onPress={() => setSleepQualityIndex(index)}
                   >
                     <Text style={styles.gridCardText}>{option}</Text>
                   </TouchableOpacity>
@@ -70,13 +106,18 @@ const OnboardingHabitsScreen = ({ navigation }:any) => {
 
             {/* Question Block 3 — Exercise Frequency */}
             <View style={styles.questionBlock}>
-              <Text style={styles.questionLabel}>How often do you exercise?</Text>
+              <Text style={styles.questionLabel}>
+                How often do you exercise?
+              </Text>
               <View style={styles.verticalStackContainer}>
-                {['Rarely', 'Weekly', 'Regular'].map((option) => (
+                {exerciseOptions.map((option, index) => (
                   <TouchableOpacity
                     key={option}
-                    style={[styles.verticalCard, exerciseFrequency === option && styles.selectedCard]}
-                    onPress={() => setExerciseFrequency(option)}
+                    style={[
+                      styles.verticalCard,
+                      exerciseFrequencyIndex === index && styles.selectedCard,
+                    ]}
+                    onPress={() => setExerciseFrequencyIndex(index)}
                   >
                     <Text style={styles.verticalCardText}>{option}</Text>
                   </TouchableOpacity>
@@ -87,7 +128,8 @@ const OnboardingHabitsScreen = ({ navigation }:any) => {
             <View style={styles.ctaButtonContainer}>
               <Button
                 title="Continue"
-                onPress={() => navigation.navigate('OnboardingMotivation')}
+                onPress={handleContinue}
+                disabled={!isAllSelected}
               />
             </View>
           </View>
@@ -111,7 +153,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
-header: {
+  header: {
     minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,13 +247,12 @@ header: {
     borderColor: '#ECECEC',
     justifyContent: 'center',
     alignItems: 'flex-start',
-
   },
   gridCardText: {
     paddingLeft: 12,
     fontSize: 14,
     fontWeight: '500',
-    color: '#000000'
+    color: '#000000',
   },
   // Exercise Frequency Styles
   verticalStackContainer: {
@@ -236,7 +277,7 @@ header: {
   selectedCard: {
     borderColor: '#B95E82',
     backgroundColor: '#FFE8E8',
-    borderWidth: 1
+    borderWidth: 1,
   },
   // CTA Button
   ctaButtonContainer: {

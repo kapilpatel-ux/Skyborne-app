@@ -122,7 +122,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     setIsVerifying(true);
 
     try {
-      const payload: { phone?: string; email?: string; code: string } = { code };
+      const payload: { phone?: string; email?: string; otp: string } = {otp: code };
       if (userEmail) payload.email = userEmail;
 
       const res = await verifyOtp(payload);

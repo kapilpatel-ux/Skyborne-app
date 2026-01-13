@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
+import { useOnboardingStore } from '../../store/onboardingSlice';
 
 const fitnessLevels = [
   {
@@ -31,7 +32,8 @@ const fitnessLevels = [
 ];
 
 const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
-  const [selectedLevel, setSelectedLevel] = useState('intermediate'); // Default selection
+  const [selectedIndex, setSelectedIndex] = useState<number>(1); // Default to 'Intermediate' (index 1)
+  const { setFitnessLevel } = useOnboardingStore();
 
   const FitnessCard = ({ level, isSelected, onPress }: any) => (
     <TouchableOpacity
@@ -45,6 +47,13 @@ const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
       </View>
     </TouchableOpacity>
   );
+
+  const handleContinue = () => {
+    // Convert selected index to 1-based number (1-3) and store
+    const fitnessValue = selectedIndex + 1;
+    setFitnessLevel(fitnessValue);
+    navigation.navigate('OnboardingHabits');
+  };
 
   return (
     <GradientBackground>
@@ -64,19 +73,19 @@ const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
         </View>
         <View style={styles.container}>
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>What’s your fitness level?</Text>
+            <Text style={styles.title}>What's your fitness level?</Text>
             <Text style={styles.subtitle}>
-              We’ll recommend the right classes for you
+              We'll recommend the right classes for you
             </Text>
           </View>
 
           <View style={styles.cardsGroup}>
-            {fitnessLevels.map(level => (
+            {fitnessLevels.map((level, index) => (
               <FitnessCard
                 key={level.id}
                 level={level}
-                isSelected={selectedLevel === level.id}
-                onPress={() => setSelectedLevel(level.id)}
+                isSelected={selectedIndex === index}
+                onPress={() => setSelectedIndex(index)}
               />
             ))}
           </View>
@@ -84,7 +93,7 @@ const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
           <View style={styles.buttonContainer}>
             <Button
               title="Continue"
-              onPress={() => navigation.navigate('OnboardingHabits')}
+              onPress={handleContinue}
             />
           </View>
         </View>
