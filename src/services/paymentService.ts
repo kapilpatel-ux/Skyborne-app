@@ -17,7 +17,6 @@ export interface PaymentOrderPayload {
 export interface PaymentOrderResponse {
   success: boolean;
   message: string;
-  data: {
     orderId: string;
     orderRef: string;
     paymentLink: string;
@@ -27,7 +26,6 @@ export interface PaymentOrderResponse {
     currency: string;
     status: string;
     gateway?: string;    // ✅ NEW: Payment gateway used
-  };
 }
 
 export interface PaymentVerificationPayload {
@@ -80,27 +78,31 @@ class PaymentService {
       console.log('🔄 Creating payment order:', payload);
       
       const response = await this.api.post('/payment/create-order', payload);
+
+      console.log("response", response);
       
-      if (response.data?.success && response.data?.data?.orderRef) {
+      if (response.data?.success && response.data?.orderRef) {
         // ✅ Store payment details for verification later
-        await AsyncStorage.setItem('paymentOrderRef', response.data.data.orderRef);
+        await AsyncStorage.setItem('paymentOrderRef', response.data.orderRef);
         
         // Store gateway-specific details
         if (response.data.data.sessionId) {
-          await AsyncStorage.setItem('paymentSessionId', response.data.data.sessionId);
+          await AsyncStorage.setItem('paymentSessionId', response.data.sessionId);
         }
         if (response.data.data.reference) {
-          await AsyncStorage.setItem('paymentReference', response.data.data.reference);
+          await AsyncStorage.setItem('paymentReference', response.data.reference);
         }
         if (response.data.gateway) {
           await AsyncStorage.setItem('paymentGateway', response.data.gateway);
         }
 
         console.log('✅ Payment order created:', {
-          orderRef: response.data.data.orderRef,
+          orderRef: response.data.orderRef,
           gateway: response.data.gateway,
         });
       }
+
+      
       
       return response.data;
     } catch (error: any) {

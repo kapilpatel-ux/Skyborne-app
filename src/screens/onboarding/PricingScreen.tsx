@@ -158,7 +158,7 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
       }
 
       // ✅ FIXED: Access paymentLink from response.data
-      const { paymentLink } = response?.data;
+      const { paymentLink } = response;
 
       if (!paymentLink) {
         Toast.show({
