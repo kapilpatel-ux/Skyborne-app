@@ -1,4 +1,7 @@
 import React from 'react';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/AppNavigator';
 import {
   View,
   Text,
@@ -34,9 +37,15 @@ interface SettingItem {
   subtitle: string;
   icon: ImageSourcePropType;
   iconBgColor: string;
+  screen?: keyof RootStackParamList;
 }
 
 const ProfileScreen = () => {
+
+  type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList,'Profile'>;
+
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+
   const statCards: StatCard[] = [
     {
       id: 1,
@@ -81,6 +90,7 @@ const ProfileScreen = () => {
       subtitle: 'Diamond Plan',
       icon: ProfileImages.subscriptionIcon,
       iconBgColor: '#FFE8E8',
+      screen: 'ManageSubscription',
     },
     {
       id: 2,
@@ -88,20 +98,23 @@ const ProfileScreen = () => {
       subtitle: 'View past Sessions',
       icon: ProfileImages.historyIcon,
       iconBgColor: '#FFE8E8',
+      screen: 'SessionHistory',
     },
-    {
-      id: 3,
-      title: 'Timezone',
-      subtitle: 'Asia/Kolkata',
-      icon: ProfileImages.timezonIcon,
-      iconBgColor: '#FFE8E8',
-    },
+    // {
+    //   id: 3,
+    //   title: 'Timezone',
+    //   subtitle: 'Asia/Kolkata',
+    //   icon: ProfileImages.timezonIcon,
+    //   iconBgColor: '#FFE8E8',
+    //   screen: '',
+    // },
     {
       id: 4,
       title: 'Support',
       subtitle: 'Get help',
       icon: ProfileImages.supportIcon,
       iconBgColor: '#FFE8E8',
+      screen: 'Support',
     },
   ];
 
@@ -187,7 +200,13 @@ const ProfileScreen = () => {
         <View style={styles.settingsContainer}>
           {settingItems.map((item, index) => (
             <View key={item.id}>
-              <TouchableOpacity style={styles.settingItem}>
+              <TouchableOpacity style={styles.settingItem}
+                onPress={() => {
+                  if (item.screen) {
+                    navigation.navigate(item.screen);
+                  }
+                }}
+              >
                 <View style={[styles.settingIconContainer, { backgroundColor: item.iconBgColor }]}>
                   <Image source={item.icon} style={styles.settingIcon} />
                 </View>
