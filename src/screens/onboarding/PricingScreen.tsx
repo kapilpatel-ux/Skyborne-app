@@ -142,6 +142,7 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
         plan: pricingPlan as string,
         email: email,
         phone: phone,
+        source: 'app',
       });
 
       console.log('✅ Payment order response:', response);
@@ -180,9 +181,11 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
       // Open payment link
       await Linking.openURL(paymentLink);
 
+      dispatch(setOnboardingCompleted(true));
+      navigation.navigate('Home');
       // ✅ FIXED: Navigate to PaymentVerification after opening payment link
       setIsProcessingPayment(false);
-      navigation.navigate('PaymentVerification');
+      // navigation.navigate('PaymentVerification');
     } catch (error: any) {
       console.error('❌ Payment error:', error);
       Toast.show({
