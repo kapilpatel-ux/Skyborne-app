@@ -238,11 +238,11 @@ const ProfileScreen = () => {
             <View key={item.id}>
               <TouchableOpacity
                 style={styles.settingItem}
-                // onPress={() => {
-                //   if (item.screen) {
-                //     navigation.navigate(item.screen);
-                //   }
-                // }}
+                onPress={() => {
+                  if (item.screen) {
+                    navigation.navigate(item.screen as any);
+                  }
+                }}
               >
                 <View
                   style={[
