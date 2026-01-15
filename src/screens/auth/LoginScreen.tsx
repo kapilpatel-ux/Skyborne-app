@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Formik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import TextInput from '../../components/TextInput';
@@ -10,6 +10,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import GradientBackground from '../../components/GradientBackground';
 import { FontFamilies } from '../../constants/fonts';
+import Toast from 'react-native-toast-message';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -42,39 +43,51 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   const onSubmit = async (
-    data: FormData,
-    { setSubmitting }: FormikHelpers<FormData>
-  ) => {
-    try {
-      setLoginError('');
-      
-      const result = await login(data.email, data.password);
-      
-      if (result.success) {
-        // Login successful - Navigate to home or appropriate screen
-        Alert.alert(
-          'Success',
-          'Login successful!',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.navigate('Home'),
-            },
-          ]
-        );
-      } else {
-        // Login failed - Show error message
-        setLoginError(result.message || 'Login failed. Please try again.');
-        Alert.alert('Login Failed', result.message || 'Invalid credentials');
-      }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      setLoginError(error.message || 'An unexpected error occurred');
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
-    } finally {
-      setSubmitting(false);
+  data: FormData,
+  { setSubmitting }: FormikHelpers<FormData>
+) => {
+  try {
+    setLoginError('');
+
+    const result = await login(data.email, data.password);
+
+    if (result.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'Login Successful',
+        text2: 'Welcome back! 👋',
+        position: 'top',
+        visibilityTime: 2500,
+      });
+
+      navigation.navigate('Home');
+    } else {
+      const msg = result.message || 'Login failed. Please try again.';
+      setLoginError(msg);
+
+      Toast.show({
+        type: 'error',
+        text1: 'Login Failed',
+        text2: msg,
+        position: 'top',
+        visibilityTime: 3000,
+      });
     }
-  };
+  } catch (error: any) {
+    const msg = error.message || 'An unexpected error occurred';
+    setLoginError(msg);
+
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: msg,
+      position: 'top',
+      visibilityTime: 3000,
+    });
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <GradientBackground>
@@ -163,7 +176,7 @@ export default function LoginScreen({ navigation }: Props) {
                 )}
 
                 {/* Forgot Password */}
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.forgotPasswordContainer}
                   onPress={() => {
                     // Navigate to forgot password screen when implemented
@@ -171,7 +184,7 @@ export default function LoginScreen({ navigation }: Props) {
                   }}
                 >
                   <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 {/* CTA */}
                 <Button

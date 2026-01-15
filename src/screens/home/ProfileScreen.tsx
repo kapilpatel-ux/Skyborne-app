@@ -12,9 +12,10 @@ import {
   Image,
   ImageSourcePropType,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient'; 
+import LinearGradient from 'react-native-linear-gradient';
 import { ProfileImages } from '../../assets/images/profile';
 import BottomNav from '../../components/BottomNav';
+import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
 
 interface StatCard {
   id: number;
@@ -41,10 +42,13 @@ interface SettingItem {
 }
 
 const ProfileScreen = () => {
-
-  type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList,'Profile'>;
-
+  type ProfileScreenNavigationProp = NativeStackNavigationProp<
+    RootStackParamList,
+    'Profile'
+  >;
   const navigation = useNavigation<ProfileScreenNavigationProp>();
+
+  const { user } = useHomeViewModel();
 
   const statCards: StatCard[] = [
     {
@@ -118,38 +122,65 @@ const ProfileScreen = () => {
     },
   ];
 
+  const getInitials = (firstName?: string, lastName?: string) => {
+    const first = firstName?.charAt(0).toUpperCase() ?? '';
+    const last = lastName?.charAt(0).toUpperCase() ?? '';
+    return `${first}${last}`;
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <TouchableOpacity style={styles.backButton}>
-              <Image style={styles.backIcon} source={ProfileImages.ArrowIcon1}/>
+              <Image
+                style={styles.backIcon}
+                source={ProfileImages.ArrowIcon1}
+              />
             </TouchableOpacity>
 
             <Text style={styles.headerTitle}>Profile</Text>
           </View>
 
           <TouchableOpacity style={styles.settingsButton}>
-            <Image style={styles.settingsIcon} source={ProfileImages.SettingsIcon} />
+            <Image
+              style={styles.settingsIcon}
+              source={ProfileImages.SettingsIcon}
+            />
           </TouchableOpacity>
         </View>
 
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          <Image
-            source={ProfileImages.ProfileImg}
-            style={styles.avatar}
-          />
+          {user?.profileImage ? (
+            <Image
+              source={{ uri: user.profileImage }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {getInitials(user?.firstName, user?.lastName)}
+              </Text>
+            </View>
+          )}
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>John Bakes</Text>
-            <Text style={styles.profileSince}>since 2019</Text>
+            <Text style={styles.profileName}>
+              {`${user?.firstName} ${user?.lastName}`}{' '}
+            </Text>
+            <Text style={styles.profileSince}>
+              since {new Date(user?.createdAt).getFullYear()}
+            </Text>
           </View>
           <View style={styles.premiumBadge}>
-            <Text style={styles.premiumText}>Premium</Text>
+            <Text style={styles.premiumText}>{user?.plan}</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editButton}
             onPress={() => navigation.navigate('EditProfile')}
           >
@@ -181,11 +212,13 @@ const ProfileScreen = () => {
         </View>
 
         <View style={styles.progressList}>
-          {progressItems.map((item) => (
+          {progressItems.map(item => (
             <View key={item.id} style={styles.progressCard}>
               <View style={styles.progressHeader}>
                 <Text style={styles.progressTitle}>{item.title}</Text>
-                <Text style={styles.progressPercentage}>{item.percentage}%</Text>
+                <Text style={styles.progressPercentage}>
+                  {item.percentage}%
+                </Text>
               </View>
               <View style={styles.progressBarContainer}>
                 <LinearGradient
@@ -203,14 +236,20 @@ const ProfileScreen = () => {
         <View style={styles.settingsContainer}>
           {settingItems.map((item, index) => (
             <View key={item.id}>
-              <TouchableOpacity style={styles.settingItem}
-                onPress={() => {
-                  if (item.screen) {
-                    navigation.navigate(item.screen);
-                  }
-                }}
+              <TouchableOpacity
+                style={styles.settingItem}
+                // onPress={() => {
+                //   if (item.screen) {
+                //     navigation.navigate(item.screen);
+                //   }
+                // }}
               >
-                <View style={[styles.settingIconContainer, { backgroundColor: item.iconBgColor }]}>
+                <View
+                  style={[
+                    styles.settingIconContainer,
+                    { backgroundColor: item.iconBgColor },
+                  ]}
+                >
                   <Image source={item.icon} style={styles.settingIcon} />
                 </View>
                 <View style={styles.settingTextContainer}>
@@ -219,7 +258,9 @@ const ProfileScreen = () => {
                 </View>
                 <Image source={ProfileImages.ArrowIcon2} />
               </TouchableOpacity>
-              {index < settingItems.length - 1 && <View style={styles.divider} />}
+              {index < settingItems.length - 1 && (
+                <View style={styles.divider} />
+              )}
             </View>
           ))}
         </View>
@@ -228,7 +269,6 @@ const ProfileScreen = () => {
         <TouchableOpacity style={styles.logoutButton}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-
       </ScrollView>
       <BottomNav active="Profile" />
     </SafeAreaView>
@@ -252,6 +292,22 @@ const styles = StyleSheet.create({
     paddingTop: 35,
     paddingBottom: 39,
   },
+  avatar: {
+    marginLeft:10,
+    width: 42,
+    height: 42,
+    borderRadius: 28,
+    backgroundColor: '#B95E82',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  avatarText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -297,12 +353,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // paddingHorizontal: 21,
   },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    marginLeft: 21,
-  },
   profileInfo: {
     flex: 1,
     marginLeft: 14,
@@ -320,6 +370,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     color: '#050505',
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   premiumBadge: {
     height: 24.45,

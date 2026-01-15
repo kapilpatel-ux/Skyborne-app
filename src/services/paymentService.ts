@@ -102,9 +102,6 @@ class PaymentService {
           gateway: response.data.gateway,
         });
       }
-
-      
-      
       return response.data;
     } catch (error: any) {
       const errorMessage = 

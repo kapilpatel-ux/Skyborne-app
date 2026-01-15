@@ -1,6 +1,10 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
-import paymentReducer from  './paymentSlice'
+import paymentReducer from  './paymentSlice';
+import faqReducer from  './faqSlice';
+import homeReducer from  './homeSlice';
+
+
 import {
   persistStore,
   persistReducer,
@@ -16,7 +20,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Define root reducer with proper typing
 const rootReducer = combineReducers({ 
   auth: authReducer ,
-  payment:paymentReducer
+  payment:paymentReducer,
+  faq:faqReducer,
+  home:homeReducer
 });
 
 const persistConfig = {

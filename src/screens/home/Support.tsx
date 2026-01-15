@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,13 @@ import {
   TouchableOpacity,
   Image,
   ImageSourcePropType,
+  ActivityIndicator,
 } from 'react-native';
-import {
-  ArrowLeft,
-} from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import { Images } from '../../assets/images';
+import { fetchFAQs } from '../../store/faqSlice'; 
+import { RootState } from '../../store';
 
 interface ContactOption {
   id: number;
@@ -21,57 +23,25 @@ interface ContactOption {
   icon: ImageSourcePropType;
 }
 
-interface FAQItem {
-  id: number;
-  question: string;
-  answer: string;
-  icon: ImageSourcePropType;
-}
-
 const SupportScreen = ({ navigation }: { navigation: any }) => {
+  const dispatch = useDispatch<any>();
+  const { items: faqItems, status, error } = useSelector(
+    (state: RootState) => state.faq
+  );
+
+  // Fetch FAQs on mount
+  useEffect(() => {
+    if (faqItems.length === 0) {
+      dispatch(fetchFAQs());
+    }
+  }, [dispatch, faqItems.length]);
+
   const contactOptions: ContactOption[] = [
-    {
-      id: 1,
-      title: 'WhatsApp Support',
-      subtitle: 'Quick response within minutes',
-      icon: Images.whatsappIcon,
-    },
     {
       id: 2,
       title: 'Email Support',
-      subtitle: 'Support@skyborne.app',
+      subtitle: 'info@skybornedrop.com',
       icon: Images.emailIcon,
-    },
-  ];
-
-  const faqItems: FAQItem[] = [
-    {
-      id: 1,
-      question: 'How do i join a live class?',
-      answer:
-        'Go to the schedule tab, find a class marked "LIVE" tap on it to see details and click "join live class" at the schedule time',
-      icon: Images.questionIcon,
-    },
-    {
-      id: 2,
-      question: 'Can i watch recorded classes anytime?',
-      answer:
-        'Yes! Classes marked as "REPLAY" can be watched anytime. They count towards your session limit',
-      icon: Images.questionIcon,
-    },
-    {
-      id: 3,
-      question: 'How do i upgrade my plan?',
-      answer:
-        'Go to profile>Subscription to view available plans and upgrade your membership',
-      icon: Images.questionIcon,
-    },
-    {
-      id: 4,
-      question: 'What if i miss a live class?',
-      answer:
-        "Don't worry! All live classes are recorded and available as replays within 24 hours.",
-      icon: Images.questionIcon,
     },
   ];
 
@@ -100,15 +70,17 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
             <View key={option.id}>
               <TouchableOpacity style={styles.contactItem}>
                 <View style={styles.contactIconContainer}>
-                  <Image source={option.icon}  />
+                  <Image source={option.icon} />
                 </View>
                 <View style={styles.contactTextContainer}>
                   <Text style={styles.contactTitle}>{option.title}</Text>
                   <Text style={styles.contactSubtitle}>{option.subtitle}</Text>
                 </View>
-                <Image source={Images.rightIcon}/>
+                <Image source={Images.rightIcon} />
               </TouchableOpacity>
-              {index < contactOptions.length - 1 && <View style={styles.divider} />}
+              {index < contactOptions.length - 1 && (
+                <View style={styles.divider} />
+              )}
             </View>
           ))}
         </View>
@@ -118,17 +90,32 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
           <Text style={styles.sectionTitle}>Frequently asked questions</Text>
         </View>
 
-        <View style={styles.faqList}>
-          {faqItems.map((item) => (
-            <View key={item.id} style={styles.faqCard}>
-              <Image source={item.icon} style={styles.faqIcon} />
-              <View style={styles.faqContent}>
-                <Text style={styles.faqQuestion}>{item.question}</Text>
-                <Text style={styles.faqAnswer}>{item.answer}</Text>
+        {status === 'loading' ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#494949" />
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Failed to load FAQs</Text>
+          </View>
+        ) : faqItems.length > 0 ? (
+          <View style={styles.faqList}>
+            {faqItems.map((item) => (
+              <View key={item.id} style={styles.faqCard}>
+                <Image source={Images.questionIcon} style={styles.faqIcon} />
+                <View style={styles.faqContent}>
+                  <Text style={styles.faqQuestion}>{item.question}</Text>
+                  <Text style={styles.faqAnswer}>{item.answer}</Text>
+                </View>
               </View>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No FAQs available</Text>
+          </View>
+        )}
+
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -272,6 +259,33 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     width: 277,
     color: '#050505',
+  },
+  // Loading / Error / Empty States
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 16,
+  },
+  errorText: {
+    fontFamily: 'Satoshi-Bold',
+    fontSize: 16,
+    color: '#B95E82',
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontFamily: 'Satoshi-Regular',
+    fontSize: 14,
+    color: '#494949',
   },
   bottomSpacer: {
     height: 20,

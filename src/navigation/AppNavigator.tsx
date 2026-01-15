@@ -26,12 +26,13 @@ import FeedbackScreen from '../screens/home/Feedback';
 import PaymentVerification from '../screens/onboarding/PaymentVerificationScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import EditProfileScreen from '../screens/home/EditProfileScreen';
+import ClassDetailsScreen from '../screens/home/ClassDetailScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
   AuthOptions: undefined;
   Signup: undefined;
-  OTP: { phone?: string,email?:string } | undefined;
+  OTP: { phone?: string; email?: string } | undefined;
   OnboardingInspiration: undefined;
   OnboardingGoal: undefined;
   OnboardingTimeCommitment: undefined;
@@ -43,17 +44,19 @@ export type RootStackParamList = {
   Pricing: undefined;
   GetStarted: undefined;
   Home: undefined;
-  Explore: undefined;     
-  Schedule: undefined;  
+  Explore: undefined;
+  Schedule: undefined;
   Profile: undefined;
   ManageSubscription: undefined;
   SessionHistory: undefined;
   Support: undefined;
+  ClassDetails: {
+    classId: string;
+  };
   Feedback: undefined;
-  PaymentVerification:undefined
+  PaymentVerification: undefined;
   Login: undefined;
   EditProfile: undefined;
-
 };
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -66,22 +69,50 @@ export default function AppNavigator() {
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="OTP" component={OTPVerificationScreen} />
-        <Stack.Screen name="OnboardingInspiration" component={OnboardingInspirationScreen} />
+        <Stack.Screen
+          name="OnboardingInspiration"
+          component={OnboardingInspirationScreen}
+        />
         <Stack.Screen name="OnboardingGoal" component={OnboardingGoalScreen} />
-        <Stack.Screen name="OnboardingTimeCommitment" component={OnboardingTimeCommitmentScreen} />
-        <Stack.Screen name="OnboardingFitnessLevel" component={OnboardingFitnessLevelScreen} />
-        <Stack.Screen name="OnboardingHabits" component={OnboardingHabitsScreen} />
-        <Stack.Screen name="OnboardingLocation" component={OnboardingLocationScreen} />
-        <Stack.Screen name="OnboardingMotivation" component={OnboardingMotivationScreen} />
+        <Stack.Screen
+          name="OnboardingTimeCommitment"
+          component={OnboardingTimeCommitmentScreen}
+        />
+        <Stack.Screen
+          name="OnboardingFitnessLevel"
+          component={OnboardingFitnessLevelScreen}
+        />
+        <Stack.Screen
+          name="OnboardingHabits"
+          component={OnboardingHabitsScreen}
+        />
+        <Stack.Screen
+          name="OnboardingLocation"
+          component={OnboardingLocationScreen}
+        />
+        <Stack.Screen
+          name="OnboardingMotivation"
+          component={OnboardingMotivationScreen}
+        />
         <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
         <Stack.Screen name="Pricing" component={PricingScreen} />
         <Stack.Screen name="GetStarted" component={GetStartedScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Explore" component={ExploreScreen} />
-        <Stack.Screen name="PaymentVerification" component={PaymentVerification} />
+        <Stack.Screen
+          name="PaymentVerification"
+          component={PaymentVerification}
+        />
         <Stack.Screen name="Schedule" component={ScheduleScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="ManageSubscription" component={ManageSubscriptionScreen} />
+        <Stack.Screen
+          name="ManageSubscription"
+          component={ManageSubscriptionScreen}
+        />
+        <Stack.Screen
+          name="ClassDetails"
+          component={ClassDetailsScreen}
+        />
         <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} />
         <Stack.Screen name="Support" component={SupportScreen} />
         <Stack.Screen name="Feedback" component={FeedbackScreen} />

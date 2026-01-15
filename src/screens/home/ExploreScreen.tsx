@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,35 +9,37 @@ import {
   TouchableOpacity,
   Pressable,
   ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 import { ExploreImages } from '../../assets/images/explore';
 import BottomNav from '../../components/BottomNav';
+import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
 
 const ExploreScreen = () => {
   const categories = [
     {
       id: 1,
       title: 'Yoga',
+      source: ExploreImages.trending1,
       sessions: '100+ Sessions',
-      // image: YogaImg,
     },
     {
       id: 2,
       title: 'Fitness Classes',
       sessions: '100+ Sessions',
-      // image: FitnessImg,
+      source: ExploreImages.fitness,
     },
     {
       id: 3,
       title: 'Zumba Dance',
       sessions: '100+ Sessions',
-      // image: ZumbaImg,
+      source: ExploreImages.zumba,
     },
     {
       id: 4,
       title: 'Diet & Nutrition',
       sessions: '100+ Sessions',
-      // image: DietImg,
+      source:ExploreImages.diet
     },
   ];
 
@@ -74,18 +76,63 @@ const ExploreScreen = () => {
     },
   ];
 
+  // Use home view model to fetch upcoming meetings
+  const { upcomingMeetings, isLoading, error } = useHomeViewModel();
+
+  // Get max 5 upcoming classes
+  const upcomingClasses = upcomingMeetings.slice(0, 5);
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  // Dynamic upcoming class card
+  const DynamicSessionCard = ({ meeting }: any) => (
+    <Pressable style={styles.sessionCard}>
+      <View style={styles.sessionImageContainer}>
+        <ImageBackground
+          source={require('../../assets/images/home/session-image.png')}
+          style={styles.sessionImage}
+          resizeMode="cover"
+        />
+        <View style={styles.sessionImagePlaceholder} />
+      </View>
+      <View style={styles.sessionInfo}>
+        <Text style={styles.sessionTitle}>{meeting.title}</Text>
+        <Text style={styles.sessionDuration}>
+          {new Date(meeting.localTime).toLocaleDateString()} •{' '}
+          {formatTime(meeting.localTime)} ({meeting.service?.title})
+        </Text>
+        <Pressable style={styles.sessionPlayButton}>
+          <View style={styles.playButtonCircle}>
+            <View style={styles.playIcon}>
+              <View style={styles.playLineMiddle} />
+              <View style={styles.playLineTop} />
+              <View style={styles.playLineBottom} />
+            </View>
+          </View>
+        </Pressable>
+      </View>
+    </Pressable>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header - top: 87px from Figma */}
+        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Explore Sessions</Text>
         </View>
 
-        {/* Search Bar - top: 145px, 16px horizontal margins */}
+        {/* Search Bar */}
         <View style={styles.searchContainer}>
           <View style={styles.searchIconWrapper}>
             <View style={styles.searchIcon} />
@@ -97,18 +144,15 @@ const ExploreScreen = () => {
           />
         </View>
 
-        {/* Quick Start Banner - top: 219px */}
+        {/* Quick Start Banner */}
         <View style={styles.quickStartBanner}>
           <View style={styles.bannerImageContainer}>
-
             <ImageBackground
               source={ExploreImages.meditation}
               style={styles.bannerImage}
               resizeMode="cover"
             >
-              {/* OVERLAY / GRADIENT */}
               <View style={styles.bannerGradient}>
-                
                 <View style={styles.bannerContent}>
                   <Text style={styles.bannerTitle}>Quick Start</Text>
                   <Text style={styles.bannerDescription}>
@@ -125,19 +169,17 @@ const ExploreScreen = () => {
                     />
                   </View>
                 </TouchableOpacity>
-
               </View>
             </ImageBackground>
-
           </View>
         </View>
 
-        {/* Trending Categories Section - top: 439px */}
+        {/* Trending Categories Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Trending for You</Text>
         </View>
 
-        {/* Horizontal Scroll for Categories - top: 486px */}
+        {/* Horizontal Scroll for Categories */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -154,24 +196,23 @@ const ExploreScreen = () => {
             >
               <View style={styles.categoryImageContainer}>
                 <ImageBackground
-                  source={ExploreImages.trending1}
+                  source={category?.source}
                   style={styles.categoryImage}
                   resizeMode="cover"
                 >
-                {/* <View style={styles.categoryGradient} /> */}
-                <View style={styles.categoryInfo}>
-                  <Text style={styles.categoryTitle}>{category.title}</Text>
-                  <Text style={styles.categorySessions}>
-                    {category.sessions}
-                  </Text>
-                </View>
+                  <View style={styles.categoryInfo}>
+                    <Text style={styles.categoryTitle}>{category.title}</Text>
+                    <Text style={styles.categorySessions}>
+                      {category.sessions}
+                    </Text>
+                  </View>
                 </ImageBackground>
               </View>
             </Pressable>
           ))}
         </ScrollView>
 
-        {/* Trending Sessions Section - top: 888px */}
+        {/* Trending Sessions Section - Dynamic */}
         <View style={styles.sectionHeaderWithAction}>
           <Text style={styles.sectionTitle}>Trending for You</Text>
           <Pressable>
@@ -179,38 +220,39 @@ const ExploreScreen = () => {
           </Pressable>
         </View>
 
-        {/* Session List - starts at top: 944px */}
-        <View style={styles.sessionsList}>
-          {trendingSessions.map((session) => (
-            <Pressable key={session.id} style={styles.sessionCard}>
-              <View style={styles.sessionImageContainer}>
-                <ImageBackground
-                  source={session.image}
-                  style={styles.sessionImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.sessionImagePlaceholder} />
-              </View>
-              <View style={styles.sessionInfo}>
-                <Text style={styles.sessionTitle}>{session.title}</Text>
-                <Text style={styles.sessionDuration}>{session.duration}</Text>
-                  <Pressable style={styles.sessionPlayButton}>
-                  <View style={styles.playButtonCircle}>
-                    <View style={styles.playIcon}>
-                      <View style={styles.playLineMiddle} />
-                      <View style={styles.playLineTop} />
-                      <View style={styles.playLineBottom} />
-                    </View>
-                  </View>
-                </Pressable>
-              </View>
-            </Pressable>
-          ))}
-        </View>
+        {/* Loading State */}
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#B95E82" />
+            <Text style={styles.loadingText}>Loading upcoming classes...</Text>
+          </View>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
+        {/* Dynamic Upcoming Classes - Max 5 */}
+        {!isLoading && upcomingClasses.length > 0 && (
+          <View style={styles.sessionsList}>
+            {upcomingClasses.map(meeting => (
+              <DynamicSessionCard key={meeting._id} meeting={meeting} />
+            ))}
+          </View>
+        )}
+
+        {/* Fallback when no upcoming classes */}
+    {!isLoading && upcomingClasses.length === 0 && !error && (
+          <View style={styles.noRecordsContainer}>
+            <Text style={styles.noRecordsText}>No records found</Text>
+          </View>
+        )}  
       </ScrollView>
       <BottomNav active="Explore" />
     </SafeAreaView>
-    
   );
 };
 
@@ -222,8 +264,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  
-  // Header - exact Figma position top: 87px
+
   header: {
     paddingHorizontal: 16,
     marginTop: 35,
@@ -236,11 +277,22 @@ const styles = StyleSheet.create({
     lineHeight: 33,
     color: '#494949',
   },
+  noRecordsContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noRecordsText: {
+    fontSize: 16,
+    fontFamily: 'Satoshi',
+    color: '#959595',
+    fontWeight: '400',
+  },
 
-  // Search Bar - top: 145px in Figma
   searchContainer: {
     marginHorizontal: 16,
-    marginBottom: 31, // Space to banner (219 - 145 - 43)
+    marginBottom: 31,
     height: 43,
     backgroundColor: 'rgba(173, 173, 173, 0.21)',
     borderRadius: 7,
@@ -273,10 +325,9 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
 
-  // Quick Start Banner - top: 219px, width: 358px, height: 172px
   quickStartBanner: {
     marginHorizontal: 16,
-    marginBottom: 48, // Space to "Trending for You" (439 - 219 - 172)
+    marginBottom: 48,
     height: 172,
     borderRadius: 8,
     overflow: 'hidden',
@@ -336,15 +387,14 @@ const styles = StyleSheet.create({
     height: 25,
   },
 
-  // Section Headers
   sectionHeader: {
     paddingHorizontal: 16,
-    marginBottom: 25, // Space to categories (486 - 439 - 22)
+    marginBottom: 25,
   },
   sectionHeaderWithAction: {
     paddingHorizontal: 16,
-    marginBottom: 34, // Space to sessions list (944 - 888 - 31)
-    marginTop: 48, // Space from categories end (888 - 486 - 354)
+    marginBottom: 34,
+    marginTop: 48,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -365,7 +415,6 @@ const styles = StyleSheet.create({
     color: '#B95E82',
   },
 
-  // Categories Horizontal Scroll - top: 486px, width: 374px, height: 354px
   categoriesScroll: {
     marginBottom: 0,
   },
@@ -393,14 +442,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  categoryGradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 137,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  },
   categoryInfo: {
     position: 'absolute',
     bottom: 21,
@@ -422,14 +463,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Trending Sessions List - starts at top: 944px
   sessionsList: {
     paddingHorizontal: 16,
   },
   sessionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 31, // Calculated from spacing between items
+    marginBottom: 31,
   },
   sessionImageContainer: {
     width: 111,
@@ -475,7 +515,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#B95E82',
     justifyContent: 'center',
     alignItems: 'center',
-    display:'flex'
+    display: 'flex',
   },
   playIcon: {
     width: 12,
@@ -504,6 +544,33 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 3,
     left: 5.5,
+  },
+
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#494949',
+    fontFamily: 'Satoshi',
+  },
+
+  errorContainer: {
+    backgroundColor: '#FFE5E5',
+    borderRadius: 8,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#D32F2F',
+  },
+  errorText: {
+    color: '#D32F2F',
+    fontSize: 14,
+    fontFamily: 'Satoshi',
   },
 });
 
