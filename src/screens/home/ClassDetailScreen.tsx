@@ -9,13 +9,39 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
+import { ChevronLeft } from 'lucide-react-native';
 import GradientBackground from '../../components/GradientBackground';
 import { useClassDetailsViewModel } from '../../viewmodels/useClassDetailsViewModel';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
-type ClassDetailsNavigationProp = StackNavigationProp<
+const MOCK_CLASS_DETAILS = {
+  _id: 'mock-class-id-123',
+  title: 'Power Yoga Flow',
+  description:
+    'A high-energy yoga session designed to improve flexibility, strength, and mindfulness.',
+  imageUrl:
+    'https://images.unsplash.com/photo-1552196563-55cd4e45efb3',
+  startTime: '2026-01-15T18:30:00.000Z',
+  duration: 60,
+  level: 'Intermediate',
+  rating: 4.8,
+  reviews: 214,
+  trainer: {
+    firstName: 'Aarav',
+    lastName: 'Sharma',
+  },
+  requirements: [
+    'Yoga Mat',
+    'Water Bottle',
+    'Comfortable Clothing',
+    'Stable Internet',
+  ],
+};
+
+
+type ClassDetailsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'ClassDetails'
 >;
@@ -30,7 +56,12 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   route,
   navigation,
 }) => {
-  const { classId } = route.params;
+  // const classId = route?.params?.classId;
+  const classId = route?.params?.classId ?? route?.params?._id;
+
+  console.log('📌 route params:', route?.params);
+  console.log('📌 classId in screen:', classId);
+
   const [isJoining, setIsJoining] = useState(false);
   const [classDetails, setClassDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,50 +71,60 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   const { getClassDetails } = useClassDetailsViewModel();
 
   // Fetch class details when screen mounts
+  // useEffect(() => {
+  //   let isMounted = true;
+
+  //   const fetchDetails = async () => {
+  //     if (!classId) {
+  //       setError('Invalid class ID');
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     setIsLoading(true);
+  //     setError(null);
+
+  //     try {
+  //       const details = await getClassDetails(classId);
+  //       console.log('details', details);
+
+  //       if (isMounted) {
+  //         if (details) {
+  //           setClassDetails(details);
+  //           setError(null);
+  //         } else {
+  //           setError('Class details not found');
+  //           setClassDetails(null);
+  //         }
+  //         setIsLoading(false);
+  //       }
+  //     } catch (err) {
+  //       if (isMounted) {
+  //         setError(
+  //           err instanceof Error ? err.message : 'Failed to load class details',
+  //         );
+  //         setClassDetails(null);
+  //         setIsLoading(false);
+  //       }
+  //     }
+  //   };
+
+  //   fetchDetails();
+
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [classId, getClassDetails]);
+
   useEffect(() => {
-    let isMounted = true;
+    // 🔥 TEMP STATIC MODE FOR UI CHECK
+    setIsLoading(true);
 
-    const fetchDetails = async () => {
-      if (!classId) {
-        setError('Invalid class ID');
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const details = await getClassDetails(classId);
-        console.log('details', details);
-
-        if (isMounted) {
-          if (details) {
-            setClassDetails(details);
-            setError(null);
-          } else {
-            setError('Class details not found');
-            setClassDetails(null);
-          }
-          setIsLoading(false);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(
-            err instanceof Error ? err.message : 'Failed to load class details',
-          );
-          setClassDetails(null);
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchDetails();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [classId, getClassDetails]);
+    setTimeout(() => {
+      setClassDetails(MOCK_CLASS_DETAILS);
+      setIsLoading(false);
+    }, 500);
+  }, []);
 
   const handleJoinClass = async () => {
     setIsJoining(true);
@@ -102,17 +143,13 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
     }
   };
 
-//   const handleBack = () => {
-//     navigation.goBack();
-//   };
-
   const formatTime = (dateString?: string) => {
     if (!dateString) return '--:--';
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true,
+      hour12: false,
     });
   };
 
@@ -138,7 +175,12 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity
               style={styles.retryButton}
-              onPress={() => getClassDetails(classId)}
+              onPress={() => {
+                if (classId) {
+                  setIsLoading(true);
+                  getClassDetails(classId).then(setClassDetails);
+                }
+              }}
             >
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
@@ -154,12 +196,11 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No class details found</Text>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Image
-                source={require('../../assets/images/back-arrow.png')}
-                style={{ width: 16, height: 16, marginHorizontal: 16 }}
-                resizeMode="contain"
-              />
+            <TouchableOpacity
+              style={styles.backToHomeButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backToHomeButtonText}>Go Back</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -176,22 +217,21 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
         >
           {/* Header with Back Button */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Image
-                source={require('../../assets/images/back-arrow.png')}
-                style={{ width: 16, height: 16, marginHorizontal: 16 }}
-                resizeMode="contain"
-              />
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <ChevronLeft size={24} color="#494949" strokeWidth={2} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Details</Text>
-            <View style={styles.headerPlaceholder} />
+            <View style={styles.headerSpacer} />
           </View>
 
           {/* Class Image */}
           <View style={styles.imageContainer}>
             {classDetails.imageUrl ? (
               <Image
-                source={classDetails.imageUrl}
+                source={{ uri: classDetails.imageUrl }}
                 style={styles.classImage}
                 resizeMode="cover"
               />
@@ -202,33 +242,39 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
             )}
           </View>
 
-          {/* Class Title and Trainer */}
+          {/* Class Title, Trainer, and Rating */}
           <View style={styles.titleSection}>
             <View style={styles.titleRow}>
-              <View style={{ flex: 1 }}>
+              <View style={styles.titleLeft}>
                 <Text style={styles.className}>{classDetails.title}</Text>
                 <Text style={styles.trainerText}>
                   Trainer: {classDetails.trainer?.firstName}{' '}
                   {classDetails.trainer?.lastName}
                 </Text>
               </View>
-              <View style={styles.ratingBadge}>
-                <Text style={styles.ratingIcon}>⭐</Text>
-                <Text style={styles.ratingText}>
-                  {classDetails.rating || 4.0}
-                </Text>
+
+              <View style={styles.ratingContainer}>
+                {/* Row 1: Star + Rating */}
+                <View style={styles.ratingRow}>
+                  <Text style={styles.ratingIcon}>⭐</Text>
+                  <Text style={styles.ratingValue}>
+                    {classDetails.rating || '4.0'}
+                  </Text>
+                </View>
+
+                {/* Row 2: Reviews */}
                 <Text style={styles.reviewsText}>
-                  ({classDetails.reviews || 0} reviews)
+                  ({classDetails.reviews || 120} reviews)
                 </Text>
               </View>
             </View>
           </View>
 
-          {/* Class Details - Time, Duration, Level */}
-          <View style={styles.detailsGrid}>
-            <View style={styles.detailCard}>
-              <View style={styles.detailIcon}>
-                <Text style={styles.iconText}>⏰</Text>
+          {/* Details Cards - Time, Duration, Level */}
+          <View style={styles.detailsCard}>
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconBox}>
+                <Text style={styles.detailIconEmoji}>⏰</Text>
               </View>
               <Text style={styles.detailLabel}>Time</Text>
               <Text style={styles.detailValue}>
@@ -236,9 +282,9 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
               </Text>
             </View>
 
-            <View style={styles.detailCard}>
-              <View style={styles.detailIcon}>
-                <Text style={styles.iconText}>⏱️</Text>
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconBox}>
+                <Text style={styles.detailIconEmoji}>⏱️</Text>
               </View>
               <Text style={styles.detailLabel}>Duration</Text>
               <Text style={styles.detailValue}>
@@ -246,64 +292,52 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
               </Text>
             </View>
 
-            <View style={styles.detailCard}>
-              <View style={styles.detailIcon}>
-                <Text style={styles.iconText}>📊</Text>
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconBox}>
+                <Text style={styles.detailIconEmoji}>📊</Text>
               </View>
               <Text style={styles.detailLabel}>Level</Text>
               <Text style={styles.detailValue}>
-                {classDetails.level || 'All'}
+                {classDetails.level || 'Intermediate'}
               </Text>
             </View>
           </View>
 
           {/* About Class Section */}
-          {classDetails.description && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>About class</Text>
-              <View style={styles.aboutCard}>
-                <Text style={styles.aboutText}>{classDetails.description}</Text>
-                <TouchableOpacity>
-                  <Text style={styles.readMore}>Read more</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>About class</Text>
+            <Text style={styles.aboutText}>
+              {classDetails.description ||
+                'High-energy dance workout to boost your mood and turn calories...'}
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.readMoreText}>Read more</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* What You'll Need Section */}
-          {classDetails.requirements &&
-            classDetails.requirements.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>What you'll need</Text>
-                <View style={styles.requirementsCard}>
-                  {classDetails.requirements.map(
-                    (requirement: any, index: number) => (
-                      <View key={index} style={styles.requirementItem}>
-                        <Text style={styles.bulletPoint}>•</Text>
-                        <Text style={styles.requirementText}>
-                          {requirement}
-                        </Text>
-                      </View>
-                    ),
-                  )}
-                </View>
-              </View>
-            )}
-
-          {/* Service/Category Info */}
-          {classDetails.service && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Class Type</Text>
-              <View style={styles.serviceCard}>
-                <Text style={styles.serviceText}>
-                  {classDetails.service.title}
-                </Text>
-              </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>What you'll need</Text>
+            <View style={styles.needsCard}>
+              {classDetails.requirements && classDetails.requirements.length > 0 ? (
+                classDetails.requirements.map((requirement: any, index: number) => (
+                  <Text key={index} style={styles.needItem}>
+                    • {requirement}
+                  </Text>
+                ))
+              ) : (
+                <>
+                  <Text style={styles.needItem}>• Stable Mind</Text>
+                  <Text style={styles.needItem}>• Good Internet Connection</Text>
+                  <Text style={styles.needItem}>• Water Bottle</Text>
+                  <Text style={styles.needItem}>• Sneakers</Text>
+                </>
+              )}
             </View>
-          )}
+          </View>
 
-          {/* Spacer for button visibility */}
-          <View style={{ height: 20 }} />
+          {/* Spacer for button */}
+          <View style={{ height: 100 }} />
         </ScrollView>
 
         {/* Join Class Button - Fixed at Bottom */}
@@ -330,9 +364,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingBottom: 20,
   },
 
   /* LOADING & ERROR STATES */
@@ -371,13 +403,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#B95E82',
     paddingVertical: 12,
     paddingHorizontal: 32,
-    borderRadius: 8,
+    borderRadius: 40,
   },
   retryButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Satoshi-Medium',
   },
   emptyContainer: {
     flex: 1,
@@ -394,13 +426,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#B95E82',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 40,
   },
   backToHomeButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Satoshi-Medium',
   },
 
   /* HEADER */
@@ -408,46 +440,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 16,
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    paddingTop: 35,
+    paddingBottom: 25,
   },
   backButton: {
-    width: 36,
-    height: 44,
-    borderRadius: 6,
-    backgroundColor: '#FFF',
-    alignItems: 'center',
+    width: 24,
+    height: 24,
     justifyContent: 'center',
-  },
-  backIcon: {
-    width: 18,
-    height: 12,
-    transform: [{ rotate: '180deg' }],
+    alignItems: 'center',
   },
   headerTitle: {
-    fontFamily: 'Satoshi-Medium',
-    fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'Satoshi-Bold',
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 22,
+    textAlign: 'center',
     color: '#494949',
   },
-  headerPlaceholder: {
-    width: 36,
+  headerSpacer: {
+    width: 24,
   },
 
-  /* IMAGE CONTAINER */
+  /* IMAGE */
   imageContainer: {
-    width: '100%',
-    height: 280,
-    borderRadius: 16,
+    height: 257,
+    marginHorizontal: 16,
+    marginBottom: 18,
+    borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 24,
+    backgroundColor: '#FFEBEB',
   },
   classImage: {
     width: '100%',
     height: '100%',
   },
   placeholderImage: {
-    backgroundColor: '#FFE8E8',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -459,180 +487,186 @@ const styles = StyleSheet.create({
 
   /* TITLE SECTION */
   titleSection: {
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    marginBottom: 22,
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  titleLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
   className: {
     fontFamily: 'Satoshi-Bold',
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
+    lineHeight: 22,
     color: '#494949',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   trainerText: {
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Satoshi-Medium',
     fontSize: 14,
-    color: '#050505',
+    fontWeight: '500',
+    lineHeight: 19,
+    color: 'rgba(0, 0, 0, 0.6)',
   },
-  ratingBadge: {
+  ratingContainer: {
+    alignItems: 'flex-start',
+  },
+  ratingRow: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   ratingIcon: {
-    fontSize: 18,
+    fontSize: 17,
     marginBottom: 4,
+    marginRight: 1,
   },
-  ratingText: {
+  ratingValue: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 14,
     fontWeight: '700',
-    color: '#494949',
+    lineHeight: 19,
+    color: '#000000',
+    marginBottom: 2,
   },
   reviewsText: {
-    fontFamily: 'Satoshi-Regular',
-    fontSize: 12,
-    color: '#050505',
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 19,
+    color: 'rgba(0, 0, 0, 0.6)',
   },
 
-  /* DETAILS GRID */
-  detailsGrid: {
+  /* DETAILS CARD */
+  detailsCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 32,
-  },
-  detailCard: {
-    flex: 1,
-    backgroundColor: '#FFE8E8',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-  },
-  detailIcon: {
-    width: 40,
-    height: 40,
+    width: 358,
+    height: 121,
+    marginHorizontal: 16,
+    marginBottom: 28,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 8,
+    paddingHorizontal: 36,
+    paddingVertical: 17,
+    justifyContent: 'space-between',
+  },
+  detailItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailIconBox: {
+    width: 41,
+    height: 38,
+    backgroundColor: '#FFE8E8',
+    borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
-  iconText: {
-    fontSize: 18,
+  detailIconEmoji: {
+    fontSize: 20,
   },
   detailLabel: {
     fontFamily: 'Satoshi-Regular',
-    fontSize: 12,
-    color: '#707070',
+    fontSize: 13,
+    fontWeight: '400',
+    lineHeight: 18,
+    textAlign: 'center',
+    color: 'rgba(5, 5, 5, 0.5)',
     marginBottom: 4,
   },
   detailValue: {
     fontFamily: 'Satoshi-Bold',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
+    lineHeight: 22,
+    textAlign: 'center',
+    letterSpacing: 0.16,
     color: '#494949',
   },
 
   /* SECTIONS */
   section: {
-    marginBottom: 28,
+    paddingHorizontal: 16,
+    marginBottom: 44,
   },
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 18,
     fontWeight: '700',
+    lineHeight: 24,
     color: '#494949',
-    marginBottom: 12,
+    marginBottom: 13,
   },
 
-  /* ABOUT CARD */
-  aboutCard: {
-    backgroundColor: '#FFE8E8',
-    borderRadius: 12,
-    padding: 16,
-  },
+  /* ABOUT TEXT */
   aboutText: {
-    fontFamily: 'Satoshi-Regular',
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#050505',
-    marginBottom: 8,
-  },
-  readMore: {
-    fontFamily: 'Satoshi-Medium',
-    fontSize: 14,
-    color: '#B95E82',
-    fontWeight: '600',
-  },
-
-  /* REQUIREMENTS CARD */
-  requirementsCard: {
-    backgroundColor: '#FFE8E8',
-    borderRadius: 12,
-    padding: 16,
-  },
-  requirementItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  bulletPoint: {
-    fontFamily: 'Satoshi-Regular',
+    fontFamily: 'Outfit-Regular',
     fontSize: 16,
-    color: '#494949',
-    marginRight: 12,
-    fontWeight: '600',
+    fontWeight: '400',
+    lineHeight: 20,
+    color: 'rgba(26, 28, 32, 0.8)',
+    marginBottom: 4,
   },
-  requirementText: {
-    fontFamily: 'Satoshi-Regular',
-    fontSize: 14,
-    color: '#050505',
-    flex: 1,
+  readMoreText: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    color: '#B95E82',
   },
 
-  /* SERVICE CARD */
-  serviceCard: {
+  /* NEEDS CARD */
+  needsCard: {
+    width: 358,
     backgroundColor: '#FFE8E8',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 17,
   },
-  serviceText: {
-    fontFamily: 'Satoshi-Medium',
-    fontSize: 14,
+  needItem: {
+    fontFamily: 'Satoshi-Regular',
+    fontSize: 13,
+    fontWeight: '400',
+    lineHeight: 15.6,
     color: '#494949',
+    marginBottom: 7.59,
   },
 
-  /* BUTTON CONTAINER */
+  /* BUTTON */
   buttonContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#ECECEC',
+    paddingHorizontal: 22,
+    paddingTop: 16,
+    paddingBottom: 24,
+    backgroundColor: 'transparent',
   },
   joinButton: {
-    width: '100%',
-    height: 52,
+    width: 346.08,
+    height: 54.3,
     backgroundColor: '#B95E82',
-    borderRadius: 26,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
   },
   joinButtonDisabled: {
     opacity: 0.7,
   },
   joinButtonText: {
-    fontFamily: 'Satoshi-Bold',
+    fontFamily: 'Satoshi-Medium',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
+    lineHeight: 22,
+    textAlign: 'center',
     color: '#FFFFFF',
   },
 });
