@@ -3,6 +3,7 @@ import authReducer from './authSlice';
 import paymentReducer from  './paymentSlice';
 import faqReducer from  './faqSlice';
 import homeReducer from  './homeSlice';
+import profileReducer from './profileSlice';
 
 
 import {
@@ -22,7 +23,8 @@ const rootReducer = combineReducers({
   auth: authReducer ,
   payment:paymentReducer,
   faq:faqReducer,
-  home:homeReducer
+  home:homeReducer,
+  profile: profileReducer,
 });
 
 const persistConfig = {

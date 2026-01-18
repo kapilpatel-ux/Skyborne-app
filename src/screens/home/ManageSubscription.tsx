@@ -11,6 +11,9 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SubscriptionImages } from '../../assets/images/subscriptions';
+import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
+import { useState, useEffect } from 'react';
+import { useBillingViewModel } from '../../viewmodels/useBillingViewModel';
 
 interface BillingInfo {
   label: string;
@@ -24,11 +27,108 @@ interface SettingOption {
 }
 
 const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
-  const billingInfo: BillingInfo[] = [
-    { label: 'Next billing date', value: 'Aug 15, 2026' },
-    { label: 'Payment method', value: '*** **** **** 4319' },
-    { label: 'Next billing date', value: 'Aug 15, 2026' },
-  ];
+
+  const { user, loadProfile } = useProfileViewModel();
+  const { subscription, paymentHistory, fetchSubscription, fetchHistory } = useBillingViewModel();
+
+
+  const [billingInfo, setBillingInfo] = useState<BillingInfo[]>([]);
+
+  useEffect(() => {
+    const loadBilling = async () => {
+      await fetchSubscription();
+      await fetchHistory();
+    };
+
+    loadBilling();
+  }, []);
+
+  useEffect(() => {
+    if (!subscription && paymentHistory.length === 0) return;
+
+    const lastPayment = paymentHistory[0]; // latest payment
+
+    const startDate = subscription?.startDate
+      ? new Date(subscription.startDate)
+      : lastPayment?.createdAt
+      ? new Date(lastPayment.createdAt)
+      : null;
+
+    const nextBillingDate = subscription?.endDate
+      ? new Date(subscription.endDate)
+      : startDate
+      ? new Date(
+          new Date(startDate).setMonth(
+            new Date(startDate).getMonth() + 1,
+          ),
+        )
+      : null;
+
+    const info: BillingInfo[] = [];
+
+    if (startDate) {
+      info.push({
+        label: 'Subscription start date',
+        value: startDate.toDateString(),
+      });
+    }
+
+    if (nextBillingDate) {
+      info.push({
+        label: 'Next billing date',
+        value: nextBillingDate.toDateString(),
+      });
+    }
+
+    if (lastPayment?.gateway) {
+      info.push({
+        label: 'Payment method',
+        value: lastPayment.gateway.toUpperCase(),
+      });
+    }
+
+    if (lastPayment?.amount) {
+      info.push({
+        label: 'Amount paid',
+        value: `$${lastPayment.amount}`,
+      });
+    }
+
+    if (lastPayment?.invoiceId || lastPayment?._id) {
+      info.push({
+        label: 'Invoice reference',
+        value: lastPayment.invoiceId || lastPayment._id,
+      });
+    }
+
+    setBillingInfo(info);
+  }, [subscription, paymentHistory]);
+
+
+
+  // total used credits logic
+  const total = user?.totalClassCredits ?? 0;
+  const used = total - (
+    (user?.classCredits?.yoga ?? 0) +
+    (user?.classCredits?.zumba ?? 0) +
+    (user?.classCredits?.specialty ?? 0)
+  );
+  const progressPercent = total > 0 ? (used / total) * 100 : 0;
+
+  // const billingInfo: BillingInfo[] = [
+  //   { label: 'Next billing date', value: 'Aug 15, 2026' },
+  //   { label: 'Payment method', value: '*** **** **** 4319' },
+  //   { label: 'Next billing date', value: 'Aug 15, 2026' },
+  // ];
+
+  // simple plan price mapping
+  const planPrices: Record<string, number> = {
+    'gold-yoga': 100,
+    'gold-zumba': 100,
+    'gold-mixed':100,
+    diamond: 200,
+    platinum: 300,
+  };
 
   const settingOptions: SettingOption[] = [
     {
@@ -47,6 +147,51 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       icon: SubscriptionImages.invoicesIcon,
     },
   ];
+
+  // const [billingInfo, setBillingInfo] = useState<BillingInfo[]>([]);
+
+  useEffect(() => {
+    const loadBillingInfo = async () => {
+      try {
+        // 1. Get last orderRef
+        const stored = await getStoredPaymentDetails();
+        if (!stored?.orderRef) return;
+
+        // 2. Verify payment
+        const res = await verifyPayment(stored.orderRef);
+        if (!res?.success || !res?.data) return;
+
+        const payment = res.data;
+
+        // 3. Dates calculate
+        const startDate = new Date(payment.createdAt);
+        const nextDate = new Date(startDate);
+        nextDate.setMonth(nextDate.getMonth() + 1);
+
+        setBillingInfo([
+          {
+            label: 'Start date',
+            value: startDate.toDateString(),
+          },
+          {
+            label: 'Payment method',
+            value: payment.gateway
+              ? payment.gateway.toUpperCase()
+              : 'Card',
+          },
+          {
+            label: 'Next billing date',
+            value: nextDate.toDateString(),
+          },
+        ]);
+      } catch (e) {
+        console.log('Billing info error', e);
+      }
+    };
+
+    loadBillingInfo();
+  }, []);
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -70,19 +215,25 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
           <View style={styles.planHeader}>
             <Text style={styles.planLabel}>Current plan</Text>
             <View style={styles.diamondBadge}>
-              <Text style={styles.diamondText}>Diamond</Text>
+              <Text style={styles.diamondText}>
+                {user?.plan?.toUpperCase() ?? '--'}
+              </Text>
             </View>
           </View>
           
-          <Text style={styles.planPrice}>$200/month</Text>
-          
+          <Text style={styles.planPrice}>
+            ${planPrices[user?.plan?.toLowerCase() ?? '']}/month
+          </Text>
+
           <View style={styles.planFeatures}>
             <View style={styles.featureItem}>
               <Image
                 source={SubscriptionImages.videoIcon}
                 style={styles.featureIcon}
               />
-              <Text style={styles.featureText}>4 live sessions/month</Text>
+              <Text style={styles.featureText}>
+                {user?.totalClassCredits ?? 0} live sessions
+              </Text>
             </View>
             <View style={styles.featureItem}>
               <Image
@@ -98,14 +249,16 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
         <View style={styles.sessionCard}>
           <View style={styles.sessionHeader}>
             <Text style={styles.sessionTitle}>Session this month</Text>
-            <Text style={styles.sessionRemaining}>1 of 4 remaining</Text>
+            <Text style={styles.sessionRemaining}>
+              {used} of {total} used
+            </Text>
           </View>
           <View style={styles.sessionProgressContainer}>
             <LinearGradient
               colors={['#B95E82', '#F39F9F']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={[styles.sessionProgressBar, { width: '25%' }]}
+              style={[styles.sessionProgressBar, { width: `${progressPercent}%`},]}
             />
           </View>
         </View>

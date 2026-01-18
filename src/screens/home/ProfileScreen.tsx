@@ -15,8 +15,10 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { ProfileImages } from '../../assets/images/profile';
 import BottomNav from '../../components/BottomNav';
-import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
-
+import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
+import { useEffect } from 'react';
+import { Alert } from 'react-native';
+import { removeAuthToken } from '../../services/authService';
 interface StatCard {
   id: number;
   value: string;
@@ -48,34 +50,42 @@ const ProfileScreen = () => {
   >;
   const navigation = useNavigation<ProfileScreenNavigationProp>();
 
-  const { user } = useHomeViewModel();
+  const {
+    user,
+    dashboardStats,
+    loadProfile,
+  } = useProfileViewModel();
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
   const statCards: StatCard[] = [
     {
       id: 1,
-      value: '48',
-      label: 'Total Sessions',
+      value: String(dashboardStats?.data?.upcomingSessions ?? 0),
+      label: 'Upcoming Session',
       backgroundColor: '#FFF7DD',
       icon: ProfileImages.ArrowIcon1,
     },
     {
       id: 2,
-      value: '12',
-      label: 'Total Hours',
+      value: String(dashboardStats?.data?.totalCredits ?? 0),
+      label: 'Credits',
       backgroundColor: '#FFE8E8',
       icon: ProfileImages.ArrowIcon1,
     },
     {
       id: 3,
-      value: '07',
-      label: 'Total Sessions',
+      value: String(dashboardStats?.data?.classesAttended ?? 0),
+      label: 'Class Attended',
       backgroundColor: '#FFE8E8',
       icon: ProfileImages.ArrowIcon1,
     },
     {
       id: 4,
-      value: '127',
-      label: 'Achievements',
+      value: dashboardStats?.data?.currentPlan?.displayName ?? '--',
+      label: 'Current Plan',
       backgroundColor: '#FFF7DD',
       icon: ProfileImages.ArrowIcon1,
     },
@@ -128,6 +138,27 @@ const ProfileScreen = () => {
     return `${first}${last}`;
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'No',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            await removeAuthToken();
+            navigation.replace('Login');
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -137,7 +168,10 @@ const ProfileScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity style={styles.backButton}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
               <Image
                 style={styles.backIcon}
                 source={ProfileImages.ArrowIcon1}
@@ -174,7 +208,7 @@ const ProfileScreen = () => {
               {`${user?.firstName} ${user?.lastName}`}{' '}
             </Text>
             <Text style={styles.profileSince}>
-              since {new Date(user?.createdAt).getFullYear()}
+              since {user?.createdAt ? new Date(user.createdAt).getFullYear() : '--'}
             </Text>
           </View>
           <View style={styles.premiumBadge}>
@@ -200,7 +234,10 @@ const ProfileScreen = () => {
               ]}
             >
               <Image source={ProfileImages.sandWAtch} style={styles.statIcon} />
-              <Text style={styles.statValue}>{stat.value}</Text>
+              {/* <Text style={styles.statValue}>{stat.value}</Text> */}
+              <Text style={[ styles.statValue, stat.label === 'Current Plan' && styles.planStatValue,]}>
+                {stat.value}
+              </Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
             </View>
           ))}
@@ -266,7 +303,10 @@ const ProfileScreen = () => {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -440,6 +480,10 @@ const styles = StyleSheet.create({
     color: '#000000',
     textAlign: 'center',
     marginBottom: 5,
+  },
+  planStatValue: {
+    fontSize: 16,   
+    lineHeight: 20,
   },
   statLabel: {
     fontFamily: 'Satoshi-Medium',

@@ -78,8 +78,17 @@ export function useClassDetailsViewModel() {
 
       // First, search in Redux store
       const allMeetings = [...homeState.todayMeetings, ...homeState.upcomingMeetings];
-      const meeting = allMeetings.find(m => m._id === classId);
+      // const meeting = allMeetings.find(m => m._id === classId);
 
+      console.log('📌 classId received in VM:', classId);
+      console.log(
+        '📌 meetings list (_id):',
+        allMeetings.map(m => m._id)
+      );
+      
+      const meeting = allMeetings.find(
+        m => m._id === classId || m.id === classId
+      );
       console.log("meeting in api", meeting);
 
       if (meeting) {

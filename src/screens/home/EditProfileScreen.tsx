@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,15 +17,24 @@ import Button from '../../components/Button';
 import { FontFamilies } from '../../constants/fonts';
 import GradientBackground from '../../components/GradientBackground';
 import { Images } from '../../assets/images';
+import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
+
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProfile'>;
 
 const EditProfileScreen = ({ navigation }: Props) => {
   // Initialize with user data - replace with actual user data from your store/context
-  const [firstName, setFirstName] = useState('John');
-  const [lastName, setLastName] = useState('Bakes');
-  const [email] = useState('john.bakes@example.com'); // Not editable
-  
+  // const [firstName, setFirstName] = useState(user?.firstName ?? '');
+  // const [lastName, setLastName] = useState(user?.lastName ?? '');
+  // const [email] = useState(user?.email ?? '');
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+
+
+  const { user, loadProfile, updateProfile } = useProfileViewModel();
+
   const [errors, setErrors] = useState({
     firstName: '',
     lastName: '',
@@ -57,35 +66,43 @@ const EditProfileScreen = ({ navigation }: Props) => {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
+
+    const payload = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+    };
+
+    console.log('🟡 EditProfileScreen → payload:', payload);
 
     setIsSubmitting(true);
-
     try {
-      // Simulate API call - Replace with your actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // TODO: Update user profile in your backend and state management
-      // Example: await updateUserProfile({ firstName, lastName });
-      
-      Alert.alert(
-        'Success',
-        'Profile updated successfully',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
-    } catch (error) {
+      const res = await updateProfile(payload);
+      console.log('🟢 EditProfileScreen → updateProfile response:', res);
+
+      Alert.alert('Success', 'Profile updated successfully', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (error: any) {
+      console.log('🔴 EditProfileScreen → update error:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  useEffect(() => {
+    if(user) {
+      setFirstName(user.firstName ?? '');
+      setLastName(user.lastName ?? '');
+      setEmail(user.email ?? '');
+    }
+  }, [user]);
+
 
   return (
     <GradientBackground>
@@ -109,10 +126,10 @@ const EditProfileScreen = ({ navigation }: Props) => {
             contentContainerStyle={styles.scrollContent}
           >
             {/* Profile Image Section */}
-            <View style={styles.profileImageSection}>
+            {/* <View style={styles.profileImageSection}>
               <View style={styles.avatarContainer}>
                 <Image
-                  source={Images.emailIcon}
+                  source={user?.profileImage ? { uri: user.profileImage } : Images.emailIcon }
                   style={styles.avatar}
                 />
                 <TouchableOpacity style={styles.cameraButton}>
@@ -120,7 +137,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
                 </TouchableOpacity>
               </View>
               <Text style={styles.changePhotoText}>Change Profile Photo</Text>
-            </View>
+            </View> */}
 
             {/* Form Section */}
             <View style={styles.formSection}>
@@ -167,8 +184,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
                 <Text style={styles.label}>Email Address</Text>
                 <View style={styles.disabledInputContainer}>
                   <TextInput
-                    value={email}
-                    placeholder="Email"
+                    value={user?.email ?? ''} 
                     editable={false}
                     style={styles.disabledInput}
                   />
