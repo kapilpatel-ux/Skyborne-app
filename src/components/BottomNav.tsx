@@ -11,22 +11,22 @@ const BottomNav = ({ active }: { active: 'Home' | 'Explore' | 'Schedule' | 'Prof
   return (
     <View style={styles.bottomNavBar}>
       <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
-        <Image source={require('../assets/images/home.png')} />
+        <Image source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/home.png'}} />
         <Text style={active === 'Home' ? styles.active : styles.inactive}>Home</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Explore')}>
-        <Image source={require('../assets/images/search.png')} />
+        <Image source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/search.png'}} />
         <Text style={active === 'Explore' ? styles.active : styles.inactive}>Explore</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Schedule')}>
-        <Image source={require('../assets/images/calender.png')} />
+        <Image source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/calender.png'}} />
         <Text style={active === 'Schedule' ? styles.active : styles.inactive}>Schedule</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
-        <Image source={require('../assets/images/user.png')} />
+        <Image source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/user.png'}} />
         <Text style={active === 'Profile' ? styles.active : styles.inactive}>Profile</Text>
       </TouchableOpacity>
     </View>

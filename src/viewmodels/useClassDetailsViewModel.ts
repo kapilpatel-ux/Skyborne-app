@@ -128,6 +128,8 @@ export function useClassDetailsViewModel() {
    */
   const transformMeetingToClassDetails = (meeting: any) => {
     const regionalInfo = getRegionalTime(meeting);
+    console.log("meeting", meeting);
+    
 
     return {
       _id: meeting._id,
@@ -150,10 +152,12 @@ export function useClassDetailsViewModel() {
       // Use regional time information
       startTime: regionalInfo.localTime,
       localTime: regionalInfo.localTime,
+      regionTime:meeting?.localTime,
       startDate: meeting.startDate, // Keep ISO format for backend
       timezone: regionalInfo.timezone,
       mode: regionalInfo.mode, // 'live' or 'replay'
       region: regionalInfo.region,
+      regions: meeting.regions,
       
       duration: meeting.duration || 60,
       level: meeting.level || 'All Levels',

@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
 import { useOnboardingStore } from '../../store/onboardingSlice';
@@ -15,19 +9,20 @@ const fitnessLevels = [
     id: 'beginner',
     title: 'Beginner',
     subtitle: 'Just starting my wellness journey',
-    image: require('../../assets/images/community.jpg'),
+    image: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/community.jpg',
   },
   {
     id: 'intermediate',
     title: 'Intermediate',
     subtitle: 'I exercise regularly',
-    image: require('../../assets/images/intermidiate.png'),
+    image:
+      'https://skyborne-images.s3.ap-south-1.amazonaws.com/intermidiate.png',
   },
   {
     id: 'advanced',
     title: 'Advanced',
     subtitle: 'Very active and experienced',
-    image: require('../../assets/images/advanced.jpg'),
+    image: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/advanced.jpg',
   },
 ];
 
@@ -40,7 +35,7 @@ const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
       style={[styles.card, isSelected && styles.selectedCard]}
       onPress={onPress}
     >
-      <Image source={level.image} style={styles.cardImagePlaceholder} />
+      <Image source={{uri:level.image}} style={styles.cardImagePlaceholder} />
       <View style={styles.cardTextContainer}>
         <Text style={styles.cardTitle}>{level.title}</Text>
         <Text style={styles.cardSubtitle}>{level.subtitle}</Text>
@@ -61,7 +56,9 @@ const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
-              source={require('../../assets/images/back-arrow.png')}
+              source={{
+                uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/back-arrow.png',
+              }}
               style={{ width: 16, height: 16, marginHorizontal: 16 }}
               resizeMode="contain"
             />
@@ -91,10 +88,7 @@ const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
           </View>
 
           <View style={styles.buttonContainer}>
-            <Button
-              title="Continue"
-              onPress={handleContinue}
-            />
+            <Button title="Continue" onPress={handleContinue} />
           </View>
         </View>
       </View>

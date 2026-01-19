@@ -27,6 +27,8 @@ import PaymentVerification from '../screens/onboarding/PaymentVerificationScreen
 import LoginScreen from '../screens/auth/LoginScreen';
 import EditProfileScreen from '../screens/home/EditProfileScreen';
 import ClassDetailsScreen from '../screens/home/ClassDetailScreen';
+import ViewAll from '../screens/home/ViewAll';
+import UpgradePlanScreen from '../screens/home/UpgradePlan';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -46,6 +48,8 @@ export type RootStackParamList = {
   Home: undefined;
   Explore: undefined;
   Schedule: undefined;
+  ViewAll: undefined;
+  UpgradePlan:undefined;
   Profile: undefined;
   ManageSubscription: undefined;
   SessionHistory: undefined;
@@ -104,16 +108,17 @@ export default function AppNavigator() {
           component={PaymentVerification}
         />
         <Stack.Screen name="Schedule" component={ScheduleScreen} />
+        <Stack.Screen name="ViewAll" component={ViewAll} />
+
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen
           name="ManageSubscription"
           component={ManageSubscriptionScreen}
         />
-        <Stack.Screen
-          name="ClassDetails"
-          component={ClassDetailsScreen}
-        />
+        <Stack.Screen name="ClassDetails" component={ClassDetailsScreen} />
         <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} />
+        <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
+
         <Stack.Screen name="Support" component={SupportScreen} />
         <Stack.Screen name="Feedback" component={FeedbackScreen} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />

@@ -2,12 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 
-//const API_BASE_URL =
-  // process.env.REACT_APP_API_URL ||
-  // 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
-
-   const API_BASE_URL = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
-
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
 
 export interface Meeting {
   _id: string;
@@ -48,6 +43,13 @@ export interface UserProfile {
   country?: string;
   timezone?: string;
   plan?: string;
+  classCredits?: {
+    yoga?: number;
+    zumba?: number;
+    specialty?: number;
+  };
+  totalClassCredits?: number;
+  profileImage?: string;
   [key: string]: any;
 }
 
@@ -58,7 +60,7 @@ export interface UserResponse {
 }
 
 export interface WeeklyActivityDay {
-  day: string;       // M, T, W...
+  day: string;
   completed: boolean;
 }
 
@@ -73,7 +75,6 @@ export interface ClassDetailsResponse {
   success: boolean;
   data: Meeting;
 }
-
 
 class HomeService {
   private api: AxiosInstance;
@@ -127,12 +128,12 @@ class HomeService {
   }
 
   /**
- * Fetch weekly activity
- */
+   * Fetch weekly activity
+   */
   async getWeeklyActivity(): Promise<WeeklyActivityResponse> {
     try {
       const response = await this.api.get<WeeklyActivityResponse>(
-        '/meetings/weekly-activity'
+        '/meetings/weekly-activity',
       );
 
       return response.data;
@@ -147,8 +148,9 @@ class HomeService {
 
   /**
    * Fetch today's meetings
+   * @param search - Optional search query to filter meetings by title, service, or trainer
    */
-  async getTodaysMeetings(search: string = ''): Promise<MeetingsResponse> {
+  async getTodaysMeetings(search?: string): Promise<MeetingsResponse> {
     try {
       const params = search ? { search } : {};
       const response = await this.api.get<MeetingsResponse>('/meetings/today', {
@@ -168,33 +170,42 @@ class HomeService {
     }
   }
 
-  /**
-   * Fetch upcoming meetings
-   */
-  async getUpcomingMeetings(search: string = ''): Promise<MeetingsResponse> {
-    try {
-      const params = search ? { search } : {};
-      const response = await this.api.get<MeetingsResponse>(
-        '/meetings/upcoming',
-        { params },
-      );
 
-      if (!response.data.success) {
-        throw new Error('Failed to fetch upcoming meetings');
-      }
+/**
+ * Fetch upcoming meetings with pagination
+ * @param search - Optional search query to filter meetings by title, service, or trainer
+ * @param skip - Number of items to skip (default: 0)
+ * @param limit - Number of items to fetch (default: 10)
+ */
+async getUpcomingMeetings(search?: string, skip: number = 0, limit: number = 10): Promise<MeetingsResponse & { totalCount: number; hasMore: boolean }> {
+  try {
+    const params: any = { skip, limit };
+    if (search) params.search = search;
 
-      return response.data;
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        'Failed to fetch upcoming meetings';
-      throw new Error(errorMessage);
+    const response = await this.api.get<MeetingsResponse & { totalCount: number; hasMore: boolean }>(
+      '/meetings/upcoming',
+      { params },
+    );
+
+    if (!response.data.success) {
+      throw new Error('Failed to fetch upcoming meetings');
     }
+
+    return response.data;
+  } catch (error: any) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      'Failed to fetch upcoming meetings';
+    throw new Error(errorMessage);
   }
+}
+
+
 
   /**
    * Fetch class/meeting details by ID
+   * @param classId - The ID of the class to fetch
    */
   async getClassDetails(classId: string): Promise<ClassDetailsResponse> {
     try {
@@ -203,15 +214,13 @@ class HomeService {
       }
 
       const response = await this.api.get<ClassDetailsResponse>(
-        `/meetings/${classId}`
+        `/meetings/${classId}`,
       );
 
       if (!response.data.success) {
-        throw new Error('Failed to fetch class details',
-        );
+        throw new Error('Failed to fetch class details');
       }
-      console.log("class detail", classId);
-      
+      console.log('class detail', classId);
 
       return response.data;
     } catch (error: any) {
@@ -225,8 +234,9 @@ class HomeService {
 
   /**
    * Fetch user profile and all meetings
+   * @param search - Optional search query to filter meetings
    */
-  async getHomeData(search: string = ''): Promise<{
+  async getHomeData(search?: string): Promise<{
     user: UserResponse;
     today: MeetingsResponse;
     upcoming: MeetingsResponse;
@@ -251,8 +261,9 @@ class HomeService {
 
   /**
    * Fetch both today and upcoming meetings
+   * @param search - Optional search query to filter meetings
    */
-  async getAllMeetings(search: string = ''): Promise<{
+  async getAllMeetings(search?: string): Promise<{
     today: MeetingsResponse;
     upcoming: MeetingsResponse;
   }> {
@@ -279,19 +290,19 @@ export const homeService = new HomeService();
 // Export functions for Redux thunks
 export const getUserProfile = () => homeService.getUserProfile();
 
-export const getTodaysMeetings = (search: string = '') =>
+export const getTodaysMeetings = (search?: string) =>
   homeService.getTodaysMeetings(search);
 
-export const getUpcomingMeetings = (search: string = '') =>
+export const getUpcomingMeetings = (search?: string) =>
   homeService.getUpcomingMeetings(search);
 
 export const getClassDetails = (classId: string) =>
   homeService.getClassDetails(classId);
 
-export const getAllMeetings = (search: string = '') =>
+export const getAllMeetings = (search?: string) =>
   homeService.getAllMeetings(search);
 
-export const getHomeData = (search: string = '') =>
+export const getHomeData = (search?: string) =>
   homeService.getHomeData(search);
 
 export const getWeeklyActivity = () =>

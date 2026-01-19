@@ -4,6 +4,10 @@ import paymentReducer from  './paymentSlice';
 import faqReducer from  './faqSlice';
 import homeReducer from  './homeSlice';
 import profileReducer from './profileSlice';
+import weeklyScheduleReducer from  './weeklyScheduleSlice';
+import billingReducer from  './billingslice';
+
+
 
 
 import {
@@ -25,6 +29,8 @@ const rootReducer = combineReducers({
   faq:faqReducer,
   home:homeReducer,
   profile: profileReducer,
+  weeklySchedule:weeklyScheduleReducer,
+  billing:billingReducer
 });
 
 const persistConfig = {

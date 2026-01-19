@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Button from '../../components/Button';
 import { useOnboardingStore } from '../../store/onboardingSlice';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -14,10 +8,7 @@ import { useDispatch } from 'react-redux';
 import { setOnboardingCompleted } from '../../store/authSlice';
 import GradientBackground from '../../components/GradientBackground';
 
-type Props = NativeStackScreenProps<
-  RootStackParamList,
-  'OnboardingGoal'
->;
+type Props = NativeStackScreenProps<RootStackParamList, 'OnboardingGoal'>;
 
 const GOALS = [
   'Attend my first session',
@@ -45,13 +36,15 @@ export default function OnboardingGoalScreen({ navigation }: Props) {
       <View style={styles.screen}>
         {/* HEADER */}
         <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Image
-                      source={require('../../assets/images/back-arrow.png')}
-                      style={{ width: 16, height: 16, marginHorizontal: 16 }}
-                      resizeMode="contain"
-                    />
-                  </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Image
+              source={{
+                uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/back-arrow.png',
+              }}
+              style={{ width: 16, height: 16, marginHorizontal: 16 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
 
           <View style={styles.progressTrack}>
             <View style={styles.progressFill} />
@@ -88,17 +81,16 @@ export default function OnboardingGoalScreen({ navigation }: Props) {
           </View>
         </View>
       </View>
-    </GradientBackground >
+    </GradientBackground>
   );
 }
-
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
   header: {
-     minHeight: 120,
+    minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 70,
@@ -127,13 +119,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-     fontSize: 30,
+    fontSize: 30,
     fontWeight: '700',
     color: '#494949',
     marginBottom: 38,
     lineHeight: 34,
     textAlign: 'center',
-
   },
   options: {
     flex: 1,
@@ -153,12 +144,12 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   optionSelected: {
-   backgroundColor: '#FFE8E8',
+    backgroundColor: '#FFE8E8',
     borderWidth: 1,
     borderColor: '#B95E82',
   },
   optionText: {
-     fontSize: 14,
+    fontSize: 14,
     fontWeight: '500',
     color: '#000000',
   },

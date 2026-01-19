@@ -33,7 +33,12 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     Toast.show({
       type,
       position: 'top',
-      text1: type === 'success' ? '✓ Success' : type === 'error' ? '✗ Error' : 'ℹ Info',
+      text1:
+        type === 'success'
+          ? '✓ Success'
+          : type === 'error'
+          ? '✗ Error'
+          : 'ℹ Info',
       text2: message,
       topOffset: 60,
     });
@@ -51,7 +56,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
   useEffect(() => {
     if (!canResend && timer > 0) {
       const interval = setInterval(() => {
-        setTimer((prev) => {
+        setTimer(prev => {
           if (prev <= 1) {
             setCanResend(true);
             return 0;
@@ -122,7 +127,9 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     setIsVerifying(true);
 
     try {
-      const payload: { phone?: string; email?: string; otp: string } = {otp: code };
+      const payload: { phone?: string; email?: string; otp: string } = {
+        otp: code,
+      };
       if (userEmail) payload.email = userEmail;
 
       const res = await verifyOtp(payload);
@@ -151,7 +158,9 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
       <View style={styles.appBar}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image
-            source={require('../../assets/images/back-arrow.png')}
+            source={{
+              uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/back-arrow.png',
+            }}
             style={{ width: 16, height: 16, marginHorizontal: 16 }}
             resizeMode="contain"
           />
@@ -175,15 +184,15 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
           {otp.map((digit, index) => (
             <TextInput
               key={index}
-              ref={(ref) => {
+              ref={ref => {
                 if (ref) inputs.current[index] = ref;
               }}
               style={styles.otpBox}
               keyboardType="number-pad"
               maxLength={1}
               value={digit}
-              onChangeText={(text) => handleChange(text, index)}
-              onKeyPress={(e) => handleKeyPress(e, index)}
+              onChangeText={text => handleChange(text, index)}
+              onKeyPress={e => handleKeyPress(e, index)}
               editable={!isVerifying && !isSendingOtp}
             />
           ))}
@@ -193,12 +202,15 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
 
         <Text style={styles.resendText}>
           {!canResend ? (
-            <>Resend in 00:{timer < 10 ? '0' : ''}{timer}s</>
+            <>
+              Resend in 00:{timer < 10 ? '0' : ''}
+              {timer}s
+            </>
           ) : (
             <>
               Didn't receive it?{' '}
-              <Text 
-                style={styles.resendLink} 
+              <Text
+                style={styles.resendLink}
                 onPress={handleResendOtp}
                 disabled={isSendingOtp}
               >

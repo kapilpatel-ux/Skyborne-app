@@ -33,7 +33,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
 
 
-  const { user, loadProfile, updateProfile } = useProfileViewModel();
+  const { user, loadProfile, updateProfile } :any= useProfileViewModel();
 
   const [errors, setErrors] = useState({
     firstName: '',

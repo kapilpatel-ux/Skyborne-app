@@ -14,6 +14,7 @@ import { SubscriptionImages } from '../../assets/images/subscriptions';
 import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 import { useState, useEffect } from 'react';
 import { useBillingViewModel } from '../../viewmodels/useBillingViewModel';
+import { getStoredPaymentDetails, verifyPayment } from '../../services/paymentService';
 
 interface BillingInfo {
   label: string;
@@ -24,12 +25,16 @@ interface SettingOption {
   id: number;
   title: string;
   icon: ImageSourcePropType;
+  page?:string
 }
 
 const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
 
-  const { user, loadProfile } = useProfileViewModel();
+  const { user, loadProfile }:any = useProfileViewModel();
   const { subscription, paymentHistory, fetchSubscription, fetchHistory } = useBillingViewModel();
+
+  console.log("user", user);
+  
 
 
   const [billingInfo, setBillingInfo] = useState<BillingInfo[]>([]);
@@ -46,7 +51,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
   useEffect(() => {
     if (!subscription && paymentHistory.length === 0) return;
 
-    const lastPayment = paymentHistory[0]; // latest payment
+    const lastPayment = paymentHistory[0];
 
     const startDate = subscription?.startDate
       ? new Date(subscription.startDate)
@@ -135,17 +140,18 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       id: 1,
       title: 'Upgrade Plan',
       icon: SubscriptionImages.upgradeIcon,
+      page:'UpgradePlan'
     },
-    {
-      id: 2,
-      title: 'Update payment method',
-      icon: SubscriptionImages.paymentIcon,
-    },
-    {
-      id: 3,
-      title: 'View invoices',
-      icon: SubscriptionImages.invoicesIcon,
-    },
+    // {
+    //   id: 2,
+    //   title: 'Update payment method',
+    //   icon: SubscriptionImages.paymentIcon,
+    // },
+    // {
+    //   id: 3,
+    //   title: 'View invoices',
+    //   icon: SubscriptionImages.invoicesIcon,
+    // },
   ];
 
   // const [billingInfo, setBillingInfo] = useState<BillingInfo[]>([]);
@@ -264,7 +270,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
         </View>
 
         {/* Billing Information */}
-        <View style={styles.billingContainer}>
+        {/* <View style={styles.billingContainer}>
           <Text style={styles.billingTitle}>Billing Information</Text>
           
           {billingInfo.map((item, index) => (
@@ -276,13 +282,13 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
               {index < billingInfo.length && <View style={styles.divider} />}
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* Settings Options */}
         <View style={styles.settingsContainer}>
           {settingOptions.map((option, index) => (
             <View key={option.id}>
-              <TouchableOpacity style={styles.settingItem}>
+              <TouchableOpacity style={styles.settingItem} onPress={()=>navigation.navigate(option?.page)}>
                 <View style={styles.settingIconContainer}>
                   <Image source={option.icon}/>
                 </View>

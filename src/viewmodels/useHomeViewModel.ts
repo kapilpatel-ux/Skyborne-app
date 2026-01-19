@@ -6,11 +6,12 @@ import {
   fetchTodaysMeetings,
   fetchUpcomingMeetings,
   fetchHomeData,
+  fetchSearchMeetings,
   setSearchQuery,
   clearError,
+  fetchWeeklyActivity,
 } from '../store/homeSlice';
 import { RootState } from '../store';
-import { fetchWeeklyActivity } from '../store/homeSlice';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -53,90 +54,112 @@ export function useHomeViewModel() {
   /**
    * Fetch today's meetings
    */
-  const fetchTodays = useCallback(
-    async (search: string = ''): Promise<ApiResponse> => {
-      try {
-        const result = await dispatch(fetchTodaysMeetings(search));
+  const fetchTodays = useCallback(async (): Promise<ApiResponse> => {
+    try {
+      const result = await dispatch(fetchTodaysMeetings());
 
-        if (result.meta.requestStatus === 'fulfilled') {
-          return {
-            success: true,
-            message: "Today's meetings fetched successfully",
-            data: result.payload,
-          };
-        } else {
-          return {
-            success: false,
-            message: result.payload || "Failed to fetch today's meetings",
-          };
-        }
-      } catch (error: any) {
-        console.error('Fetch today meetings error:', error);
+      if (result.meta.requestStatus === 'fulfilled') {
+        return {
+          success: true,
+          message: "Today's meetings fetched successfully",
+          data: result.payload,
+        };
+      } else {
         return {
           success: false,
-          message: error?.message || 'An error occurred',
+          message: result.payload || "Failed to fetch today's meetings",
         };
       }
-    },
-    [dispatch],
-  );
+    } catch (error: any) {
+      console.error('Fetch today meetings error:', error);
+      return {
+        success: false,
+        message: error?.message || 'An error occurred',
+      };
+    }
+  }, [dispatch]);
 
   /**
    * Fetch upcoming meetings
    */
-  const fetchUpcoming = useCallback(
-    async (search: string = ''): Promise<ApiResponse> => {
-      try {
-        const result = await dispatch(fetchUpcomingMeetings(search));
+  const fetchUpcoming = useCallback(async (): Promise<ApiResponse> => {
+    try {
+      const result = await dispatch(fetchUpcomingMeetings());
 
-        if (result.meta.requestStatus === 'fulfilled') {
-          return {
-            success: true,
-            message: 'Upcoming meetings fetched successfully',
-            data: result.payload,
-          };
-        } else {
-          return {
-            success: false,
-            message: result.payload || 'Failed to fetch upcoming meetings',
-          };
-        }
-      } catch (error: any) {
-        console.error('Fetch upcoming meetings error:', error);
+      if (result.meta.requestStatus === 'fulfilled') {
+        return {
+          success: true,
+          message: 'Upcoming meetings fetched successfully',
+          data: result.payload,
+        };
+      } else {
         return {
           success: false,
-          message: error?.message || 'An error occurred',
+          message: result.payload || 'Failed to fetch upcoming meetings',
         };
       }
-    },
-    [dispatch],
-  );
+    } catch (error: any) {
+      console.error('Fetch upcoming meetings error:', error);
+      return {
+        success: false,
+        message: error?.message || 'An error occurred',
+      };
+    }
+  }, [dispatch]);
 
   /**
    * Fetch all home data (user + meetings)
    */
-  const fetchAll = useCallback(
-    async (search: string = ''): Promise<ApiResponse> => {
+  const fetchAll = useCallback(async (): Promise<ApiResponse> => {
+    try {
+      const result = await dispatch(fetchHomeData());
+
+      if (result.meta.requestStatus === 'fulfilled') {
+        return {
+          success: true,
+          message: 'Home data fetched successfully',
+          data: result.payload,
+        };
+      } else {
+        return {
+          success: false,
+          message: result.payload || 'Failed to fetch home data',
+        };
+      }
+    } catch (error: any) {
+      console.error('Fetch all data error:', error);
+      return {
+        success: false,
+        message: error?.message || 'An error occurred',
+      };
+    }
+  }, [dispatch]);
+
+  /**
+   * Search meetings - sends request to backend with search query
+   */
+  const fetchSearch = useCallback(
+    async (search: string): Promise<ApiResponse> => {
       try {
-        const result = await dispatch(fetchHomeData(search));
+        const result = await dispatch(fetchSearchMeetings(search));
 
         if (result.meta.requestStatus === 'fulfilled') {
           return {
             success: true,
-            message: 'Home data fetched successfully',
+            message: 'Search completed',
             data: result.payload,
           };
         } else {
           return {
             success: false,
-            message: result.payload || 'Failed to fetch home data',
+            message: result.payload || 'Search failed',
           };
         }
       } catch (error: any) {
-        console.error('Fetch all data error:', error);
+        console.error('Search error:', error);
         return {
           success: false,
-          message: error?.message || 'An error occurred',
+          message: error?.message || 'An error occurred during search',
         };
       }
     },
@@ -144,7 +167,7 @@ export function useHomeViewModel() {
   );
 
   /**
-   * Update search query
+   * Update search query in Redux state
    */
   const updateSearchQuery = useCallback(
     (query: string) => {
@@ -153,17 +176,31 @@ export function useHomeViewModel() {
     [dispatch],
   );
 
+  /**
+   * Fetch weekly activity data
+   */
   const fetchWeekly = useCallback(async (): Promise<ApiResponse> => {
-    const result = await dispatch(fetchWeeklyActivity());
+    try {
+      const result = await dispatch(fetchWeeklyActivity());
 
-    if (result.meta.requestStatus === 'fulfilled') {
-      return { success: true, data: result.payload };
+      if (result.meta.requestStatus === 'fulfilled') {
+        return {
+          success: true,
+          data: result.payload,
+        };
+      }
+
+      return {
+        success: false,
+        message: result.payload || 'Failed to fetch weekly activity',
+      };
+    } catch (error: any) {
+      console.error('Fetch weekly error:', error);
+      return {
+        success: false,
+        message: error?.message || 'An error occurred',
+      };
     }
-
-    return {
-      success: false,
-      message: result.payload || 'Failed to fetch weekly activity',
-    };
   }, [dispatch]);
 
   /**
@@ -191,6 +228,7 @@ export function useHomeViewModel() {
     fetchTodays,
     fetchUpcoming,
     fetchAll,
+    fetchSearch,
     fetchWeekly,
     updateSearchQuery,
     clearError: handleClearError,

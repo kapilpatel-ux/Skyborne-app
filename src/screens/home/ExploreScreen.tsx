@@ -14,112 +14,183 @@ import {
 import { ExploreImages } from '../../assets/images/explore';
 import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
+import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
 
-const ExploreScreen = () => {
+interface UserRegion {
+  timezone: string;
+  region: string;
+}
+
+const ExploreScreen = ({ navigation }: any) => {
+  const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
+  const [isRegionLoading, setIsRegionLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+
   const categories = [
     {
       id: 1,
       title: 'Yoga',
       source: ExploreImages.trending1,
-      sessions: '100+ Sessions',
     },
     {
       id: 2,
       title: 'Fitness Classes',
-      sessions: '100+ Sessions',
       source: ExploreImages.fitness,
     },
     {
       id: 3,
       title: 'Zumba Dance',
-      sessions: '100+ Sessions',
       source: ExploreImages.zumba,
     },
     {
       id: 4,
       title: 'Diet & Nutrition',
-      sessions: '100+ Sessions',
-      source:ExploreImages.diet
+      source: ExploreImages.diet,
     },
   ];
 
-  const trendingSessions = [
-    {
-      id: 1,
-      title: 'Morning Yoga Flow',
-      duration: '12 min - Beginner',
-      image: ExploreImages.yoga1,
-    },
-    {
-      id: 2,
-      title: 'Zumba Cardio Blast',
-      duration: '25 min - Intermediate',
-      image: ExploreImages.yoga2,
-    },
-    {
-      id: 3,
-      title: 'Gentle Back Stretch',
-      duration: '8 min - All Levels',
-      image: ExploreImages.yoga3,
-    },
-    {
-      id: 4,
-      title: 'Strength Core Builder',
-      duration: '18 min - Beginner',
-      image: ExploreImages.yoga4,
-    },
-    {
-      id: 5,
-      title: 'Restorative Yin Yoga',
-      duration: '15 min - Beginner',
-      image: ExploreImages.yoga5,
-    },
-  ];
+  const { upcomingMeetings, isLoading, error, fetchSearch } = useHomeViewModel();
 
-  // Use home view model to fetch upcoming meetings
-  const { upcomingMeetings, isLoading, error } = useHomeViewModel();
-
-  // Get max 5 upcoming classes
-  const upcomingClasses = upcomingMeetings.slice(0, 5);
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+  const handleClassPress = (classId: string) => {
+    navigation.navigate('ClassDetails', { classId });
   };
 
+  // Initialize user region on mount - critical for timezone handling
+  useEffect(() => {
+    try {
+      const region = getUserRegion();
+      setUserRegion(region);
+      console.log('✅ User Region Initialized:', region);
+    } catch (err) {
+      console.error('❌ Failed to get user region:', err);
+      // Fallback to UTC if region detection fails
+      setUserRegion({ timezone: 'UTC', region: 'APAC' });
+    } finally {
+      setIsRegionLoading(false);
+    }
+  }, []);
+
+  // Handle search with debounce
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchInput.trim().length > 0) {
+        handleSearch(searchInput);
+      } else {
+        // Clear search if input is empty
+        setHasSearched(false);
+        setSearchResults([]);
+      }
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchInput]);
+
+  // Perform the search
+  const handleSearch = async (query: string) => {
+    if (query.trim().length === 0) {
+      setHasSearched(false);
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearchLoading(true);
+    setHasSearched(true);
+
+    try {
+      const result = await fetchSearch(query);
+      
+      if (result.success && result.data) {
+        const meetings = result.data.upcomingMeetings || result.data.upcoming?.meetings || [];
+        setSearchResults(meetings);
+        console.log('✅ Search successful:', meetings.length, 'results found');
+      } else {
+        setSearchResults([]);
+        console.warn('⚠️ Search returned no results');
+      }
+    } catch (err) {
+      console.error('❌ Search error:', err);
+      setSearchResults([]);
+    } finally {
+      setIsSearchLoading(false);
+    }
+  };
+
+  // Clear search
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setHasSearched(false);
+    setSearchResults([]);
+  };
+
+  // Determine which classes to display
+  const displayedClasses = hasSearched ? searchResults : upcomingMeetings;
+  const upcomingClasses = displayedClasses.slice(0, 5);
+
   // Dynamic upcoming class card
-  const DynamicSessionCard = ({ meeting }: any) => (
-    <Pressable style={styles.sessionCard}>
-      <View style={styles.sessionImageContainer}>
-        <ImageBackground
-          source={require('../../assets/images/home/session-image.png')}
-          style={styles.sessionImage}
-          resizeMode="cover"
-        />
-        <View style={styles.sessionImagePlaceholder} />
-      </View>
-      <View style={styles.sessionInfo}>
-        <Text style={styles.sessionTitle}>{meeting.title}</Text>
-        <Text style={styles.sessionDuration}>
-          {new Date(meeting.localTime).toLocaleDateString()} •{' '}
-          {formatTime(meeting.localTime)} ({meeting.service?.title})
-        </Text>
-        <Pressable style={styles.sessionPlayButton}>
-          <View style={styles.playButtonCircle}>
-            <View style={styles.playIcon}>
-              <View style={styles.playLineMiddle} />
-              <View style={styles.playLineTop} />
-              <View style={styles.playLineBottom} />
+  const DynamicSessionCard = ({ meeting }: any) => {
+    // Find region-specific info from meeting regions array
+    const regionInfo = meeting?.regions?.find(
+      (r: any) => r.region === userRegion?.region,
+    );
+
+    // Fallback to first region if user region not found
+    const displayRegionInfo = regionInfo || meeting?.regions?.[0];
+
+    // Extract the pre-formatted localTime from the API response
+    const formattedTime = displayRegionInfo?.localTime || 'N/A';
+    const timezone = displayRegionInfo?.timezone || userRegion?.timezone;
+
+    // Get the correct date by converting UTC ISO to region timezone
+    const formattedDate = getRegionDateFromISO(meeting.localTime, timezone);
+
+    // Debug logging
+    console.log('📅 Meeting Display Info:', {
+      meetingTitle: meeting.title,
+      userRegion: userRegion?.region,
+      meetingISOTime: meeting.localTime,
+      displayRegionInfo,
+      regionTimezone: timezone,
+      formattedDate,
+      formattedTime,
+    });
+
+    return (
+      <Pressable 
+        style={styles.sessionCard}
+        onPress={() => handleClassPress(meeting._id)}
+      >
+        <View style={styles.sessionImageContainer}>
+          <ImageBackground
+            source={require('../../assets/images/home/session-image.png')}
+            style={styles.sessionImage}
+            resizeMode="cover"
+          />
+          <View style={styles.sessionImagePlaceholder} />
+        </View>
+        <View style={styles.sessionInfo}>
+          <Text style={styles.sessionTitle}>{meeting.title}</Text>
+          <Text style={styles.sessionDuration}>
+            {formattedDate} • {formattedTime} ({meeting.service?.title})
+          </Text>
+          <Pressable
+            style={styles.sessionPlayButton}
+            onPress={() => handleClassPress(meeting._id)}
+          >
+            <View style={styles.playButtonCircle}>
+              <View style={styles.playIcon}>
+                <View style={styles.playLineMiddle} />
+                <View style={styles.playLineTop} />
+                <View style={styles.playLineBottom} />
+              </View>
             </View>
-          </View>
-        </Pressable>
-      </View>
-    </Pressable>
-  );
+          </Pressable>
+        </View>
+      </Pressable>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -141,102 +212,118 @@ const ExploreScreen = () => {
             style={styles.searchInput}
             placeholder="Search by Classes name"
             placeholderTextColor="#959595"
+            value={searchInput}
+            onChangeText={setSearchInput}
+            returnKeyType="search"
           />
-        </View>
-
-        {/* Quick Start Banner */}
-        <View style={styles.quickStartBanner}>
-          <View style={styles.bannerImageContainer}>
-            <ImageBackground
-              source={ExploreImages.meditation}
-              style={styles.bannerImage}
-              resizeMode="cover"
+          {searchInput.length > 0 && (
+            <Pressable 
+              style={styles.clearButton}
+              onPress={handleClearSearch}
             >
-              <View style={styles.bannerGradient}>
-                <View style={styles.bannerContent}>
-                  <Text style={styles.bannerTitle}>Quick Start</Text>
-                  <Text style={styles.bannerDescription}>
-                    Start a Skyborne workout instantly just press play and move.
-                  </Text>
-                </View>
-
-                <TouchableOpacity style={styles.bannerButton}>
-                  <View style={styles.arrowCircle}>
-                    <ImageBackground
-                      source={ExploreImages.arrow}
-                      style={styles.arrowImage}
-                      resizeMode="contain"
-                    />
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </ImageBackground>
-          </View>
+              <Text style={styles.clearButtonText}>✕</Text>
+            </Pressable>
+          )}
         </View>
 
-        {/* Trending Categories Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Trending for You</Text>
-        </View>
-
-        {/* Horizontal Scroll for Categories */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesScroll}
-          contentContainerStyle={styles.categoriesContent}
-        >
-          {categories.map((category, index) => (
-            <Pressable
-              key={category.id}
-              style={[
-                styles.categoryCard,
-                index === 0 && styles.categoryCardFirst,
-              ]}
-            >
-              <View style={styles.categoryImageContainer}>
-                <ImageBackground
-                  source={category?.source}
-                  style={styles.categoryImage}
-                  resizeMode="cover"
-                >
-                  <View style={styles.categoryInfo}>
-                    <Text style={styles.categoryTitle}>{category.title}</Text>
-                    <Text style={styles.categorySessions}>
-                      {category.sessions}
+        {/* Quick Start Banner - Hidden when searching */}
+        {!hasSearched && (
+          <View style={styles.quickStartBanner}>
+            <View style={styles.bannerImageContainer}>
+              <ImageBackground
+                source={ExploreImages.meditation}
+                style={styles.bannerImage}
+                resizeMode="cover"
+              >
+                <View style={styles.bannerGradient}>
+                  <View style={styles.bannerContent}>
+                    <Text style={styles.bannerTitle}>Quick Start</Text>
+                    <Text style={styles.bannerDescription}>
+                      Start a Skyborne workout instantly just press play and move.
                     </Text>
                   </View>
-                </ImageBackground>
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
+                </View>
+              </ImageBackground>
+            </View>
+          </View>
+        )}
 
-        {/* Trending Sessions Section - Dynamic */}
+        {/* Trending Categories Section - Hidden when searching */}
+        {!hasSearched && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Trending for You</Text>
+            </View>
+
+            {/* Horizontal Scroll for Categories */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoriesScroll}
+              contentContainerStyle={styles.categoriesContent}
+            >
+              {categories.map((category, index) => (
+                <Pressable
+                  key={category.id}
+                  style={[
+                    styles.categoryCard,
+                    index === 0 && styles.categoryCardFirst,
+                  ]}
+                >
+                  <View style={styles.categoryImageContainer}>
+                    <ImageBackground
+                      source={category?.source}
+                      style={styles.categoryImage}
+                      resizeMode="cover"
+                    >
+                      <View style={styles.categoryInfo}>
+                        <Text style={styles.categoryTitle}>{category.title}</Text>
+                      </View>
+                    </ImageBackground>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        )}
+
+        {/* Trending/Search Results Header */}
         <View style={styles.sectionHeaderWithAction}>
-          <Text style={styles.sectionTitle}>Trending for You</Text>
-          <Pressable>
-            <Text style={styles.viewAllText}>View all</Text>
-          </Pressable>
+          <Text style={styles.sectionTitle}>
+            {hasSearched ? `Search Results for "${searchInput}"` : 'Trending for You'}
+          </Text>
+          {!hasSearched && (
+            <Pressable>
+              <TouchableOpacity onPress={() => navigation.navigate('ViewAll')}>
+                <Text style={styles.viewAllText}>View all</Text>
+              </TouchableOpacity>
+            </Pressable>
+          )}
         </View>
 
         {/* Loading State */}
-        {isLoading && (
+        {((isLoading && !hasSearched) || (isSearchLoading && hasSearched) || isRegionLoading) && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#B95E82" />
-            <Text style={styles.loadingText}>Loading upcoming classes...</Text>
+            <Text style={styles.loadingText}>
+              {isRegionLoading
+                ? 'Detecting your location...'
+                : isSearchLoading
+                ? 'Searching...'
+                : 'Loading upcoming classes...'}
+            </Text>
           </View>
         )}
 
         {/* Error State */}
-        {error && !isLoading && (
+        {error && !isLoading && !hasSearched && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
         {/* Dynamic Upcoming Classes - Max 5 */}
-        {!isLoading && upcomingClasses.length > 0 && (
+        {!isLoading && !isRegionLoading && !isSearchLoading && upcomingClasses.length > 0 && (
           <View style={styles.sessionsList}>
             {upcomingClasses.map(meeting => (
               <DynamicSessionCard key={meeting._id} meeting={meeting} />
@@ -244,12 +331,27 @@ const ExploreScreen = () => {
           </View>
         )}
 
-        {/* Fallback when no upcoming classes */}
-    {!isLoading && upcomingClasses.length === 0 && !error && (
+        {/* No results for search */}
+        {hasSearched && !isSearchLoading && upcomingClasses.length === 0 && (
+          <View style={styles.noRecordsContainer}>
+            <Text style={styles.noRecordsText}>
+              No classes found for "{searchInput}"
+            </Text>
+            <Pressable 
+              style={styles.tryAgainButton}
+              onPress={handleClearSearch}
+            >
+              <Text style={styles.tryAgainButtonText}>Clear Search</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Fallback when no upcoming classes and not searching */}
+        {!hasSearched && !isLoading && !isRegionLoading && upcomingClasses.length === 0 && !error && (
           <View style={styles.noRecordsContainer}>
             <Text style={styles.noRecordsText}>No records found</Text>
           </View>
-        )}  
+        )}
       </ScrollView>
       <BottomNav active="Explore" />
     </SafeAreaView>
@@ -288,6 +390,19 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi',
     color: '#959595',
     fontWeight: '400',
+    marginBottom: 16,
+  },
+  tryAgainButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    backgroundColor: '#B95E82',
+    borderRadius: 6,
+  },
+  tryAgainButtonText: {
+    fontSize: 14,
+    fontFamily: 'Satoshi',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 
   searchContainer: {
@@ -321,8 +436,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 15,
     letterSpacing: -0.1,
-    color: '#959595',
+    color: '#494949',
     paddingVertical: 0,
+  },
+  clearButton: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  clearButtonText: {
+    fontSize: 18,
+    color: '#959595',
+    fontWeight: '600',
   },
 
   quickStartBanner: {
@@ -368,23 +495,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     width: 200,
     height: 32,
-  },
-  bannerButton: {
-    position: 'absolute',
-    right: 18,
-    bottom: 25,
-  },
-  arrowCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrowImage: {
-    width: 25,
-    height: 25,
   },
 
   sectionHeader: {
@@ -454,13 +564,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#FFFFFF',
     marginBottom: 7,
-  },
-  categorySessions: {
-    fontFamily: 'Satoshi',
-    fontWeight: '400',
-    fontSize: 14,
-    lineHeight: 19,
-    color: '#FFFFFF',
   },
 
   sessionsList: {

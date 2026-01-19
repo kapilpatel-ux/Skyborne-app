@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,15 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import GradientBackground from '../../components/GradientBackground';
 import { HomeImages } from '../../assets/images/home';
 import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
-import type { RootStackParamList } from '../../navigation/AppNavigator'; 
+import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
+import type { RootStackParamList } from '../../navigation/AppNavigator';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -22,14 +24,26 @@ interface HomeScreenProps {
   navigation: HomeScreenNavigationProp;
 }
 
+interface UserRegion {
+  timezone: string;
+  region: string;
+}
+
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const MAX_WATER = 2.5; // liters
-  const STEP = 0.25; // 250ml
+  const MAX_WATER = 2.5;
+  const STEP = 0.25;
 
   const [currentWater, setCurrentWater] = useState(2.0);
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
+  const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
+  const [isRegionLoading, setIsRegionLoading] = useState(true);
+
   const percentage = Math.round((currentWater / MAX_WATER) * 100);
 
-  // Use home view model
   const {
     user,
     todayMeetings,
@@ -37,47 +51,86 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     isLoading,
     error,
     fetchAll,
+    fetchUser,
+    fetchSearch,
     weeklyActivity,
     fetchWeekly,
   } = useHomeViewModel();
 
   useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+
+
+  // Initialize user region on mount - critical for timezone handling
+  useEffect(() => {
+    try {
+      const region = getUserRegion();
+      setUserRegion(region);
+      console.log('✅ User Region Initialized:', region);
+    } catch (err) {
+      console.error('❌ Failed to get user region:', err);
+      // Fallback to UTC if region detection fails
+      setUserRegion({ timezone: 'UTC', region: 'APAC' });
+    } finally {
+      setIsRegionLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Initial load - no search
     fetchAll();
-  }, [fetchAll]);
+  }, []);
 
   useEffect(() => {
     fetchWeekly();
-  }, [fetchWeekly]);
+  }, []);
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+  // Debounced search - send request to backend
+  useEffect(() => {
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    if (!localSearchQuery.trim()) {
+      // Empty search - fetch all
+      const timeout = setTimeout(() => {
+        fetchAll();
+      }, 300);
+      setSearchTimeout(timeout);
+      return;
+    }
+
+    // Debounce search requests to backend
+    const timeout = setTimeout(() => {
+      fetchSearch(localSearchQuery);
+    }, 500); // Wait 500ms after user stops typing
+
+    setSearchTimeout(timeout);
+
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
+  }, [localSearchQuery]);
+
+
+  const handleSearchIconPress = () => {
+    setShowSearchBar(!showSearchBar);
+    if (showSearchBar) {
+      // Clear search when closing
+      setLocalSearchQuery('');
+      fetchAll();
+    }
   };
 
-  // Handle navigation to class details
+
   const handleClassPress = (classId: string) => {
     navigation.navigate('ClassDetails', { classId });
   };
-
-  // Static session images fallback
-  const SessionImages = [
-    {
-      title: 'Yoga Morning Flow',
-      image: require('../../assets/images/home/session-image.png'),
-      subtitle: 'Gentle energy boost for your day',
-      id: 'fallback-1',
-    },
-    {
-      title: 'Strength Training',
-      image: require('../../assets/images/home/session-image.png'),
-      subtitle: 'Build muscle and strength',
-      id: 'fallback-2',
-    },
-  ];
 
   const totalUsedCredits =
     (user?.classCredits?.yoga ?? 0) +
@@ -90,97 +143,98 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     return `${first}${last}`;
   };
 
-  // Dynamic session cards from API
-  const DynamicSessionCard = ({ meeting }: any) => (
-    <TouchableOpacity
-      style={styles.sessionCard}
-      onPress={() => handleClassPress(meeting._id)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.sessionContent}>
-        <Text style={styles.sessionTitle}>{meeting.title}</Text>
-        <Text style={styles.sessionSubtitle}>{meeting.service.title}</Text>
-      </View>
-      <Image
-        source={require('../../assets/images/home/session-image.png')}
-        style={styles.sessionImage}
-        resizeMode="cover"
-      />
-      <TouchableOpacity
-        style={styles.joinButton}
-        onPress={() => handleClassPress(meeting._id)}
-      >
-        <Text style={styles.joinButtonText}>Join now</Text>
-        <View style={styles.arrowContainer}>
-          <Image
-            source={require('../../assets/images/arrow-black.png')}
-            style={styles.arrow}
-          />
-        </View>
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
+  const DynamicSessionCard = ({ meeting }: any) => {
+    // Find region-specific info from meeting regions array
+    // const regionInfo = meeting?.regions?.find(
+    //   (r: any) => r.region === userRegion?.region,
+    // );
 
-  // Dynamic upcoming class card
-  const DynamicClassCard = ({ meeting }: any) => (
-    <TouchableOpacity
-      style={styles.classCard}
-      onPress={() => handleClassPress(meeting._id)}
-      activeOpacity={0.7}
-    >
-      <Image
-        source={require('../../assets/images/home/yoga-flow.png')}
-        style={styles.classImage}
-        resizeMode="cover"
-      />
-      <View style={styles.classOverlay}>
-        <View style={styles.classContent}>
-          <Text style={styles.className}>{meeting.title}</Text>
-          <Text style={styles?.classTime}>
-            {new Date(meeting.localTime).toLocaleDateString()} •{' '}
-            {formatTime(meeting.localTime)} ({meeting.service?.title})
-          </Text>
+    // Fallback to first region if user region not found
+    // const displayRegionInfo = regionInfo || meeting?.regions?.[0];
+
+    return (
+      <TouchableOpacity
+        style={styles.sessionCard}
+        onPress={() => handleClassPress(meeting._id)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.sessionContent}>
+          <Text style={styles.sessionTitle}>{meeting.title}</Text>
+          <Text style={styles.sessionSubtitle}>{meeting.service.title}</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.classPlayButton}
+        <Image
+          source={require('../../assets/images/home/session-image.png')}
+          style={styles.sessionImage}
+          resizeMode="cover"
+        />
+        <TouchableOpacity
+          style={styles.joinButton}
           onPress={() => handleClassPress(meeting._id)}
         >
-          <Image
-            source={require('../../assets/images/arrow-white.png')}
-            style={styles.arrow}
-          />
+          <Text style={styles.joinButtonText}>Join now</Text>
+          <View style={styles.arrowContainer}>
+            <Image
+              source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/arrow-black.png'}}
+              style={styles.arrow}
+            />
+          </View>
         </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
-  // Fallback session card
-  const FallbackSessionCard = ({ session, id }: any) => (
-    <TouchableOpacity
-      key={id}
-      style={styles.sessionCard}
-      activeOpacity={0.7}
-    >
-      <View style={styles.sessionContent}>
-        <Text style={styles.sessionTitle}>{session.title}</Text>
-        <Text style={styles.sessionSubtitle}>{session.subtitle}</Text>
-      </View>
-      <Image
-        source={session.image}
-        style={styles.sessionImage}
-        resizeMode="cover"
-      />
-      <TouchableOpacity style={styles.joinButton} activeOpacity={0.7}>
-        <Text style={styles.joinButtonText}>Join now</Text>
-        <View style={styles.arrowContainer}>
-          <Image
-            source={require('../../assets/images/arrow-black.png')}
-            style={styles.arrow}
-          />
+  const DynamicClassCard = ({ meeting }: any) => {
+    // Find region-specific info from meeting regions array
+    const regionInfo = meeting?.regions?.find(
+      (r: any) => r.region === userRegion?.region,
+    );
+
+    // Fallback to first region if user region not found
+    const displayRegionInfo = regionInfo || meeting?.regions?.[0];
+
+    // Extract the pre-formatted localTime from the API response
+    // API already provides formatted time like "10:00 AM" in localTime field
+    const formattedTime = displayRegionInfo?.localTime || 'N/A';
+    const timezone = displayRegionInfo?.timezone || userRegion?.timezone;
+    const isLive = displayRegionInfo?.mode === 'live';
+
+    // Get the correct date by converting UTC ISO to region timezone
+    // This ensures date matches what the user sees in their timezone
+    const formattedDate = getRegionDateFromISO(meeting.localTime, timezone);
+
+    return (
+      <TouchableOpacity
+        style={styles.classCard}
+        onPress={() => handleClassPress(meeting._id)}
+        activeOpacity={0.7}
+      >
+        <Image
+          source={require('../../assets/images/home/yoga-flow.png')}
+          style={styles.classImage}
+          resizeMode="cover"
+        />
+        <View style={styles.classOverlay}>
+          <View style={styles.classContent}>
+            <Text style={styles.className}>{meeting.title}</Text>
+            <Text style={styles?.classTime}>
+              {formattedDate} • {formattedTime} ({meeting.service?.title})
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.classPlayButton}
+            onPress={() => handleClassPress(meeting._id)}
+          >
+            <Image
+              source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/arrow-white.png'}}
+              style={styles.arrow}
+            />
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
+
+  const isSearchActive = showSearchBar && localSearchQuery.trim().length > 0;
 
   return (
     <GradientBackground>
@@ -198,57 +252,93 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               />
             </View>
             <Text style={styles.headerTitle}>Skyborne Drop</Text>
-            <View style={styles.searchContainer}>
+            <TouchableOpacity
+              style={styles.searchContainer}
+              onPress={handleSearchIconPress}
+            >
               <Image source={HomeImages.searchIcon} style={styles.searchIcon} />
-            </View>
+            </TouchableOpacity>
           </View>
+
+          {/* Search Bar - Shown only when showSearchBar is true */}
+          {showSearchBar && (
+            <View style={styles.searchBarContainer}>
+              <Image
+                source={HomeImages.searchIcon}
+                style={styles.searchBarIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search classes, trainers, services..."
+                placeholderTextColor="#999"
+                value={localSearchQuery}
+                onChangeText={setLocalSearchQuery}
+                returnKeyType="search"
+                autoFocus
+              />
+              {localSearchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setLocalSearchQuery('')}>
+                  <Text style={styles.clearButton}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
 
           {/* User Profile Section */}
-          <View style={styles.profileContainer}>
-            {user?.profileImage ? (
-              <Image
-                source={{ uri: user.profileImage }}
-                style={styles.profileImage}
-              />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {getInitials(user?.firstName, user?.lastName)}
+          {!showSearchBar && (
+            <View style={styles.profileContainer}>
+              {user?.profileImage ? (
+                <Image
+                  source={{ uri: user.profileImage }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {getInitials(user?.firstName, user?.lastName)}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.profileTextContainer}>
+                <Text style={styles.greetingText}>
+                  Good Morning, {user?.firstName || 'Guest'}
+                </Text>
+                <Text style={styles.subGreetingText}>
+                  Choose yours workout today
                 </Text>
               </View>
-            )}
-            <View style={styles.profileTextContainer}>
-              <Text style={styles.greetingText}>
-                Good Morning, {user?.firstName || 'Guest'}
-              </Text>
-              <Text style={styles.subGreetingText}>Choose yours workout today</Text>
             </View>
-          </View>
+          )}
 
           {/* Wellness Score Card */}
-          <View style={styles.wellnessCard}>
-            <Text style={styles.wellnessTitle}>Your Wellness Score</Text>
-            <View style={styles.scoreRow}>
-              <View style={styles.scoreLeft}>
-                <Text style={styles.scoreText}>
-                  {user?.totalClassCredits - totalUsedCredits}/{user?.totalClassCredits}
-                </Text>
-                <Text style={styles.scoreSubText}>
-                  You're doing great! Keep up the momentum.
-                </Text>
-                <TouchableOpacity style={styles.primaryButton}>
-                  <Text style={styles.primaryButtonText}>Get Started</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.imageContainer}>
-                <Image
-                  source={HomeImages.getStartedImage}
-                  style={styles.getStartedImage}
-                  resizeMode="contain"
-                />
+          {!showSearchBar && (
+            <View style={styles.wellnessCard}>
+              <Text style={styles.wellnessTitle}>Your Wellness Score</Text>
+              <View style={styles.scoreRow}>
+                <View style={styles.scoreLeft}>
+                  {user?.totalClassCredits && (
+                    <Text style={styles.scoreText}>
+                      {user?.totalClassCredits - totalUsedCredits}/
+                      {user?.totalClassCredits}
+                    </Text>
+                  )}
+                  <Text style={styles.scoreSubText}>
+                    You're doing great! Keep up the momentum.
+                  </Text>
+                  {/* <TouchableOpacity style={styles.primaryButton}>
+                    <Text style={styles.primaryButtonText}>Get Started</Text>
+                  </TouchableOpacity> */}
+                </View>
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={HomeImages.getStartedImage}
+                    style={styles.getStartedImage}
+                    resizeMode="contain"
+                  />
+                </View>
               </View>
             </View>
-          </View>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -264,19 +354,82 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           )}
 
           {/* Loading State */}
-          {isLoading && (
+          {(isLoading || isRegionLoading) && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#B95E82" />
-              <Text style={styles.loadingText}>Loading sessions...</Text>
+              <Text style={styles.loadingText}>
+                {isRegionLoading
+                  ? 'Detecting your location...'
+                  : isSearchActive
+                  ? 'Searching...'
+                  : 'Loading sessions...'}
+              </Text>
             </View>
           )}
 
-          {/* Today's Sessions Section */}
-          {!isLoading && todayMeetings.length > 0 && (
+          {/* Search Results - Only show when search is active */}
+          {isSearchActive && !isLoading && (
+            <>
+              <Text style={styles.searchResultsTitle}>Search Results</Text>
+
+              {/* Today's Sessions Results */}
+              {todayMeetings.length > 0 && (
+                <>
+                  <Text style={styles.sectionTitle}>Today's Sessions</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.sessionsScroll}
+                    style={styles.sessionsContainer}
+                  >
+                    {todayMeetings.map(meeting => (
+                      <DynamicSessionCard key={meeting._id} meeting={meeting} />
+                    ))}
+                  </ScrollView>
+                </>
+              )}
+
+              {/* Upcoming Sessions Results */}
+              {upcomingMeetings.length > 0 && (
+                <>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { marginTop: 20, marginBottom: 10 },
+                    ]}
+                  >
+                    Upcoming Classes
+                  </Text>
+                  {upcomingMeetings.map((meeting, idx) => (
+                    <DynamicClassCard
+                      key={`${meeting._id}-${idx}`}
+                      meeting={meeting}
+                    />
+                  ))}
+                </>
+              )}
+
+              {/* No Results */}
+              {todayMeetings.length === 0 && upcomingMeetings.length === 0 && (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyMessage}>
+                    No classes found matching "{localSearchQuery}"
+                  </Text>
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Normal View - Today's Sessions */}
+          {!showSearchBar && !isLoading && todayMeetings.length > 0 && (
             <>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Today's Sessions</Text>
-                <Text style={styles.viewAllText}>View all</Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ViewAll')}
+                >
+                  <Text style={styles.viewAllText}>View all</Text>
+                </TouchableOpacity>
               </View>
 
               <ScrollView
@@ -292,101 +445,82 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </>
           )}
 
-          {/* Discover Sessions Header - Fallback */}
-          {!isLoading && todayMeetings.length === 0 && (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Discover today's Top Sessions</Text>
-              <Text style={styles.viewAllText}>View all</Text>
-            </View>
-          )}
-
-          {/* Fallback Sessions */}
-          {!isLoading && todayMeetings.length === 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.sessionsScroll}
-              style={styles.sessionsContainer}
-            >
-              {SessionImages.map(session => (
-                <FallbackSessionCard key={session.id} session={session} id={session.id} />
-              ))}
-            </ScrollView>
+          {!showSearchBar && !isLoading && todayMeetings.length === 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                  Discover today's Top Sessions
+                </Text>
+                {/* <TouchableOpacity
+                  onPress={() => navigation.navigate('ViewAll')}
+                >
+                  <Text style={styles.viewAllText}>View all</Text>
+                </TouchableOpacity>{' '} */}
+              </View>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyMessage}>No record found</Text>
+              </View>
+            </>
           )}
 
           {/* Upcoming Classes Section */}
-          {!isLoading && upcomingMeetings.length > 0 && (
+          {!showSearchBar && !isLoading && upcomingMeetings.length > 0 && (
             <View style={styles.upcomingSection}>
               <Text style={styles.upcomingTitle}>Upcoming Classes</Text>
               <DynamicClassCard meeting={upcomingMeetings[0]} />
             </View>
           )}
 
-          {/* Default Upcoming Class */}
-          {!isLoading && upcomingMeetings.length === 0 && (
+          {!showSearchBar && !isLoading && upcomingMeetings.length === 0 && (
             <View style={styles.upcomingSection}>
               <Text style={styles.upcomingTitle}>Upcoming Classes</Text>
-              <TouchableOpacity style={styles.classCard} activeOpacity={0.7}>
-                <Image
-                  source={require('../../assets/images/home/yoga-flow.png')}
-                  style={styles.classImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.classOverlay}>
-                  <View style={styles.classContent}>
-                    <Text style={styles.className}>Yoga Flow</Text>
-                    <Text style={styles.classTime}>Today • 9:00 AM (Los Angeles)</Text>
-                  </View>
-                  <TouchableOpacity style={styles.classPlayButton}>
-                    <Image
-                      source={require('../../assets/images/arrow-white.png')}
-                      style={styles.arrow}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyMessage}>No record found</Text>
+              </View>
             </View>
           )}
 
           {/* This Week Activity Section */}
-          <View style={styles.weekActivitySection}>
-            <Text style={styles.weekActivityTitle}>This Week Activity</Text>
-            <View style={styles.weekActivityCard}>
-              <View style={styles.weekHeader}>
-                <Text style={styles.weekLabel}>This Week</Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${weeklyActivity?.progressPercent ?? 0}%` },
-                  ]}
-                />
-              </View>
-
-              <View style={styles.weekDays}>
-                {weeklyActivity?.days.map((d, index) => (
-                  <TouchableOpacity
-                    key={index}
+          {!showSearchBar && (
+            <View style={styles.weekActivitySection}>
+              <Text style={styles.weekActivityTitle}>This Week Activity</Text>
+              <View style={styles.weekActivityCard}>
+                <View style={styles.weekHeader}>
+                  <Text style={styles.weekLabel}>This Week</Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View
                     style={[
-                      styles.dayButton,
-                      d.completed && styles.dayButtonActive,
+                      styles.progressFill,
+                      { width: `${weeklyActivity?.progressPercent ?? 0}%` },
                     ]}
-                  >
-                    <Text
-                      style={
-                        d.completed
-                          ? styles.dayButtonTextActive
-                          : styles.dayButtonText
-                      }
+                  />
+                </View>
+
+                <View style={styles.weekDays}>
+                  {weeklyActivity?.days.map((d, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.dayButton,
+                        d.completed && styles.dayButtonActive,
+                      ]}
                     >
-                      {d.day}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={
+                          d.completed
+                            ? styles.dayButtonTextActive
+                            : styles.dayButtonText
+                        }
+                      >
+                        {d.day}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             </View>
-          </View>
+          )}
         </ScrollView>
         <BottomNav active="Home" />
       </SafeAreaView>
@@ -402,6 +536,41 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingBottom: 24,
+  },
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ECECEC',
+  },
+  searchBarIcon: {
+    width: 18,
+    height: 18,
+    tintColor: '#B95E82',
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#494949',
+    fontFamily: 'Satoshi-Regular',
+  },
+  clearButton: {
+    fontSize: 18,
+    color: '#B95E82',
+    fontWeight: '600',
+    paddingLeft: 8,
+  },
+  searchResultsTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#494949',
+    marginBottom: 16,
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -458,7 +627,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 35,
-    marginBottom: 40,
+    marginBottom: 20,
   },
   headerTitle: {
     flex: 1,
@@ -475,6 +644,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     display: 'flex',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyMessage: {
+    fontSize: 16,
+    color: '#999',
+    fontWeight: '500',
   },
   hamburgerContainer: {
     width: 36,
@@ -533,6 +713,7 @@ const styles = StyleSheet.create({
     paddingLeft: 22,
     paddingTop: 30,
     paddingRight: 12,
+    marginBottom: 24,
   },
   wellnessTitle: {
     fontFamily: 'Satoshi-Regular',

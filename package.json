@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.20.1",
+    "@react-native-google-signin/google-signin": "^16.1.1",
     "@react-native/new-app-screen": "0.83.1",
     "@react-navigation/native": "^6.1.7",
     "@react-navigation/native-stack": "^6.9.12",
@@ -31,6 +32,8 @@
     "react-native-toast-message": "^2.3.3",
     "react-redux": "^8.1.2",
     "redux-persist": "^6.0.0",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "yup": "^1.7.1",
     "zustand": "^4.5.7"
   },

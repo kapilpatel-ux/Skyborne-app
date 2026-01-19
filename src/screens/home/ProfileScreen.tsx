@@ -54,7 +54,7 @@ const ProfileScreen = () => {
     user,
     dashboardStats,
     loadProfile,
-  } = useProfileViewModel();
+  } :any= useProfileViewModel();
 
   useEffect(() => {
     loadProfile();
@@ -181,12 +181,12 @@ const ProfileScreen = () => {
             <Text style={styles.headerTitle}>Profile</Text>
           </View>
 
-          <TouchableOpacity style={styles.settingsButton}>
+          {/* <TouchableOpacity style={styles.settingsButton}>
             <Image
               style={styles.settingsIcon}
               source={ProfileImages.SettingsIcon}
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Profile Card */}

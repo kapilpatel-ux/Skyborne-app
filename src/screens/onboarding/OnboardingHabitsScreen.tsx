@@ -14,8 +14,12 @@ import { useOnboardingStore } from '../../store/onboardingSlice';
 
 const OnboardingHabitsScreen = ({ navigation }: any) => {
   const [waterIntakeIndex, setWaterIntakeIndex] = useState<number | null>(null);
-  const [sleepQualityIndex, setSleepQualityIndex] = useState<number | null>(null);
-  const [exerciseFrequencyIndex, setExerciseFrequencyIndex] = useState<number | null>(null);
+  const [sleepQualityIndex, setSleepQualityIndex] = useState<number | null>(
+    null,
+  );
+  const [exerciseFrequencyIndex, setExerciseFrequencyIndex] = useState<
+    number | null
+  >(null);
   const { setHabits } = useOnboardingStore();
 
   const waterOptions = ['Yes', 'No'];
@@ -23,14 +27,17 @@ const OnboardingHabitsScreen = ({ navigation }: any) => {
   const exerciseOptions = ['Rarely', 'Weekly', 'Regular'];
 
   // Check if all fields are selected
-  const isAllSelected = waterIntakeIndex !== null && sleepQualityIndex !== null && exerciseFrequencyIndex !== null;
+  const isAllSelected =
+    waterIntakeIndex !== null &&
+    sleepQualityIndex !== null &&
+    exerciseFrequencyIndex !== null;
 
   const handleContinue = () => {
     if (isAllSelected) {
       // Convert indices to 1-based numbers and store
       const habitsValue = {
-        waterIntake: waterIntakeIndex + 1,     // 1-2
-        sleepQuality: sleepQualityIndex + 1,   // 1-3
+        waterIntake: waterIntakeIndex + 1, // 1-2
+        sleepQuality: sleepQualityIndex + 1, // 1-3
         exerciseFrequency: exerciseFrequencyIndex + 1, // 1-3
       };
       setHabits(habitsValue);
@@ -45,7 +52,9 @@ const OnboardingHabitsScreen = ({ navigation }: any) => {
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Image
-                source={require('../../assets/images/back-arrow.png')}
+                source={{
+                  uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/back-arrow.png',
+                }}
                 style={{ width: 16, height: 16, marginHorizontal: 16 }}
                 resizeMode="contain"
               />

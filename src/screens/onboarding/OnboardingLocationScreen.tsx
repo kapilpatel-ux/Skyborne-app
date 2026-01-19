@@ -47,8 +47,7 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
   const authState = useSelector((state: RootState) => state.auth);
 
   // Zustand store for onboarding data
-  const { inspiration, firstGoal, fitnessLevel, habits } =
-    useOnboardingStore();
+  const { inspiration, firstGoal, fitnessLevel, habits } = useOnboardingStore();
 
   // Get signup form data from Redux or context
   const tempUserId = authState.tempUserId;
@@ -171,7 +170,9 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
-              source={require('../../assets/images/back-arrow.png')}
+              source={{
+                uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/back-arrow.png',
+              }}
               style={{ width: 16, height: 16, marginHorizontal: 16 }}
               resizeMode="contain"
             />

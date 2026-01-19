@@ -32,7 +32,7 @@ const validationSchema = Yup.object().shape({
     .email('Invalid email format')
     .matches(
       /^[^\s@]+@[^\s@]+\.(com|net|org|in|co|io|ai|edu|gov|ae)$/i,
-      'Enter a valid email'
+      'Enter a valid email',
     ),
   password: Yup.string()
     .required('Password is required')
@@ -42,11 +42,11 @@ const validationSchema = Yup.object().shape({
     .matches(/\d/, 'Password must contain number')
     .matches(
       /[@$!%*?&]/,
-      'Password must contain special character (@, $, !, %, *, ?, &)'
+      'Password must contain special character (@, $, !, %, *, ?, &)',
     ),
   agreeTerms: Yup.boolean().oneOf(
     [true],
-    'You must agree to terms before continuing'
+    'You must agree to terms before continuing',
   ),
 });
 
@@ -64,7 +64,7 @@ export default function SignupScreen({ navigation }: Props) {
 
   const onSubmit = async (
     data: FormData,
-    { setSubmitting }: FormikHelpers<FormData>
+    { setSubmitting }: FormikHelpers<FormData>,
   ) => {
     try {
       updateStepData('step2', {
@@ -90,7 +90,9 @@ export default function SignupScreen({ navigation }: Props) {
         <View style={styles.appBar}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
-              source={require('../../assets/images/back-arrow.png')}
+              source={{
+                uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/back-arrow.png',
+              }}
               style={{ width: 16, height: 16, marginHorizontal: 16 }}
               resizeMode="contain"
             />
@@ -180,7 +182,9 @@ export default function SignupScreen({ navigation }: Props) {
                 {/* Terms */}
                 <TouchableOpacity
                   style={styles.checkboxRow}
-                  onPress={() => setFieldValue('agreeTerms', !values.agreeTerms)}
+                  onPress={() =>
+                    setFieldValue('agreeTerms', !values.agreeTerms)
+                  }
                 >
                   <View
                     style={[
@@ -189,8 +193,8 @@ export default function SignupScreen({ navigation }: Props) {
                     ]}
                   />
                   <Text style={styles.termsText}>
-                    I agree to Skyborne's <Text style={styles.link}>Terms</Text> and{' '}
-                    <Text style={styles.link}>Data Policy</Text>
+                    I agree to Skyborne's <Text style={styles.link}>Terms</Text>{' '}
+                    and <Text style={styles.link}>Data Policy</Text>
                   </Text>
                 </TouchableOpacity>
                 {touched.agreeTerms && errors.agreeTerms && (
@@ -205,8 +209,12 @@ export default function SignupScreen({ navigation }: Props) {
 
                 {/* Signup Link */}
                 <View style={styles.loginContainer}>
-                  <Text style={styles.loginText}>Already have an account? </Text>
-                  <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                  <Text style={styles.loginText}>
+                    Already have an account?{' '}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('Login')}
+                  >
                     <Text style={styles.loginLink}>Login</Text>
                   </TouchableOpacity>
                 </View>
@@ -305,7 +313,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
-   loginContainer: {
+  loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',

@@ -16,7 +16,7 @@ import { Images } from '../../assets/images';
 interface FeelingOption {
   id: number;
   label: string;
-  icon: ImageSourcePropType;
+  icon: string;
 }
 
 const FeedbackScreen = ({ navigation }: { navigation: any }) => {
@@ -62,7 +62,7 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
       <View style={styles.container}>
         {/* Close Button */}
         <TouchableOpacity style={styles.closeButton} onPress={handleSkip}>
-          <Image source={Images.crossIcon} />
+          <Image source={{uri:Images.crossIcon}} />
         </TouchableOpacity>
 
         {/* Success Animation */}
@@ -115,7 +115,7 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
               ]}
               onPress={() => setSelectedFeeling(option.id)}
             >
-              <Image source={option.icon} style={styles.feelingIcon} />
+              <Image source={{uri:option.icon}} style={styles.feelingIcon} />
               <Text style={styles.feelingLabel}>{option.label}</Text>
             </TouchableOpacity>
           ))}

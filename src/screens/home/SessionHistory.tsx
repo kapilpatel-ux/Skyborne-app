@@ -25,7 +25,7 @@ interface SessionHistoryItem {
   date: string;
   feeling: string;
   rating: number;
-  image: ImageSourcePropType;
+  image: string;
 }
 
 const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
@@ -102,7 +102,7 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
           {/* Session Image */}
           <View style={styles.sessionImageContainer}>
             <Image
-              source={session.image}
+              source={{uri:session.image}}
               style={styles.sessionImage}
               resizeMode="cover"
             />
@@ -117,17 +117,17 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
             {/* Session Details */}
             <View style={styles.sessionDetails}>
               <View style={styles.detailItem}>
-                <Image source={Images.sandWatch} />
+                <Image source={{uri:Images.sandWatch}} />
                 <Text style={styles.detailText}>{session.duration}</Text>
               </View>
 
               <View style={styles.detailItem}>
-                <Image source={Images.flower}/>
+                <Image source={{uri:Images.flower}}/>
                 <Text style={styles.detailText}>{session.category}</Text>
               </View>
 
               <View style={styles.detailItem}>
-                <Image source={Images.calendarIcon}/>
+                <Image source={{uri:Images.calendarIcon}}/>
                 <Text style={styles.detailText}>{session.date}</Text>
               </View>
             </View>

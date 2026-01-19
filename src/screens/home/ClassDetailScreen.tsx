@@ -1,3 +1,4 @@
+// ============ ClassDetailsScreen.tsx (Updated) ============
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -8,38 +9,17 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  Linking,
+  Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { ChevronLeft } from 'lucide-react-native';
 import GradientBackground from '../../components/GradientBackground';
 import { useClassDetailsViewModel } from '../../viewmodels/useClassDetailsViewModel';
+import { useJoinMeeting } from '../../viewmodels/useJoinMeeting'; // Import join hook
+import { getRegionDateFromISO, getUserRegion } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
-
-const MOCK_CLASS_DETAILS = {
-  _id: 'mock-class-id-123',
-  title: 'Power Yoga Flow',
-  description:
-    'A high-energy yoga session designed to improve flexibility, strength, and mindfulness.',
-  imageUrl:
-    'https://images.unsplash.com/photo-1552196563-55cd4e45efb3',
-  startTime: '2026-01-15T18:30:00.000Z',
-  duration: 60,
-  level: 'Intermediate',
-  rating: 4.8,
-  reviews: 214,
-  trainer: {
-    firstName: 'Aarav',
-    lastName: 'Sharma',
-  },
-  requirements: [
-    'Yoga Mat',
-    'Water Bottle',
-    'Comfortable Clothing',
-    'Stable Internet',
-  ],
-};
-
 
 type ClassDetailsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -52,105 +32,226 @@ interface ClassDetailsScreenProps {
   route: ClassDetailsRouteProp;
 }
 
+interface UserRegion {
+  timezone: string;
+  region: string;
+}
+
 const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   route,
   navigation,
 }) => {
-  // const classId = route?.params?.classId;
-  const classId = route?.params?.classId ?? route?.params?._id;
+  const classId = route?.params?.classId;
 
-  console.log('📌 route params:', route?.params);
-  console.log('📌 classId in screen:', classId);
-
-  const [isJoining, setIsJoining] = useState(false);
   const [classDetails, setClassDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
+  const [isJoinButtonDisabled, setIsJoinButtonDisabled] = useState(true);
 
   // Use class details view model
   const { getClassDetails } = useClassDetailsViewModel();
 
-  // Fetch class details when screen mounts
-  // useEffect(() => {
-  //   let isMounted = true;
-
-  //   const fetchDetails = async () => {
-  //     if (!classId) {
-  //       setError('Invalid class ID');
-  //       setIsLoading(false);
-  //       return;
-  //     }
-
-  //     setIsLoading(true);
-  //     setError(null);
-
-  //     try {
-  //       const details = await getClassDetails(classId);
-  //       console.log('details', details);
-
-  //       if (isMounted) {
-  //         if (details) {
-  //           setClassDetails(details);
-  //           setError(null);
-  //         } else {
-  //           setError('Class details not found');
-  //           setClassDetails(null);
-  //         }
-  //         setIsLoading(false);
-  //       }
-  //     } catch (err) {
-  //       if (isMounted) {
-  //         setError(
-  //           err instanceof Error ? err.message : 'Failed to load class details',
-  //         );
-  //         setClassDetails(null);
-  //         setIsLoading(false);
-  //       }
-  //     }
-  //   };
-
-  //   fetchDetails();
-
-  //   return () => {
-  //     isMounted = false;
-  //   };
-  // }, [classId, getClassDetails]);
+  // Use join meeting hook
+  const {
+    joinMeeting,
+    isJoining,
+    error: joinError,
+    clearError: clearJoinError,
+  } = useJoinMeeting();
 
   useEffect(() => {
-    // 🔥 TEMP STATIC MODE FOR UI CHECK
-    setIsLoading(true);
+    if (!classDetails?.startDate) {
+      setIsJoinButtonDisabled(true);
+      return;
+    }
 
-    setTimeout(() => {
-      setClassDetails(MOCK_CLASS_DETAILS);
-      setIsLoading(false);
-    }, 500);
+    const checkJoinButtonStatus = () => {
+      const meetingStartTime = new Date(classDetails.startDate).getTime();
+      const currentTime = Date.now();
+      const timeUntilStart = meetingStartTime - currentTime;
+      const fiveMinutesInMs = 5 * 60 * 1000;
+      
+      // Enable button if within 5 minutes or meeting has already started
+      if (timeUntilStart <= fiveMinutesInMs) {
+        setIsJoinButtonDisabled(false);
+      } else {
+        setIsJoinButtonDisabled(true);
+      }
+    };
+
+    checkJoinButtonStatus();
+
+    // Check every minute
+    const interval = setInterval(checkJoinButtonStatus, 60000);
+
+    return () => clearInterval(interval);
+  }, [classDetails?.startDate]);
+
+  // Initialize user region on mount
+  useEffect(() => {
+    try {
+      const region = getUserRegion();
+      setUserRegion(region);
+      console.log('✅ User Region Initialized:', region);
+    } catch (err) {
+      console.error('❌ Failed to get user region:', err);
+      // Fallback to UTC if region detection fails
+      setUserRegion({ timezone: 'UTC', region: 'APAC' });
+    }
   }, []);
 
-  const handleJoinClass = async () => {
-    setIsJoining(true);
-    try {
-      // Add join class API call here
-      // await joinClassAPI(classId);
+  useEffect(() => {
+    let isMounted = true;
 
-      // Navigate to next screen or show success message
-      setTimeout(() => {
-        setIsJoining(false);
-        // navigation.navigate('SessionRoom'); // or your next screen
-      }, 1000);
+    const fetchDetails = async () => {
+      if (!classId) {
+        setError('Invalid class ID');
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const details = await getClassDetails(classId);
+        console.log('Class details:', details);
+
+        if (isMounted) {
+          if (details) {
+            setClassDetails(details);
+            setError(null);
+          } else {
+            setError('Class details not found');
+            setClassDetails(null);
+          }
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(
+            err instanceof Error ? err.message : 'Failed to load class details',
+          );
+          setClassDetails(null);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [classId, getClassDetails]);
+
+  /**
+   * Handle join class button press
+   */
+  const handleJoinClass = async () => {
+    if (!classId) {
+      Alert.alert('Error', 'Class ID is missing');
+      return;
+    }
+
+    try {
+      clearJoinError();
+      const joinUrl = await joinMeeting(classId);
+
+      if (joinUrl) {
+        // For Zoom links, we use Linking.openURL which will open the default browser or Zoom app
+        try {
+          const canOpen = await Linking.canOpenURL(joinUrl);
+          if (canOpen) {
+            // For better UX, try to open with default handler (will open Zoom app if installed)
+            await Linking.openURL(joinUrl);
+          } else {
+            // Fallback: show alert with link
+            Alert.alert(
+              'Open Zoom Meeting',
+              'Would you like to open this meeting link?',
+              [
+                { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+                {
+                  text: 'Open',
+                  onPress: () => {
+                    Linking.openURL(joinUrl).catch(err => {
+                      console.error('Error opening URL:', err);
+                      Alert.alert('Error', 'Unable to open meeting link');
+                    });
+                  },
+                },
+              ],
+            );
+          }
+        } catch (err) {
+          console.error('Error opening Zoom link:', err);
+          Alert.alert(
+            'Error',
+            'Unable to open meeting link. Please try again.',
+          );
+        }
+      }
     } catch (err) {
-      setIsJoining(false);
       console.error('Error joining class:', err);
+      Alert.alert(
+        'Join Failed',
+        joinError || 'Failed to join the meeting. Please try again.',
+      );
     }
   };
 
-  const formatTime = (dateString?: string) => {
-    if (!dateString) return '--:--';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
+  const getFormattedDateTime = () => {
+    if (!classDetails || !userRegion) {
+      return { date: '--', time: '--:--' };
+    }
+
+    const regionInfo = classDetails?.regions?.find(
+      (r: any) => r.region === userRegion.region,
+    );
+
+    const displayRegionInfo = regionInfo || classDetails?.regions?.[0];
+
+    const formattedTime = displayRegionInfo?.localTime || '--:--';
+    const timezone = displayRegionInfo?.timezone || userRegion?.timezone;
+
+    const formattedDate = getRegionDateFromISO(
+      classDetails.regionTime,
+      timezone,
+    );
+
+    return {
+      date: formattedDate,
+      time: formattedTime,
+    };
+  };
+
+  const { date, time } = getFormattedDateTime();
+
+  const getDisplayedDescription = () => {
+    const description =
+      classDetails.description ||
+      'High-energy dance workout to boost your mood and turn calories...';
+
+    const MAX_LINES = 3;
+    const CHARS_PER_LINE = 50;
+    const MAX_CHARS = MAX_LINES * CHARS_PER_LINE;
+
+    if (isDescriptionExpanded || description.length <= MAX_CHARS) {
+      return description;
+    }
+
+    return description.substring(0, MAX_CHARS) + '...';
+  };
+
+  const shouldShowReadMore = () => {
+    const description =
+      classDetails.description ||
+      'High-energy dance workout to boost your mood and turn calories...';
+    const MAX_CHARS = 150;
+    return description.length > MAX_CHARS;
   };
 
   if (isLoading) {
@@ -231,7 +332,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
           <View style={styles.imageContainer}>
             {classDetails.imageUrl ? (
               <Image
-                source={{ uri: classDetails.imageUrl }}
+                source={classDetails?.imageUrl}
                 style={styles.classImage}
                 resizeMode="cover"
               />
@@ -248,24 +349,12 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
               <View style={styles.titleLeft}>
                 <Text style={styles.className}>{classDetails.title}</Text>
                 <Text style={styles.trainerText}>
-                  Trainer: {classDetails.trainer?.firstName}{' '}
-                  {classDetails.trainer?.lastName}
+                  Trainer: {classDetails.trainer?.name}{' '}
+                 
                 </Text>
-              </View>
-
-              <View style={styles.ratingContainer}>
-                {/* Row 1: Star + Rating */}
-                <View style={styles.ratingRow}>
-                  <Text style={styles.ratingIcon}>⭐</Text>
-                  <Text style={styles.ratingValue}>
-                    {classDetails.rating || '4.0'}
-                  </Text>
+                <View style={{ marginTop: 3 }}>
+                  <Text style={styles.trainerText}>({date})</Text>
                 </View>
-
-                {/* Row 2: Reviews */}
-                <Text style={styles.reviewsText}>
-                  ({classDetails.reviews || 120} reviews)
-                </Text>
               </View>
             </View>
           </View>
@@ -277,9 +366,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
                 <Text style={styles.detailIconEmoji}>⏰</Text>
               </View>
               <Text style={styles.detailLabel}>Time</Text>
-              <Text style={styles.detailValue}>
-                {formatTime(classDetails.startTime)}
-              </Text>
+              <Text style={styles.detailValue}>{time}</Text>
             </View>
 
             <View style={styles.detailItem}>
@@ -306,29 +393,37 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
           {/* About Class Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>About class</Text>
-            <Text style={styles.aboutText}>
-              {classDetails.description ||
-                'High-energy dance workout to boost your mood and turn calories...'}
-            </Text>
-            <TouchableOpacity>
-              <Text style={styles.readMoreText}>Read more</Text>
-            </TouchableOpacity>
+            <Text style={styles.aboutText}>{getDisplayedDescription()}</Text>
+            {shouldShowReadMore() && (
+              <TouchableOpacity
+                onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+              >
+                <Text style={styles.readMoreText}>
+                  {isDescriptionExpanded ? 'Read less' : 'Read more'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* What You'll Need Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>What you'll need</Text>
             <View style={styles.needsCard}>
-              {classDetails.requirements && classDetails.requirements.length > 0 ? (
-                classDetails.requirements.map((requirement: any, index: number) => (
-                  <Text key={index} style={styles.needItem}>
-                    • {requirement}
-                  </Text>
-                ))
+              {classDetails.requirements &&
+              classDetails.requirements.length > 0 ? (
+                classDetails.requirements.map(
+                  (requirement: any, index: number) => (
+                    <Text key={index} style={styles.needItem}>
+                      • {requirement}
+                    </Text>
+                  ),
+                )
               ) : (
                 <>
                   <Text style={styles.needItem}>• Stable Mind</Text>
-                  <Text style={styles.needItem}>• Good Internet Connection</Text>
+                  <Text style={styles.needItem}>
+                    • Good Internet Connection
+                  </Text>
                   <Text style={styles.needItem}>• Water Bottle</Text>
                   <Text style={styles.needItem}>• Sneakers</Text>
                 </>
@@ -343,9 +438,9 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
         {/* Join Class Button - Fixed at Bottom */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.joinButton, isJoining && styles.joinButtonDisabled]}
+            style={[styles.joinButton, (isJoining || isJoinButtonDisabled) && styles.joinButtonDisabled]}
             onPress={handleJoinClass}
-            disabled={isJoining}
+            disabled={isJoining || isJoinButtonDisabled}
           >
             {isJoining ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
@@ -508,33 +603,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   trainerText: {
-    fontFamily: 'Satoshi-Medium',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 19,
-    color: 'rgba(0, 0, 0, 0.6)',
-  },
-  ratingContainer: {
-    alignItems: 'flex-start',
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingIcon: {
-    fontSize: 17,
-    marginBottom: 4,
-    marginRight: 1,
-  },
-  ratingValue: {
-    fontFamily: 'Satoshi-Bold',
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 19,
-    color: '#000000',
-    marginBottom: 2,
-  },
-  reviewsText: {
     fontFamily: 'Satoshi-Medium',
     fontSize: 14,
     fontWeight: '500',

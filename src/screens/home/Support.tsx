@@ -20,7 +20,7 @@ interface ContactOption {
   id: number;
   title: string;
   subtitle: string;
-  icon: ImageSourcePropType;
+  icon: string;
 }
 
 const SupportScreen = ({ navigation }: { navigation: any }) => {
@@ -70,13 +70,13 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
             <View key={option.id}>
               <TouchableOpacity style={styles.contactItem}>
                 <View style={styles.contactIconContainer}>
-                  <Image source={option.icon} />
+                  <Image source={{uri:option.icon}} />
                 </View>
                 <View style={styles.contactTextContainer}>
                   <Text style={styles.contactTitle}>{option.title}</Text>
                   <Text style={styles.contactSubtitle}>{option.subtitle}</Text>
                 </View>
-                <Image source={Images.rightIcon} />
+                <Image source={{uri:Images.rightIcon}} />
               </TouchableOpacity>
               {index < contactOptions.length - 1 && (
                 <View style={styles.divider} />
@@ -102,7 +102,7 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
           <View style={styles.faqList}>
             {faqItems.map((item) => (
               <View key={item.id} style={styles.faqCard}>
-                <Image source={Images.questionIcon} style={styles.faqIcon} />
+                <Image source={{uri:Images.questionIcon}} style={styles.faqIcon} />
                 <View style={styles.faqContent}>
                   <Text style={styles.faqQuestion}>{item.question}</Text>
                   <Text style={styles.faqAnswer}>{item.answer}</Text>
