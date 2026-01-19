@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  ImageSourcePropType,
+  ActivityIndicator,
 } from 'react-native';
 import {
   Star,
@@ -15,70 +15,72 @@ import {
   ArrowLeft,
 } from 'lucide-react-native';
 import { Images } from '../../assets/images';
+import { usePastSessionsViewModel } from '../../viewmodels/usePastSessionsViewModel';
 
-interface SessionHistoryItem {
-  id: number;
-  title: string;
-  instructor: string;
-  duration: string;
-  category: string;
-  date: string;
-  feeling: string;
-  rating: number;
-  image: string;
-}
+const ITEMS_PER_PAGE = 10;
 
 const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
-  // Toggle this to see different states
-  // const hasCompletedSessions = true; // Set to false to see empty state
-  const hasCompletedSessions = false; // Set to false to see empty state
+  // Use usePastSessionsViewModel
+  const { pastSessions, isLoading: isInitialLoading, fetchSessions } = usePastSessionsViewModel();
 
-  const sessionHistory: SessionHistoryItem[] = [
-    {
-      id: 1,
-      title: 'Morning Yoga Flow',
-      instructor: 'Sarah Chen',
-      duration: '50 min',
-      category: 'Yoga',
-      date: 'Fri, Jan 9',
-      feeling: 'Strong',
-      rating: 4.0,
-      image: Images.sessionHistory,
-    },
-    {
-      id: 2,
-      title: 'Morning Yoga Flow',
-      instructor: 'Sarah Chen',
-      duration: '50 min',
-      category: 'Yoga',
-      date: 'Fri, Jan 9',
-      feeling: 'Strong',
-      rating: 4.0,
-      image: Images.sessionHistory,
-    },
-    {
-      id: 3,
-      title: 'Morning Yoga Flow',
-      instructor: 'Sarah Chen',
-      duration: '50 min',
-      category: 'Yoga',
-      date: 'Fri, Jan 9',
-      feeling: 'Strong',
-      rating: 4.0,
-      image: Images.sessionHistory,
-    },
-    {
-      id: 4,
-      title: 'Morning Yoga Flow',
-      instructor: 'Sarah Chen',
-      duration: '50 min',
-      category: 'Yoga',
-      date: 'Fri, Jan 9',
-      feeling: 'Strong',
-      rating: 4.0,
-      image: Images.sessionHistory,
-    },
-  ];
+  const [displayedItems, setDisplayedItems] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreItems, setHasMoreItems] = useState(true);
+
+  // Fetch initial data on mount
+  useEffect(() => {
+    fetchSessions(0, ITEMS_PER_PAGE);
+  }, [fetchSessions]);
+
+  // Initialize displayed items when pastSessions updates
+  useEffect(() => {
+    if (pastSessions.length > 0) {
+      const initialItems = pastSessions.slice(0, ITEMS_PER_PAGE);
+      setDisplayedItems(initialItems);
+      setCurrentPage(1);
+      setHasMoreItems(pastSessions.length > ITEMS_PER_PAGE);
+    }
+  }, [pastSessions]);
+
+  // Load more items on scroll
+  const loadMoreItems = useCallback(() => {
+    if (isLoadingMore || !hasMoreItems) return;
+
+    setIsLoadingMore(true);
+
+    setTimeout(() => {
+      const startIndex = currentPage * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      const newItems = pastSessions.slice(startIndex, endIndex);
+
+      if (newItems.length > 0) {
+        setDisplayedItems(prev => [...prev, ...newItems]);
+        setCurrentPage(prev => prev + 1);
+        setHasMoreItems(endIndex < pastSessions.length);
+      } else {
+        setHasMoreItems(false);
+      }
+
+      setIsLoadingMore(false);
+    }, 300);
+  }, [currentPage, isLoadingMore, hasMoreItems, pastSessions]);
+
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 20;
+
+    if (
+      layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - paddingToBottom
+    ) {
+      loadMoreItems();
+    }
+  };
+
+  const handleSessionPress = (sessionId: string) => {
+    navigation.navigate('SessionDetails', { sessionId });
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyStateContainer}>
@@ -89,7 +91,10 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
       <Text style={styles.emptyStateDescription}>
         Your completed classes will appear here
       </Text>
-      <TouchableOpacity style={styles.exploreButton}>
+      <TouchableOpacity 
+        style={styles.exploreButton}
+        onPress={() => navigation.navigate('Home')}
+      >
         <Text style={styles.exploreButtonText}>Explore Classes</Text>
       </TouchableOpacity>
     </View>
@@ -97,12 +102,20 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
 
   const renderSessionList = () => (
     <View style={styles.sessionListContainer}>
-      {sessionHistory.map((session) => (
-        <TouchableOpacity key={session.id} style={styles.sessionCard}>
+      {displayedItems.map((session) => (
+        <TouchableOpacity 
+          key={session._id} 
+          style={styles.sessionCard}
+          onPress={() => handleSessionPress(session._id)}
+        >
           {/* Session Image */}
           <View style={styles.sessionImageContainer}>
             <Image
-              source={{uri:session.image}}
+              source={
+                session.recordingUrl 
+                  ? { uri: session.recordingUrl }
+                  : require('../../assets/images/home/session-image.png')
+              }
               style={styles.sessionImage}
               resizeMode="cover"
             />
@@ -112,42 +125,62 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
           <View style={styles.sessionContent}>
             {/* Title and Instructor */}
             <Text style={styles.sessionTitle}>{session.title}</Text>
-            <Text style={styles.sessionInstructor}>{session.instructor}</Text>
+            <Text style={styles.sessionInstructor}>
+              {session.trainer?.name || 'Unknown Trainer'}
+            </Text>
 
             {/* Session Details */}
             <View style={styles.sessionDetails}>
               <View style={styles.detailItem}>
-                <Image source={{uri:Images.sandWatch}} />
-                <Text style={styles.detailText}>{session.duration}</Text>
+                <Image source={{ uri: Images.sandWatch }} />
+                <Text style={styles.detailText}>{session.duration} min</Text>
               </View>
 
               <View style={styles.detailItem}>
-                <Image source={{uri:Images.flower}}/>
-                <Text style={styles.detailText}>{session.category}</Text>
+                <Image source={{ uri: Images.flower }} />
+                <Text style={styles.detailText}>{session.service?.title}</Text>
               </View>
 
               <View style={styles.detailItem}>
-                <Image source={{uri:Images.calendarIcon}}/>
-                <Text style={styles.detailText}>{session.date}</Text>
+                <Image source={{ uri: Images.calendarIcon }} />
+                <Text style={styles.detailText}>
+                  {new Date(session.localTime).toLocaleDateString()}
+                </Text>
               </View>
             </View>
 
             {/* Divider */}
-            <View style={styles.sessionDivider} />
+            {/* <View style={styles.sessionDivider} /> */}
 
-            {/* Footer */}
-            <View style={styles.sessionFooter}>
+            {/* <View style={styles.sessionFooter}>
               <Text style={styles.feelingText}>
-                You felt: <Text style={styles.feelingValue}>{session.feeling}</Text>
+                Attended: <Text style={styles.feelingValue}>
+                  {session?.attendance?.totalDuration || 0} min
+                </Text>
               </Text>
               <View style={styles.ratingContainer}>
                 <Star size={17} color="#F59E0B" fill="#F59E0B" strokeWidth={2} />
-                <Text style={styles.ratingText}>{session.rating}</Text>
+                <Text style={styles.ratingText}>{session.rating || '—'}</Text>
               </View>
-            </View>
+            </View> */}
           </View>
         </TouchableOpacity>
       ))}
+
+      {/* Loading More Indicator */}
+      {isLoadingMore && (
+        <View style={styles.loadingMoreContainer}>
+          <ActivityIndicator size="small" color="#B95E82" />
+          <Text style={styles.loadingMoreText}>Loading more sessions...</Text>
+        </View>
+      )}
+
+      {/* End of List Message */}
+      {!hasMoreItems && displayedItems.length > 0 && (
+        <View style={styles.endOfListContainer}>
+          <Text style={styles.endOfListText}>No more sessions to load</Text>
+        </View>
+      )}
     </View>
   );
 
@@ -169,8 +202,19 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
-          {hasCompletedSessions ? renderSessionList() : renderEmptyState()}
+          {isInitialLoading && displayedItems.length === 0 ? (
+            <View style={styles.initialLoadingContainer}>
+              <ActivityIndicator size="large" color="#B95E82" />
+              <Text style={styles.loadingText}>Loading sessions...</Text>
+            </View>
+          ) : displayedItems.length === 0 ? (
+            renderEmptyState()
+          ) : (
+            renderSessionList()
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -263,6 +307,7 @@ const styles = StyleSheet.create({
   // Session List
   sessionListContainer: {
     paddingHorizontal: 16,
+    paddingBottom: 20,
   },
   sessionCard: {
     flexDirection: 'row',
@@ -360,6 +405,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     color: '#494949',
+  },
+  initialLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#494949',
+    fontFamily: 'Satoshi',
+  },
+  loadingMoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  loadingMoreText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#494949',
+    fontFamily: 'Satoshi',
+  },
+  endOfListContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  endOfListText: {
+    fontSize: 14,
+    color: '#959595',
+    fontFamily: 'Satoshi',
   },
 });
 

@@ -11,6 +11,7 @@ import GradientBackground from '../../components/GradientBackground';
 import { FontFamilies } from '../../constants/fonts';
 import { useSignup } from '../../store/SignupContext';
 
+
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
 type FormData = {

@@ -19,6 +19,7 @@ import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 import { useEffect } from 'react';
 import { Alert } from 'react-native';
 import { removeAuthToken } from '../../services/authService';
+
 interface StatCard {
   id: number;
   value: string;
@@ -31,7 +32,9 @@ interface ProgressItem {
   id: number;
   title: string;
   percentage: number;
-  progress: number; // 0-1 value for progress bar
+  progress: number;
+  current: number;
+  total: number;
 }
 
 interface SettingItem {
@@ -59,6 +62,41 @@ const ProfileScreen = () => {
   useEffect(() => {
     loadProfile();
   }, []);
+
+  // Calculate progress items dynamically from classCredits
+const getProgressItems = (): ProgressItem[] => {
+  if (!user?.classCredits) return [];
+
+  // Get all class types dynamically from classCredits
+  const classNames = Object.keys(user.classCredits).filter(key => key !== '_id');
+  const items: ProgressItem[] = [];
+
+  classNames.forEach((className, index) => {
+    const remainingCredits = user.classCredits[className] ?? 0;
+    const totalCredits = user.overAllclassCredits?.[className] ?? 0;
+    
+    // Calculate used credits (total - remaining)
+    const usedCredits = totalCredits - remainingCredits;
+    
+    // Calculate percentage: (used / total) * 100
+    const percentage = totalCredits > 0 
+      ? Math.round((usedCredits / totalCredits) * 100)
+      : 0;
+
+    items.push({
+      id: index + 1,
+      title: className.charAt(0).toUpperCase() + className.slice(1),
+      percentage,
+      progress: totalCredits > 0 ? usedCredits / totalCredits : 0,
+      current: usedCredits,
+      total: totalCredits, 
+    });
+  });
+
+  return items;
+};
+
+  const progressItems = getProgressItems();
 
   const statCards: StatCard[] = [
     {
@@ -91,12 +129,6 @@ const ProfileScreen = () => {
     },
   ];
 
-  const progressItems: ProgressItem[] = [
-    { id: 1, title: 'Yoga', percentage: 80, progress: 0.8 },
-    { id: 2, title: 'Fitness', percentage: 50, progress: 0.5 },
-    { id: 3, title: 'Zumba', percentage: 40, progress: 0.4 },
-  ];
-
   const settingItems: SettingItem[] = [
     {
       id: 1,
@@ -114,14 +146,6 @@ const ProfileScreen = () => {
       iconBgColor: '#FFE8E8',
       screen: 'SessionHistory',
     },
-    // {
-    //   id: 3,
-    //   title: 'Timezone',
-    //   subtitle: 'Asia/Kolkata',
-    //   icon: ProfileImages.timezonIcon,
-    //   iconBgColor: '#FFE8E8',
-    //   screen: '',
-    // },
     {
       id: 4,
       title: 'Support',
@@ -180,13 +204,6 @@ const ProfileScreen = () => {
 
             <Text style={styles.headerTitle}>Profile</Text>
           </View>
-
-          {/* <TouchableOpacity style={styles.settingsButton}>
-            <Image
-              style={styles.settingsIcon}
-              source={ProfileImages.SettingsIcon}
-            />
-          </TouchableOpacity> */}
         </View>
 
         {/* Profile Card */}
@@ -234,7 +251,6 @@ const ProfileScreen = () => {
               ]}
             >
               <Image source={ProfileImages.sandWAtch} style={styles.statIcon} />
-              {/* <Text style={styles.statValue}>{stat.value}</Text> */}
               <Text style={[ styles.statValue, stat.label === 'Current Plan' && styles.planStatValue,]}>
                 {stat.value}
               </Text>
@@ -253,9 +269,14 @@ const ProfileScreen = () => {
             <View key={item.id} style={styles.progressCard}>
               <View style={styles.progressHeader}>
                 <Text style={styles.progressTitle}>{item.title}</Text>
-                <Text style={styles.progressPercentage}>
-                  {item.percentage}%
-                </Text>
+                <View style={styles.progressInfo}>
+                  <Text style={styles.progressCredits}>
+                    {item.current}/{item.total}
+                  </Text>
+                  <Text style={styles.progressPercentage}>
+                    {item.percentage}%
+                  </Text>
+                </View>
               </View>
               <View style={styles.progressBarContainer}>
                 <LinearGradient
@@ -323,7 +344,6 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -370,17 +390,6 @@ const styles = StyleSheet.create({
     color: '#494949',
     marginLeft: 15,
   },
-  settingsButton: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingsIcon: {
-    width: 20,
-    height: 20,
-  },
-  // Profile Card
   profileCard: {
     marginHorizontal: 16,
     marginBottom: 30,
@@ -391,7 +400,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    // paddingHorizontal: 21,
   },
   profileInfo: {
     flex: 1,
@@ -445,7 +453,6 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
   },
-  // Stats Grid
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -493,7 +500,6 @@ const styles = StyleSheet.create({
     color: '#000000',
     textAlign: 'center',
   },
-  // Section Headers
   sectionHeader: {
     paddingHorizontal: 16,
     marginBottom: 20,
@@ -505,13 +511,12 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#494949',
   },
-  // Progress List
   progressList: {
     paddingHorizontal: 16,
     marginBottom: 40,
   },
   progressCard: {
-    height: 84,
+    height: 92,
     backgroundColor: '#FFE8E8',
     borderWidth: 1,
     borderColor: '#ECECEC',
@@ -519,6 +524,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 18,
     marginBottom: 12,
+    
   },
   progressHeader: {
     flexDirection: 'row',
@@ -533,6 +539,16 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     color: '#000000',
   },
+  progressInfo: {
+    alignItems: 'flex-end',
+  },
+  progressCredits: {
+    fontFamily: 'Satoshi-Medium',
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#000000',
+  },
   progressPercentage: {
     fontFamily: 'Satoshi-Medium',
     fontWeight: '500',
@@ -545,59 +561,17 @@ const styles = StyleSheet.create({
     height: 9,
     backgroundColor: '#C9C9C9',
     borderRadius: 39.12,
-    overflow: 'hidden',
+    overflow: 'hidden'
+    
   },
   progressBar: {
     height: '100%',
     borderRadius: 39.12,
   },
-  // Session List
   sessionList: {
     paddingHorizontal: 16,
     marginBottom: 46,
   },
-  sessionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 88,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#ECECEC',
-    borderRadius: 8,
-    paddingHorizontal: 9,
-    paddingVertical: 8,
-    marginBottom: 12,
-  },
-  sessionImageContainer: {
-    width: 81,
-    height: 71,
-    borderRadius: 8,
-    backgroundColor: '#FED4D4',
-    overflow: 'hidden',
-    marginRight: 13,
-  },
-  sessionImage: {
-    width: '100%',
-    height: '100%',
-  },
-  sessionInfo: {
-    flex: 1,
-  },
-  sessionTitle: {
-    fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
-    fontSize: 20,
-    lineHeight: 22,
-    color: '#494949',
-    marginBottom: 6,
-  },
-  sessionDuration: {
-    fontFamily: 'Satoshi-Regular',
-    fontSize: 14,
-    lineHeight: 19,
-    color: '#050505',
-  },
-  // Settings Container
   settingsContainer: {
     marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
@@ -655,7 +629,6 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 20,
   },
-  // Logout Button
   logoutButton: {
     marginHorizontal: 22,
     height: 54.3,

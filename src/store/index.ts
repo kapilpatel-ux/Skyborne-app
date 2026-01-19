@@ -6,6 +6,8 @@ import homeReducer from  './homeSlice';
 import profileReducer from './profileSlice';
 import weeklyScheduleReducer from  './weeklyScheduleSlice';
 import billingReducer from  './billingslice';
+import pastSessionReducer from  './pastSessionSlice';
+
 
 
 
@@ -30,7 +32,8 @@ const rootReducer = combineReducers({
   home:homeReducer,
   profile: profileReducer,
   weeklySchedule:weeklyScheduleReducer,
-  billing:billingReducer
+  billing:billingReducer,
+  pastSessions:pastSessionReducer
 });
 
 const persistConfig = {
