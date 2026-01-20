@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform  } from 'react-native';
 import { Formik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import TextInput from '../../components/TextInput';
@@ -89,7 +89,10 @@ export default function SignupScreen({ navigation }: Props) {
 
   return (
     <GradientBackground>
-      <View style={styles.screen}>
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         {/* APP BAR */}
         <View style={styles.appBar}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -115,8 +118,7 @@ export default function SignupScreen({ navigation }: Props) {
 
         {/* SCROLLABLE CONTENT */}
         <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -246,7 +248,7 @@ export default function SignupScreen({ navigation }: Props) {
             </Formik>
           </View>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </GradientBackground>
   );
 }
@@ -289,9 +291,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 40,
   },
   container: {
     paddingHorizontal: 24,
