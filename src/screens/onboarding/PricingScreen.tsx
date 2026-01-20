@@ -84,6 +84,7 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
     if (user?.id) {
       console.log('🔌 Initializing Socket.io for user:', user.id);
        const apiUrl = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
+
       SocketService.connect(apiUrl, user.id);
     }
 

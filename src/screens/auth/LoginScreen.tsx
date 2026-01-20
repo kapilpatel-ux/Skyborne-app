@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
 import { Formik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import TextInput from '../../components/TextInput';
@@ -11,6 +11,14 @@ import GradientBackground from '../../components/GradientBackground';
 import { FontFamilies } from '../../constants/fonts';
 import Toast from 'react-native-toast-message';
 import { EyeIcon, EyeOffIcon } from '../../icons/FormIcons';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
+import { useDispatch } from 'react-redux';
+import { IconImages } from '../../assets/icons';
+import { setUser } from '../../store/authSlice';
+import { socialLoginService } from '../../services/authService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -33,11 +41,143 @@ const validationSchema = Yup.object().shape({
     .min(8, 'Password must be at least 8 characters long'),
 });
 
-
 export default function LoginScreen({ navigation }: Props) {
   const { login, isLoading } = useAuthViewModel();
+  const dispatch = useDispatch<any>();
   const [loginError, setLoginError] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    configureGoogleSignIn();
+  }, []);
+
+  const configureGoogleSignIn = () => {
+    try {
+      const webClientId = process.env.GOOGLE_KEY || '';
+      console.log('Configuring with Web Client ID:', webClientId);
+
+      GoogleSignin.configure({
+        webClientId: webClientId,
+        offlineAccess: false,
+      });
+      console.log('Google Sign-In configured successfully');
+    } catch (error) {
+      console.error('Configuration error:', error);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      console.log('Starting Google Sign-In...');
+
+      if (Platform.OS === 'android') {
+        await GoogleSignin.hasPlayServices({
+          showPlayServicesUpdateDialog: true,
+        });
+      }
+
+      const userInfo: any = await GoogleSignin.signIn();
+      console.log('Google Sign-In successful:', userInfo);
+
+      const googleId = userInfo?.data?.user.id;
+      const email = userInfo?.data?.user.email;
+      const firstName = userInfo?.data?.user.givenName || '';
+      const lastName = userInfo?.data?.user.familyName || '';
+
+      // Call social-login API
+      const payload = {
+        provider: 'google',
+        email: email,
+        googleId: googleId,
+      };
+
+      console.log('Calling social-login with payload:', payload);
+
+      const response = await socialLoginService(payload);
+      console.log('Social login response:', response);
+
+      if (response.success) {
+        const { user, accessToken, refreshToken } = response.data;
+
+        // Store tokens and user data
+        await dispatch(
+          setUser({
+            ...user,
+            firstName,
+            lastName,
+          })
+        );
+
+        // Update auth state with tokens
+        dispatch({
+          type: 'auth/loginFulfilled',
+          payload: {
+            data: {
+              user: { ...user, firstName, lastName },
+              accessToken,
+              refreshToken,
+            },
+          },
+        });
+
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: `Signed in as ${email}`,
+          position: 'top',
+          visibilityTime: 2500,
+        });
+
+        navigation.navigate('Home');
+      } else {
+        const errorMsg = response.message || 'Social login failed';
+        setLoginError(errorMsg);
+        Toast.show({
+          type: 'error',
+          text1: 'Login Failed',
+          text2: errorMsg,
+          position: 'top',
+          visibilityTime: 3000,
+        });
+      }
+    } catch (error: any) {
+      console.error('Google Sign-In Error:', error);
+
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('User cancelled the sign-in');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        Toast.show({
+          type: 'info',
+          text1: 'In Progress',
+          text2: 'Sign-in is already in progress',
+        });
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Google Play Services not available or outdated',
+        });
+      } else if (error.code === '12501') {
+        Toast.show({
+          type: 'error',
+          text1: 'Configuration Error',
+          text2: 'Please check Web Client ID and SHA-1 fingerprint',
+        });
+      } else {
+        const errorMsg = error.message || 'Unknown error occurred';
+        setLoginError(errorMsg);
+        Toast.show({
+          type: 'error',
+          text1: 'Sign-in Failed',
+          text2: errorMsg,
+        });
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const initialValues: FormData = {
     email: '',
@@ -156,11 +296,11 @@ export default function LoginScreen({ navigation }: Props) {
                     value={values.email}
                     onChangeText={(text) => {
                       handleChange('email')(text);
-                      setLoginError(''); // Clear error when user types
+                      setLoginError('');
                     }}
                     onBlur={handleBlur('email')}
                     placeholder="Enter email"
-                    editable={!isSubmitting && !isLoading}
+                    editable={!isSubmitting && !isLoading && !googleLoading}
                   />
                   {touched.email && errors.email && (
                     <Text style={styles.errorText}>{errors.email}</Text>
@@ -174,11 +314,11 @@ export default function LoginScreen({ navigation }: Props) {
                       value={values.password}
                       onChangeText={(text) => {
                         handleChange('password')(text);
-                        setLoginError(''); // Clear error when user types
+                        setLoginError('');
                       }}
                       onBlur={handleBlur('password')}
                       placeholder="Enter password"
-                      editable={!isSubmitting && !isLoading}
+                      editable={!isSubmitting && !isLoading && !googleLoading}
                     />
                     <TouchableOpacity
                       style={styles.eyeIcon}
@@ -196,23 +336,34 @@ export default function LoginScreen({ navigation }: Props) {
                     <Text style={styles.errorText}>{errors.password}</Text>
                   )}
 
-                  {/* Forgot Password */}
-                  {/* <TouchableOpacity
-                    style={styles.forgotPasswordContainer}
-                    onPress={() => {
-                      // Navigate to forgot password screen when implemented
-                      Alert.alert('Forgot Password', 'This feature will be available soon!');
-                    }}
-                  >
-                    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                  </TouchableOpacity> */}
-
                   {/* CTA */}
                   <Button
                     title={isSubmitting || isLoading ? 'Logging in...' : 'Login'}
                     onPress={() => handleSubmit()}
-                    disabled={isSubmitting || isLoading}
+                    disabled={isSubmitting || isLoading || googleLoading}
                   />
+
+                  {/* Divider */}
+                  <View style={styles.dividerContainer}>
+                    <View style={styles.divider} />
+                    <Text style={styles.dividerText}>Or</Text>
+                    <View style={styles.divider} />
+                  </View>
+
+                  {/* Google Sign-In Button */}
+                  <TouchableOpacity
+                    style={styles.googleButton}
+                    onPress={handleGoogleSignIn}
+                    disabled={googleLoading || isSubmitting || isLoading}
+                  >
+                    <Image
+                      source={IconImages?.google}
+                      style={styles.googleButtonIcon}
+                    />
+                    <Text style={styles.googleButtonText}>
+                      {googleLoading ? 'Signing in...' : 'Continue with Google'}
+                    </Text>
+                  </TouchableOpacity>
 
                   {/* Signup Link */}
                   <View style={styles.signupContainer}>
@@ -325,22 +476,49 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -11 }],
     zIndex: 10,
   },
-  forgotPasswordContainer: {
-    alignSelf: 'flex-end',
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    fontSize: 13,
-    color: '#B95E82',
-    fontWeight: '500',
-    fontFamily: FontFamilies.SatoshiMedium,
-  },
   errorText: {
     color: '#ef4444',
     fontSize: 12,
     marginTop: 4,
     fontFamily: FontFamilies.SatoshiRegular,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#D7D7D7',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 14,
+    color: '#999999',
+    fontFamily: FontFamilies.SatoshiRegular,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 54,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: '#D7D7D7',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  googleButtonIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 12,
+    resizeMode: 'contain',
+  },
+  googleButtonText: {
+    fontFamily: FontFamilies.SatoshiMedium,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#494949',
   },
   signupContainer: {
     flexDirection: 'row',

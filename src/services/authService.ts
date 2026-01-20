@@ -2,10 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 import { SignupPayload } from '../viewmodels/useAuthViewModel';
 
-// const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
-  const API_BASE_URL = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
-
-
+// const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
 
 
 export interface SignupResponse {
@@ -29,6 +27,25 @@ export interface SignupResponse {
 }
 
 export interface LoginResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: {
+      id: string;
+      email: string;
+      phone?: string;
+      firstName?: string;
+      lastName?: string;
+      country?: string;
+      timezone?: string;
+      [key: string]: any;
+    };
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+export interface SocialLoginResponse {
   success: boolean;
   message: string;
   data: {
@@ -80,11 +97,7 @@ class AuthService {
    */
   async signupService(payload: SignupPayload): Promise<SignupResponse> {
     try {
-      console.log(
-  'API payload typeof:',
-  typeof payload,
-  payload
-);
+      console.log('Signup payload:', payload);
 
       const response = await this.api.post('/signup', payload);
       
@@ -132,6 +145,37 @@ class AuthService {
         error.response?.data?.message ||
         error.message ||
         'Login failed';
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Social Login - Login with Google, Apple, or other providers
+   */
+  async socialLoginService(payload: {
+    provider: string;
+    email: string;
+    googleId?: string;
+  }): Promise<SocialLoginResponse> {
+    try {
+      console.log('Social login payload:', payload);
+
+      const response = await this.api.post('/social-login', payload);
+      
+      if (response.data?.success && response.data?.data?.accessToken) {
+        // Store tokens in AsyncStorage
+        await this.setAuthToken(response.data.data.accessToken);
+        if (response.data.data.refreshToken) {
+          await this.setRefreshToken(response.data.data.refreshToken);
+        }
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Social login failed';
       throw new Error(errorMessage);
     }
   }
@@ -239,6 +283,12 @@ export const signupService = (payload: SignupPayload) =>
 
 export const loginService = (payload: { email: string; password: string }) =>
   authService.loginService(payload);
+
+export const socialLoginService = (payload: {
+  provider: string;
+  email: string;
+  googleId?: string;
+}) => authService.socialLoginService(payload);
 
 export const sendOtpService = (payload: { email?: string; phone?: string }) =>
   authService.sendOtpService(payload);
