@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   },
   authButtonsContainer: {
     width: '85%',
-    marginBottom: 57,
+    marginBottom: 5,
   },
   authButton: {
     flexDirection: 'row',

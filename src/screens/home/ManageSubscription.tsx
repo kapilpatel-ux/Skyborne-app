@@ -290,7 +290,8 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
             <View key={option.id}>
               <TouchableOpacity style={styles.settingItem} onPress={()=>navigation.navigate(option?.page)}>
                 <View style={styles.settingIconContainer}>
-                  <Image source={option.icon}/>
+                  {/* <Image source={option.icon}/> */}
+                  <Image source={option.icon} style={styles.settingIcon} />
                 </View>
                 <Text style={styles.settingTitle}>{option.title}</Text>
                 <Image source={SubscriptionImages.rightIcon}/>
@@ -540,6 +541,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
+  },
+  settingIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
   },
   settingTitle: {
     flex: 1,

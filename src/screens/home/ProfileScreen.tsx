@@ -319,7 +319,7 @@ const ProfileScreen = () => {
                   <Text style={styles.settingTitle}>{item.title}</Text>
                   <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
                 </View>
-                <Image source={ProfileImages.ArrowIcon2} />
+                <Image source={ProfileImages.ArrowIcon2} style={styles.rightArrow} />
               </TouchableOpacity>
               {index < settingItems.length - 1 && (
                 <View style={styles.divider} />
@@ -617,6 +617,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: 'rgba(5, 5, 5, 0.5)',
+  },
+  rightArrow: {
+    width: 14,
+    height: 14,
+    resizeMode: 'contain',
+    opacity: 0.6,
   },
   settingArrow: {
     width: 17.52,
