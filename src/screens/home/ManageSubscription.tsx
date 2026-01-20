@@ -14,7 +14,12 @@ import { SubscriptionImages } from '../../assets/images/subscriptions';
 import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 import { useState, useEffect } from 'react';
 import { useBillingViewModel } from '../../viewmodels/useBillingViewModel';
-import { getStoredPaymentDetails, verifyPayment } from '../../services/paymentService';
+import {
+  getStoredPaymentDetails,
+  verifyPayment,
+} from '../../services/paymentService';
+import { Alert } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 interface BillingInfo {
   label: string;
@@ -25,17 +30,22 @@ interface SettingOption {
   id: number;
   title: string;
   icon: ImageSourcePropType;
-  page?:string
+  page?: string;
 }
 
 const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  const { user, loadProfile }:any = useProfileViewModel();
-  const { subscription, paymentHistory, fetchSubscription, fetchHistory } = useBillingViewModel();
+  const {
+    user,
+    loadProfile,
+    cancelSubscription,
+    isCancellingSubscription,
+  }: any = useProfileViewModel();
+  const { subscription, paymentHistory, fetchSubscription, fetchHistory } =
+    useBillingViewModel();
 
-  console.log("user", user);
-  
-
+  console.log('user', user?.subscription?.status);
 
   const [billingInfo, setBillingInfo] = useState<BillingInfo[]>([]);
 
@@ -63,9 +73,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       ? new Date(subscription.endDate)
       : startDate
       ? new Date(
-          new Date(startDate).setMonth(
-            new Date(startDate).getMonth() + 1,
-          ),
+          new Date(startDate).setMonth(new Date(startDate).getMonth() + 1),
         )
       : null;
 
@@ -109,15 +117,13 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
     setBillingInfo(info);
   }, [subscription, paymentHistory]);
 
-
-
   // total used credits logic
   const total = user?.totalClassCredits ?? 0;
-  const used = total - (
-    (user?.classCredits?.yoga ?? 0) +
-    (user?.classCredits?.zumba ?? 0) +
-    (user?.classCredits?.specialty ?? 0)
-  );
+  const used =
+    total -
+    ((user?.classCredits?.yoga ?? 0) +
+      (user?.classCredits?.zumba ?? 0) +
+      (user?.classCredits?.specialty ?? 0));
   const progressPercent = total > 0 ? (used / total) * 100 : 0;
 
   // const billingInfo: BillingInfo[] = [
@@ -130,9 +136,51 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
   const planPrices: Record<string, number> = {
     'gold-yoga': 100,
     'gold-zumba': 100,
-    'gold-mixed':100,
+    'gold-mixed': 100,
     diamond: 200,
     platinum: 300,
+  };
+
+  const handleCancelSubscription = async () => {
+    Alert.alert(
+      'Cancel Subscription?',
+      `Are you sure you want to cancel your ${
+        user?.plan?.toUpperCase() || 'subscription'
+      }? You will lose access to premium features.`,
+      [
+        {
+          text: 'Keep Subscription',
+          onPress: () => console.log('Cancelled'),
+          style: 'cancel',
+        },
+        {
+          text: 'Cancel Subscription',
+          onPress: async () => {
+            try {
+              setIsCancelling(true);
+              await cancelSubscription(user?._id);
+              Toast.show({
+                type: 'success',
+                text1: 'Cancel Successful! 🎉',
+                text2: 'Subscription cancelled successfully',
+              });
+              await loadProfile();
+            } catch (error) {
+              console.error('Cancel error:', error);
+              Toast.show({
+                type: 'error',
+                text1: 'Error 🎉',
+                text2: 'Something went wrong',
+              });
+            } finally {
+              setIsCancelling(false);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: false },
+    );
   };
 
   const settingOptions: SettingOption[] = [
@@ -140,7 +188,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       id: 1,
       title: 'Upgrade Plan',
       icon: SubscriptionImages.upgradeIcon,
-      page:'UpgradePlan'
+      page: 'UpgradePlan',
     },
     // {
     //   id: 2,
@@ -181,9 +229,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
           },
           {
             label: 'Payment method',
-            value: payment.gateway
-              ? payment.gateway.toUpperCase()
-              : 'Card',
+            value: payment.gateway ? payment.gateway.toUpperCase() : 'Card',
           },
           {
             label: 'Next billing date',
@@ -198,14 +244,22 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
     loadBillingInfo();
   }, []);
 
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Image style={styles.backIcon} source={SubscriptionImages.backwardIcon} />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Image
+              style={styles.backIcon}
+              source={SubscriptionImages.backwardIcon}
+            />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Manage Subscriptions</Text>
           <View style={styles.headerSpacer} />
@@ -226,7 +280,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
               </Text>
             </View>
           </View>
-          
+
           <Text style={styles.planPrice}>
             ${planPrices[user?.plan?.toLowerCase() ?? '']}/month
           </Text>
@@ -264,7 +318,10 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
               colors={['#B95E82', '#F39F9F']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={[styles.sessionProgressBar, { width: `${progressPercent}%`},]}
+              style={[
+                styles.sessionProgressBar,
+                { width: `${progressPercent}%` },
+              ]}
             />
           </View>
         </View>
@@ -288,23 +345,34 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
         <View style={styles.settingsContainer}>
           {settingOptions.map((option, index) => (
             <View key={option.id}>
-              <TouchableOpacity style={styles.settingItem} onPress={()=>navigation.navigate(option?.page)}>
+              <TouchableOpacity
+                style={styles.settingItem}
+                onPress={() => navigation.navigate(option?.page)}
+              >
                 <View style={styles.settingIconContainer}>
                   {/* <Image source={option.icon}/> */}
                   <Image source={option.icon} style={styles.settingIcon} />
                 </View>
                 <Text style={styles.settingTitle}>{option.title}</Text>
-                <Image source={SubscriptionImages.rightIcon}/>
+                <Image source={SubscriptionImages.rightIcon} />
               </TouchableOpacity>
-              {index < settingOptions.length && <View style={styles.settingsdivider} />}
+              {index < settingOptions.length && (
+                <View style={styles.settingsdivider} />
+              )}
             </View>
           ))}
         </View>
 
         {/* Cancel Subscription Button */}
-        <TouchableOpacity style={styles.cancelButton}>
-          <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
-        </TouchableOpacity>
+        { user?.subscription?.status== 'active' && <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={handleCancelSubscription}
+          disabled={isCancelling}
+        >
+          <Text style={styles.cancelButtonText}>
+            {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
+          </Text>
+        </TouchableOpacity>}
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacer} />
@@ -328,7 +396,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 35,
-    paddingBottom: 41
+    paddingBottom: 41,
   },
   backButton: {
     width: 24,
@@ -415,7 +483,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Medium',
     fontWeight: '500',
     fontSize: 14,
-    lineHeight: 19, 
+    lineHeight: 19,
     color: '#FFFFFF',
   },
   // Session Progress Card

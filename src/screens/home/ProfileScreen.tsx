@@ -132,7 +132,7 @@ const ProfileScreen = () => {
     {
       id: 1,
       title: 'Subscription',
-      subtitle: 'Diamond Plan',
+      subtitle: dashboardStats?.data?.currentPlan?.displayName ?? '--',
       icon: ProfileImages.subscriptionIcon,
       iconBgColor: '#FFE8E8',
       screen: 'ManageSubscription',

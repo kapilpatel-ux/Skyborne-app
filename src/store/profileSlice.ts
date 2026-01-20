@@ -37,6 +37,18 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
+export const cancelSubscription = createAsyncThunk(
+  'profile/cancelSubscription',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const res = await profileService.cancelSubscription(userId);
+      return res.data;
+    } catch (e: any) {
+      return rejectWithValue(e.response?.data || e.message);
+    }
+  }
+);
+
 const profileSlice = createSlice({
   name: 'profile',
   initialState: {
@@ -44,12 +56,13 @@ const profileSlice = createSlice({
     dashboardStats: null,
     status: 'idle',
     error: null,
+    cancelSubscriptionStatus: 'idle',
   },
   reducers: {},
   extraReducers: builder => {
     builder
       .addCase(fetchProfile.pending, s => { s.status = 'loading'; })
-      .addCase(fetchProfile.fulfilled, (s, a) => {
+      .addCase(fetchProfile.fulfilled, (s:any, a) => {
         s.status = 'idle';
         s.user = a.payload;
       })
@@ -58,6 +71,17 @@ const profileSlice = createSlice({
       })
       .addCase(updateProfile.fulfilled, (s, a) => {
         s.user = a.payload;
+      })
+      .addCase(cancelSubscription.pending, (s) => {
+        s.cancelSubscriptionStatus = 'loading';
+      })
+      .addCase(cancelSubscription.fulfilled, (s, a) => {
+        s.cancelSubscriptionStatus = 'idle';
+        s.user = { ...(s.user ?? {}), ...(a.payload?.subscription ?? {}) };
+      })
+      .addCase(cancelSubscription.rejected, (s, a) => {
+        s.cancelSubscriptionStatus = 'error';
+        s.error = a.payload as any;
       });
   },
 });

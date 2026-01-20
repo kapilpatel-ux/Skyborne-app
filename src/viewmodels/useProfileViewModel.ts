@@ -4,6 +4,7 @@ import {
   fetchProfile,
   fetchDashboardStats,
   updateProfile,
+  cancelSubscription,
 } from '../store/profileSlice';
 import { useCallback } from 'react';
 
@@ -21,14 +22,20 @@ export function useProfileViewModel() {
     [dispatch],
   );
 
+  const cancelSubscriptionAction = useCallback(
+    (userId: string) => dispatch(cancelSubscription(userId)).unwrap(),
+    [dispatch],
+  );
+
   return {
     user: state.user,
     dashboardStats: state.dashboardStats,
     isLoading: state.status === 'loading',
     error: state.error,
+    isCancellingSubscription: state.cancelSubscriptionStatus === 'loading',
 
     loadProfile,
-    updateProfile: updateProfileAction, 
+    updateProfile: updateProfileAction,
+    cancelSubscription: cancelSubscriptionAction,
   };
-
 }

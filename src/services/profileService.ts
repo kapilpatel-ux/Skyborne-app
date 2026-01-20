@@ -1,9 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 
-// const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
-   const API_BASE_URL = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
-
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
 
 export interface DashboardStats {
   totalCredits: number;
@@ -18,6 +16,12 @@ export interface UpdateProfilePayload {
   phone?: string;
   country?: string;
   timezone?: string;
+}
+
+export interface CancelSubscriptionResponse {
+  success: boolean;
+  message: string;
+  subscription?: any;
 }
 
 class ProfileService {
@@ -47,6 +51,10 @@ class ProfileService {
 
   getDashboardStats() {
     return this.api.get('/dashboardStats');
+  }
+
+  cancelSubscription(userId: string) {
+    return this.api.post(`/subscription/${userId}/cancel`);
   }
 }
 
