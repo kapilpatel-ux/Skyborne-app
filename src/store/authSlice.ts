@@ -237,7 +237,7 @@ const authSlice = createSlice({
         state.refreshToken = action.payload.data?.refreshToken;
         state.email = action.payload.data?.user?.email;
         state.phone = action.payload.data?.user?.phone;
-        state.onboardingCompleted = true;
+        state.onboardingCompleted = action.payload.data?.user?.onboardingCompleted;
       })
       .addCase(signup.rejected, (state, action) => {
         state.status = 'failed';
@@ -258,7 +258,7 @@ const authSlice = createSlice({
         state.refreshToken = action.payload.data?.refreshToken;
         state.email = action.payload.data?.user?.email;
         state.phone = action.payload.data?.user?.phone;
-        state.onboardingCompleted = true;
+        state.onboardingCompleted = action.payload.data?.user?.onboardingCompleted;
       })
       .addCase(login.rejected, (state, action) => {
         state.status = 'failed';

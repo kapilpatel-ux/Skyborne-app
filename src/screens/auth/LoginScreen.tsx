@@ -110,6 +110,12 @@ export default function LoginScreen({ navigation }: Props) {
           })
         );
 
+        if ( user?.onboardingCompleted) {
+          navigation.replace('Home');
+        } else {
+          navigation.replace('Pricing');
+        }
+
         // Update auth state with tokens
         dispatch({
           type: 'auth/loginFulfilled',
@@ -130,7 +136,6 @@ export default function LoginScreen({ navigation }: Props) {
           visibilityTime: 2500,
         });
 
-        navigation.navigate('Home');
       } else {
         const errorMsg = response.message || 'Social login failed';
         setLoginError(errorMsg);
@@ -194,6 +199,8 @@ export default function LoginScreen({ navigation }: Props) {
       const result = await login(data.email, data.password);
 
       if (result.success) {
+        const onboardingCompleted = result?.data?.data?.user?.onboardingCompleted === true;
+
         Toast.show({
           type: 'success',
           text1: 'Login Successful',
@@ -201,8 +208,14 @@ export default function LoginScreen({ navigation }: Props) {
           position: 'top',
           visibilityTime: 2500,
         });
-
-        navigation.navigate('Home');
+  
+        if (onboardingCompleted) {
+            console.log("hitting the true");
+            navigation.navigate('Home');
+          } else {
+            console.log("hitting the false");
+            navigation.navigate('Pricing');
+        }
       } else {
         const msg = result.message || 'Login failed. Please try again.';
         setLoginError(msg);
