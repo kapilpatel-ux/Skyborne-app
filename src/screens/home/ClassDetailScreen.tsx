@@ -72,7 +72,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
       const currentTime = Date.now();
       const timeUntilStart = meetingStartTime - currentTime;
       const fiveMinutesInMs = 5 * 60 * 1000;
-      
+
       // Enable button if within 5 minutes or meeting has already started
       if (timeUntilStart <= fiveMinutesInMs) {
         setIsJoinButtonDisabled(false);
@@ -350,7 +350,6 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
                 <Text style={styles.className}>{classDetails.title}</Text>
                 <Text style={styles.trainerText}>
                   Trainer: {classDetails.trainer?.name}{' '}
-                 
                 </Text>
                 <View style={{ marginTop: 3 }}>
                   <Text style={styles.trainerText}>({date})</Text>
@@ -363,7 +362,12 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
           <View style={styles.detailsCard}>
             <View style={styles.detailItem}>
               <View style={styles.detailIconBox}>
-                <Text style={styles.detailIconEmoji}>⏰</Text>
+                <Image
+                  source={{
+                    uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
+                  }}
+                  style={styles.detailIcon}
+                />
               </View>
               <Text style={styles.detailLabel}>Time</Text>
               <Text style={styles.detailValue}>{time}</Text>
@@ -371,7 +375,12 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
             <View style={styles.detailItem}>
               <View style={styles.detailIconBox}>
-                <Text style={styles.detailIconEmoji}>⏱️</Text>
+                <Image
+                  source={{
+                    uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
+                  }}
+                  style={styles.detailIcon}
+                />
               </View>
               <Text style={styles.detailLabel}>Duration</Text>
               <Text style={styles.detailValue}>
@@ -381,7 +390,12 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
             <View style={styles.detailItem}>
               <View style={styles.detailIconBox}>
-                <Text style={styles.detailIconEmoji}>📊</Text>
+                <Image
+                  source={{
+                    uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
+                  }}
+                  style={styles.detailIcon}
+                />
               </View>
               <Text style={styles.detailLabel}>Level</Text>
               <Text style={styles.detailValue}>
@@ -438,7 +452,10 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
         {/* Join Class Button - Fixed at Bottom */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.joinButton, (isJoining || isJoinButtonDisabled) && styles.joinButtonDisabled]}
+            style={[
+              styles.joinButton,
+              (isJoining || isJoinButtonDisabled) && styles.joinButtonDisabled,
+            ]}
             onPress={handleJoinClass}
             disabled={isJoining || isJoinButtonDisabled}
           >
@@ -480,6 +497,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
+  detailIcon: {
+    width: 20,
+    height: 20,
+    resizeMode: 'contain',
+  },
+
   errorTitle: {
     fontSize: 24,
     fontWeight: '700',

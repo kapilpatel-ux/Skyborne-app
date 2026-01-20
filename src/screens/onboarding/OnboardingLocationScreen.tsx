@@ -19,6 +19,7 @@ import { useOnboardingStore } from '../../store/onboardingSlice';
 import { RootState } from '../../store';
 import Toast from 'react-native-toast-message';
 import { useSignup } from '../../store/SignupContext';
+import { IconImages } from '../../assets/icons';
 
 type DropdownInputProps = {
   label: string;
@@ -34,7 +35,7 @@ const DropdownInput = ({ label, value, placeholder }: DropdownInputProps) => (
         {value || placeholder}
       </Text>
       <Image
-        source={require('../../assets/icons/down-arrow.png')}
+        source={IconImages?.downArrow}
         style={styles.dropdownIcon}
       />
     </TouchableOpacity>
@@ -206,7 +207,7 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
                   </Text>
 
                   <Image
-                    source={require('../../assets/icons/down-arrow.png')}
+                    source={IconImages?.downArrow}
                     style={styles.dropdownIcon}
                   />
                 </TouchableOpacity>
@@ -261,7 +262,7 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
                   </Text>
 
                   <Image
-                    source={require('../../assets/icons/down-arrow.png')}
+                    source={IconImages?.downArrow}
                     style={styles.dropdownIcon}
                   />
                 </TouchableOpacity>

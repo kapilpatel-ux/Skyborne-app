@@ -80,19 +80,18 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
   const email = useSelector((state: RootState) => state.auth.email);
   const phone = useSelector((state: RootState) => state.auth.phone);
 
-  // Initialize socket connection when component mounts
-//   useEffect(() => {
-//     if (user?.id) {
-//       console.log('🔌 Initializing Socket.io for user:', user.id);
-//       const apiUrl = process.env.REACT_APP_API_URL || 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
-//       SocketService.connect(apiUrl, user.id);
-//     }
+  useEffect(() => {
+    if (user?.id) {
+      console.log('🔌 Initializing Socket.io for user:', user.id);
+       const apiUrl = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
+      SocketService.connect(apiUrl, user.id);
+    }
 
-//     return () => {
-//       if (paymentTimeout) clearTimeout(paymentTimeout);
-//       if (pollingInterval) clearInterval(pollingInterval);
-//     };
-//   }, [user?.id]);
+    return () => {
+      if (paymentTimeout) clearTimeout(paymentTimeout);
+      if (pollingInterval) clearInterval(pollingInterval);
+    };
+  }, [user?.id]);
 
   /**
    * Poll /me API every 60 seconds for 10 minutes (fallback if Socket.io fails)

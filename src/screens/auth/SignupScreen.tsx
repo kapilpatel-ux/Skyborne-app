@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Formik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import TextInput from '../../components/TextInput';
@@ -10,7 +10,8 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import GradientBackground from '../../components/GradientBackground';
 import { FontFamilies } from '../../constants/fonts';
 import { useSignup } from '../../store/SignupContext';
-
+import Svg, { Path } from 'react-native-svg';
+import { EyeIcon, EyeOffIcon } from '../../icons/FormIcons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
@@ -51,9 +52,11 @@ const validationSchema = Yup.object().shape({
   ),
 });
 
+
+
 export default function SignupScreen({ navigation }: Props) {
-  // const { signup } = useAuthViewModel();
   const { formData, updateStepData, setCurrentStep } = useSignup();
+  const [showPassword, setShowPassword] = useState(false);
 
   const initialValues: FormData = {
     firstName: formData.step2?.firstName || '',
@@ -110,119 +113,139 @@ export default function SignupScreen({ navigation }: Props) {
           <View style={{ width: 32 }} />
         </View>
 
-        {/* CONTENT */}
-        <View style={styles.container}>
-          <Text style={styles.title}>Create Your Skyborne Account</Text>
+        {/* SCROLLABLE CONTENT */}
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <Text style={styles.title}>Create Your Skyborne Account</Text>
 
-          <Formik<FormData>
-            initialValues={initialValues}
-            validationSchema={validationSchema}
-            onSubmit={onSubmit}
-          >
-            {({
-              values,
-              errors,
-              touched,
-              handleChange,
-              handleBlur,
-              setFieldValue,
-              handleSubmit,
-              isSubmitting,
-            }) => (
-              <View>
-                {/* First Name */}
-                <Text style={styles.label}>First Name*</Text>
-                <TextInput
-                  value={values.firstName}
-                  onChangeText={handleChange('firstName')}
-                  onBlur={handleBlur('firstName')}
-                  placeholder="Enter first name"
-                />
-                {touched.firstName && errors.firstName && (
-                  <Text style={styles.errorText}>{errors.firstName}</Text>
-                )}
-
-                {/* Last Name */}
-                <Text style={styles.label}>Last Name</Text>
-                <TextInput
-                  value={values.lastName}
-                  onChangeText={handleChange('lastName')}
-                  onBlur={handleBlur('lastName')}
-                  placeholder="Enter last name"
-                />
-                {touched.lastName && errors.lastName && (
-                  <Text style={styles.errorText}>{errors.lastName}</Text>
-                )}
-
-                {/* Email */}
-                <Text style={styles.label}>Email Address*</Text>
-                <TextInput
-                  keyboardType="email-address"
-                  value={values.email}
-                  onChangeText={handleChange('email')}
-                  onBlur={handleBlur('email')}
-                  placeholder="Enter email"
-                />
-                {touched.email && errors.email && (
-                  <Text style={styles.errorText}>{errors.email}</Text>
-                )}
-
-                {/* Password */}
-                <Text style={styles.label}>Password*</Text>
-                <TextInput
-                  secureTextEntry
-                  value={values.password}
-                  onChangeText={handleChange('password')}
-                  onBlur={handleBlur('password')}
-                  placeholder="Enter password"
-                />
-                {touched.password && errors.password && (
-                  <Text style={styles.errorText}>{errors.password}</Text>
-                )}
-
-                {/* Terms */}
-                <TouchableOpacity
-                  style={styles.checkboxRow}
-                  onPress={() =>
-                    setFieldValue('agreeTerms', !values.agreeTerms)
-                  }
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      values.agreeTerms && styles.checkboxChecked,
-                    ]}
+            <Formik<FormData>
+              initialValues={initialValues}
+              validationSchema={validationSchema}
+              onSubmit={onSubmit}
+            >
+              {({
+                values,
+                errors,
+                touched,
+                handleChange,
+                handleBlur,
+                setFieldValue,
+                handleSubmit,
+                isSubmitting,
+              }) => (
+                <View>
+                  {/* First Name */}
+                  <Text style={styles.label}>First Name*</Text>
+                  <TextInput
+                    value={values.firstName}
+                    onChangeText={handleChange('firstName')}
+                    onBlur={handleBlur('firstName')}
+                    placeholder="Enter first name"
                   />
-                  <Text style={styles.termsText}>
-                    I agree to Skyborne's <Text style={styles.link}>Terms</Text>{' '}
-                    and <Text style={styles.link}>Data Policy</Text>
-                  </Text>
-                </TouchableOpacity>
-                {touched.agreeTerms && errors.agreeTerms && (
-                  <Text style={styles.errorText}>{errors.agreeTerms}</Text>
-                )}
+                  {touched.firstName && errors.firstName && (
+                    <Text style={styles.errorText}>{errors.firstName}</Text>
+                  )}
 
-                {/* CTA */}
-                <Button
-                  title={isSubmitting ? 'Loading...' : 'Signup'}
-                  onPress={() => handleSubmit()}
-                />
+                  {/* Last Name */}
+                  <Text style={styles.label}>Last Name</Text>
+                  <TextInput
+                    value={values.lastName}
+                    onChangeText={handleChange('lastName')}
+                    onBlur={handleBlur('lastName')}
+                    placeholder="Enter last name"
+                  />
+                  {touched.lastName && errors.lastName && (
+                    <Text style={styles.errorText}>{errors.lastName}</Text>
+                  )}
 
-                {/* Signup Link */}
-                <View style={styles.loginContainer}>
-                  <Text style={styles.loginText}>
-                    Already have an account?{' '}
-                  </Text>
+                  {/* Email */}
+                  <Text style={styles.label}>Email Address*</Text>
+                  <TextInput
+                    keyboardType="email-address"
+                    value={values.email}
+                    onChangeText={handleChange('email')}
+                    onBlur={handleBlur('email')}
+                    placeholder="Enter email"
+                  />
+                  {touched.email && errors.email && (
+                    <Text style={styles.errorText}>{errors.email}</Text>
+                  )}
+
+                  {/* Password */}
+                  <Text style={styles.label}>Password*</Text>
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      secureTextEntry={!showPassword}
+                      value={values.password}
+                      onChangeText={handleChange('password')}
+                      onBlur={handleBlur('password')}
+                      placeholder="Enter password"
+                    />
+                    <TouchableOpacity
+                      style={styles.eyeIcon}
+                      onPress={() => setShowPassword(!showPassword)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      {showPassword ? (
+                        <EyeIcon color="#494949" size={18} />
+                      ) : (
+                        <EyeOffIcon color="#494949" size={18} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  {touched.password && errors.password && (
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  )}
+
+                  {/* Terms */}
                   <TouchableOpacity
-                    onPress={() => navigation.navigate('Login')}
+                    style={styles.checkboxRow}
+                    onPress={() =>
+                      setFieldValue('agreeTerms', !values.agreeTerms)
+                    }
                   >
-                    <Text style={styles.loginLink}>Login</Text>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        values.agreeTerms && styles.checkboxChecked,
+                      ]}
+                    />
+                    <Text style={styles.termsText}>
+                      I agree to Skyborne's <Text style={styles.link}>Terms</Text>{' '}
+                      and <Text style={styles.link}>Data Policy</Text>
+                    </Text>
                   </TouchableOpacity>
+                  {touched.agreeTerms && errors.agreeTerms && (
+                    <Text style={styles.errorText}>{errors.agreeTerms}</Text>
+                  )}
+
+                  {/* CTA */}
+                  <Button
+                    title={isSubmitting ? 'Loading...' : 'Signup'}
+                    onPress={() => handleSubmit()}
+                  />
+
+                  {/* Login Link */}
+                  <View style={styles.loginContainer}>
+                    <Text style={styles.loginText}>
+                      Already have an account?{' '}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('Login')}
+                    >
+                      <Text style={styles.loginLink}>Login</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            )}
-          </Formik>
-        </View>
+              )}
+            </Formik>
+          </View>
+        </ScrollView>
       </View>
     </GradientBackground>
   );
@@ -264,6 +287,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#3A3A3A',
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
   container: {
     paddingHorizontal: 24,
   },
@@ -281,6 +310,19 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontWeight: '500',
     fontFamily: FontFamilies.SatoshiMedium,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    transform: [{ translateY: -11 }],
+    zIndex: 10,
   },
   checkboxRow: {
     flexDirection: 'row',

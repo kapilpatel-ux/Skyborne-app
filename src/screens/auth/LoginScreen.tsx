@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Formik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import TextInput from '../../components/TextInput';
@@ -11,6 +10,7 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import GradientBackground from '../../components/GradientBackground';
 import { FontFamilies } from '../../constants/fonts';
 import Toast from 'react-native-toast-message';
+import { EyeIcon, EyeOffIcon } from '../../icons/FormIcons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -33,9 +33,11 @@ const validationSchema = Yup.object().shape({
     .min(8, 'Password must be at least 8 characters long'),
 });
 
+
 export default function LoginScreen({ navigation }: Props) {
   const { login, isLoading } = useAuthViewModel();
   const [loginError, setLoginError] = useState<string>('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const initialValues: FormData = {
     email: '',
@@ -43,51 +45,51 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   const onSubmit = async (
-  data: FormData,
-  { setSubmitting }: FormikHelpers<FormData>
-) => {
-  try {
-    setLoginError('');
+    data: FormData,
+    { setSubmitting }: FormikHelpers<FormData>
+  ) => {
+    try {
+      setLoginError('');
 
-    const result = await login(data.email, data.password);
+      const result = await login(data.email, data.password);
 
-    if (result.success) {
-      Toast.show({
-        type: 'success',
-        text1: 'Login Successful',
-        text2: 'Welcome back! 👋',
-        position: 'top',
-        visibilityTime: 2500,
-      });
+      if (result.success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Login Successful',
+          text2: 'Welcome back! 👋',
+          position: 'top',
+          visibilityTime: 2500,
+        });
 
-      navigation.navigate('Home');
-    } else {
-      const msg = result.message || 'Login failed. Please try again.';
+        navigation.navigate('Home');
+      } else {
+        const msg = result.message || 'Login failed. Please try again.';
+        setLoginError(msg);
+
+        Toast.show({
+          type: 'error',
+          text1: 'Login Failed',
+          text2: msg,
+          position: 'top',
+          visibilityTime: 3000,
+        });
+      }
+    } catch (error: any) {
+      const msg = error.message || 'An unexpected error occurred';
       setLoginError(msg);
 
       Toast.show({
         type: 'error',
-        text1: 'Login Failed',
+        text1: 'Error',
         text2: msg,
         position: 'top',
         visibilityTime: 3000,
       });
+    } finally {
+      setSubmitting(false);
     }
-  } catch (error: any) {
-    const msg = error.message || 'An unexpected error occurred';
-    setLoginError(msg);
-
-    Toast.show({
-      type: 'error',
-      text1: 'Error',
-      text2: msg,
-      position: 'top',
-      visibilityTime: 3000,
-    });
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   return (
     <GradientBackground>
@@ -113,97 +115,117 @@ export default function LoginScreen({ navigation }: Props) {
           <View style={{ width: 32 }} />
         </View>
 
-        {/* CONTENT */}
-        <View style={styles.container}>
-          <Text style={styles.title}>Welcome Back to Skyborne</Text>
-          <Text style={styles.subtitle}>Login to continue your wellness journey</Text>
+        {/* SCROLLABLE CONTENT */}
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <Text style={styles.title}>Welcome Back to Skyborne</Text>
+            <Text style={styles.subtitle}>Login to continue your wellness journey</Text>
 
-          {/* Show general login error if exists */}
-          {loginError ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorBannerText}>{loginError}</Text>
-            </View>
-          ) : null}
-
-          <Formik<FormData>
-            initialValues={initialValues}
-            validationSchema={validationSchema}
-            onSubmit={onSubmit}
-          >
-            {({
-              values,
-              errors,
-              touched,
-              handleChange,
-              handleBlur,
-              handleSubmit,
-              isSubmitting,
-            }) => (
-              <View>
-                {/* Email */}
-                <Text style={styles.label}>Email Address*</Text>
-                <TextInput
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={values.email}
-                  onChangeText={(text) => {
-                    handleChange('email')(text);
-                    setLoginError(''); // Clear error when user types
-                  }}
-                  onBlur={handleBlur('email')}
-                  placeholder="Enter email"
-                  editable={!isSubmitting && !isLoading}
-                />
-                {touched.email && errors.email && (
-                  <Text style={styles.errorText}>{errors.email}</Text>
-                )}
-
-                {/* Password */}
-                <Text style={styles.label}>Password*</Text>
-                <TextInput
-                  secureTextEntry
-                  value={values.password}
-                  onChangeText={(text) => {
-                    handleChange('password')(text);
-                    setLoginError(''); // Clear error when user types
-                  }}
-                  onBlur={handleBlur('password')}
-                  placeholder="Enter password"
-                  editable={!isSubmitting && !isLoading}
-                />
-                {touched.password && errors.password && (
-                  <Text style={styles.errorText}>{errors.password}</Text>
-                )}
-
-                {/* Forgot Password */}
-                {/* <TouchableOpacity
-                  style={styles.forgotPasswordContainer}
-                  onPress={() => {
-                    // Navigate to forgot password screen when implemented
-                    Alert.alert('Forgot Password', 'This feature will be available soon!');
-                  }}
-                >
-                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                </TouchableOpacity> */}
-
-                {/* CTA */}
-                <Button
-                  title={isSubmitting || isLoading ? 'Logging in...' : 'Login'}
-                  onPress={() => handleSubmit()}
-                  disabled={isSubmitting || isLoading}
-                />
-
-                {/* Signup Link */}
-                <View style={styles.signupContainer}>
-                  <Text style={styles.signupText}>Don't have an account? </Text>
-                  <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                    <Text style={styles.signupLink}>Sign up</Text>
-                  </TouchableOpacity>
-                </View>
+            {/* Show general login error if exists */}
+            {loginError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorBannerText}>{loginError}</Text>
               </View>
-            )}
-          </Formik>
-        </View>
+            ) : null}
+
+            <Formik<FormData>
+              initialValues={initialValues}
+              validationSchema={validationSchema}
+              onSubmit={onSubmit}
+            >
+              {({
+                values,
+                errors,
+                touched,
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                isSubmitting,
+              }) => (
+                <View>
+                  {/* Email */}
+                  <Text style={styles.label}>Email Address*</Text>
+                  <TextInput
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={values.email}
+                    onChangeText={(text) => {
+                      handleChange('email')(text);
+                      setLoginError(''); // Clear error when user types
+                    }}
+                    onBlur={handleBlur('email')}
+                    placeholder="Enter email"
+                    editable={!isSubmitting && !isLoading}
+                  />
+                  {touched.email && errors.email && (
+                    <Text style={styles.errorText}>{errors.email}</Text>
+                  )}
+
+                  {/* Password */}
+                  <Text style={styles.label}>Password*</Text>
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      secureTextEntry={!showPassword}
+                      value={values.password}
+                      onChangeText={(text) => {
+                        handleChange('password')(text);
+                        setLoginError(''); // Clear error when user types
+                      }}
+                      onBlur={handleBlur('password')}
+                      placeholder="Enter password"
+                      editable={!isSubmitting && !isLoading}
+                    />
+                    <TouchableOpacity
+                      style={styles.eyeIcon}
+                      onPress={() => setShowPassword(!showPassword)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      {showPassword ? (
+                        <EyeIcon color="#494949" size={18} />
+                      ) : (
+                        <EyeOffIcon color="#494949" size={18} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  {touched.password && errors.password && (
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  )}
+
+                  {/* Forgot Password */}
+                  {/* <TouchableOpacity
+                    style={styles.forgotPasswordContainer}
+                    onPress={() => {
+                      // Navigate to forgot password screen when implemented
+                      Alert.alert('Forgot Password', 'This feature will be available soon!');
+                    }}
+                  >
+                    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                  </TouchableOpacity> */}
+
+                  {/* CTA */}
+                  <Button
+                    title={isSubmitting || isLoading ? 'Logging in...' : 'Login'}
+                    onPress={() => handleSubmit()}
+                    disabled={isSubmitting || isLoading}
+                  />
+
+                  {/* Signup Link */}
+                  <View style={styles.signupContainer}>
+                    <Text style={styles.signupText}>Don't have an account? </Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                      <Text style={styles.signupLink}>Sign up</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </Formik>
+          </View>
+        </ScrollView>
       </View>
     </GradientBackground>
   );
@@ -245,6 +267,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#3A3A3A',
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
   container: {
     paddingHorizontal: 24,
   },
@@ -283,6 +311,19 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontWeight: '500',
     fontFamily: FontFamilies.SatoshiMedium,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    transform: [{ translateY: -11 }],
+    zIndex: 10,
   },
   forgotPasswordContainer: {
     alignSelf: 'flex-end',

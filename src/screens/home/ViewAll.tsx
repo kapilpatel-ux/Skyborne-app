@@ -100,7 +100,7 @@ const ViewAll = ({ navigation }: { navigation: any }) => {
       {/* Session Image */}
       <View style={styles.sessionImageContainer}>
         <Image
-          source={require('../../assets/images/home/session-image.png')}
+          source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/arrow-black.png'}}
           style={styles.sessionImage}
           resizeMode="cover"
         />

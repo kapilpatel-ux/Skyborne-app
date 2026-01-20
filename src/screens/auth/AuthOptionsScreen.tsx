@@ -20,6 +20,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import Toast from 'react-native-toast-message';
 import { useSignup } from '../../store/SignupContext';
+import { IconImages } from '../../assets/icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AuthOptions'>;
 type AuthProviderProps = 'email' | 'google' | 'apple';
@@ -181,12 +182,12 @@ export default function AuthOptionsScreen({ navigation }: Props) {
 
           <View style={styles.authButtonsContainer}>
             {/* <AuthButton
-              icon={require('../../assets/icons/apple.png')}
+              icon={IconImages?.apple}
               text="Continue with Apple"
               onPress={handleAppleSignIn}
             /> */}
             <AuthButton
-              icon={require('../../assets/icons/google.png')}
+              icon={IconImages?.google}
               text="Continue with Google"
               onPress={handleGoogleSignIn}
             />

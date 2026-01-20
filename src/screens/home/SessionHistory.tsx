@@ -114,7 +114,7 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
               source={
                 session.recordingUrl 
                   ? { uri: session.recordingUrl }
-                  : require('../../assets/images/home/session-image.png')
+                  : {uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/arrow-black.png'}
               }
               style={styles.sessionImage}
               resizeMode="cover"

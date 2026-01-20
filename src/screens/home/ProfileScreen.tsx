@@ -13,7 +13,7 @@ import {
   ImageSourcePropType,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { ProfileImages } from '../../assets/images/profile';
+import { AllItems, ProfileImages } from '../../assets/images/profile';
 import BottomNav from '../../components/BottomNav';
 import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 import { useEffect } from 'react';
@@ -52,49 +52,47 @@ const ProfileScreen = () => {
     'Profile'
   >;
   const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const COMMON_URL = 'https://skyborne-images.s3.ap-south-1.amazonaws.com';
 
-  const {
-    user,
-    dashboardStats,
-    loadProfile,
-  } :any= useProfileViewModel();
+  const { user, dashboardStats, loadProfile }: any = useProfileViewModel();
 
   useEffect(() => {
     loadProfile();
   }, []);
 
   // Calculate progress items dynamically from classCredits
-const getProgressItems = (): ProgressItem[] => {
-  if (!user?.classCredits) return [];
+  const getProgressItems = (): ProgressItem[] => {
+    if (!user?.classCredits) return [];
 
-  // Get all class types dynamically from classCredits
-  const classNames = Object.keys(user.classCredits).filter(key => key !== '_id');
-  const items: ProgressItem[] = [];
+    // Get all class types dynamically from classCredits
+    const classNames = Object.keys(user.classCredits).filter(
+      key => key !== '_id',
+    );
+    const items: ProgressItem[] = [];
 
-  classNames.forEach((className, index) => {
-    const remainingCredits = user.classCredits[className] ?? 0;
-    const totalCredits = user.overAllclassCredits?.[className] ?? 0;
-    
-    // Calculate used credits (total - remaining)
-    const usedCredits = totalCredits - remainingCredits;
-    
-    // Calculate percentage: (used / total) * 100
-    const percentage = totalCredits > 0 
-      ? Math.round((usedCredits / totalCredits) * 100)
-      : 0;
+    classNames.forEach((className, index) => {
+      const remainingCredits = user.classCredits[className] ?? 0;
+      const totalCredits = user.overAllclassCredits?.[className] ?? 0;
 
-    items.push({
-      id: index + 1,
-      title: className.charAt(0).toUpperCase() + className.slice(1),
-      percentage,
-      progress: totalCredits > 0 ? usedCredits / totalCredits : 0,
-      current: usedCredits,
-      total: totalCredits, 
+      // Calculate used credits (total - remaining)
+      const usedCredits = totalCredits - remainingCredits;
+
+      // Calculate percentage: (used / total) * 100
+      const percentage =
+        totalCredits > 0 ? Math.round((usedCredits / totalCredits) * 100) : 0;
+
+      items.push({
+        id: index + 1,
+        title: className.charAt(0).toUpperCase() + className.slice(1),
+        percentage,
+        progress: totalCredits > 0 ? usedCredits / totalCredits : 0,
+        current: usedCredits,
+        total: totalCredits,
+      });
     });
-  });
 
-  return items;
-};
+    return items;
+  };
 
   const progressItems = getProgressItems();
 
@@ -104,28 +102,29 @@ const getProgressItems = (): ProgressItem[] => {
       value: String(dashboardStats?.data?.upcomingSessions ?? 0),
       label: 'Upcoming Session',
       backgroundColor: '#FFF7DD',
-      icon: ProfileImages.ArrowIcon1,
+      icon: { uri: `${COMMON_URL}/laptop.png` },
     },
+
     {
       id: 2,
       value: String(dashboardStats?.data?.totalCredits ?? 0),
       label: 'Credits',
       backgroundColor: '#FFE8E8',
-      icon: ProfileImages.ArrowIcon1,
+      icon: { uri: `${COMMON_URL}/sand.png` },
     },
     {
       id: 3,
       value: String(dashboardStats?.data?.classesAttended ?? 0),
       label: 'Class Attended',
       backgroundColor: '#FFE8E8',
-      icon: ProfileImages.ArrowIcon1,
+      icon: { uri: `${COMMON_URL}/fire.png` },
     },
     {
       id: 4,
       value: dashboardStats?.data?.currentPlan?.displayName ?? '--',
       label: 'Current Plan',
       backgroundColor: '#FFF7DD',
-      icon: ProfileImages.ArrowIcon1,
+      icon: { uri: `${COMMON_URL}/badge.png` },
     },
   ];
 
@@ -179,7 +178,7 @@ const getProgressItems = (): ProgressItem[] => {
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
@@ -192,7 +191,7 @@ const getProgressItems = (): ProgressItem[] => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
@@ -225,7 +224,8 @@ const getProgressItems = (): ProgressItem[] => {
               {`${user?.firstName} ${user?.lastName}`}{' '}
             </Text>
             <Text style={styles.profileSince}>
-              since {user?.createdAt ? new Date(user.createdAt).getFullYear() : '--'}
+              since{' '}
+              {user?.createdAt ? new Date(user.createdAt).getFullYear() : '--'}
             </Text>
           </View>
           <View style={styles.premiumBadge}>
@@ -250,8 +250,13 @@ const getProgressItems = (): ProgressItem[] => {
                 index % 2 === 0 ? styles.statCardLeft : styles.statCardRight,
               ]}
             >
-              <Image source={ProfileImages.sandWAtch} style={styles.statIcon} />
-              <Text style={[ styles.statValue, stat.label === 'Current Plan' && styles.planStatValue,]}>
+              <Image source={stat?.icon} style={styles.statIcon} />
+              <Text
+                style={[
+                  styles.statValue,
+                  stat.label === 'Current Plan' && styles.planStatValue,
+                ]}
+              >
                 {stat.value}
               </Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
@@ -324,10 +329,7 @@ const getProgressItems = (): ProgressItem[] => {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-        >
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -353,7 +355,7 @@ const styles = StyleSheet.create({
     paddingBottom: 39,
   },
   avatar: {
-    marginLeft:10,
+    marginLeft: 10,
     width: 42,
     height: 42,
     borderRadius: 28,
@@ -489,7 +491,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   planStatValue: {
-    fontSize: 16,   
+    fontSize: 16,
     lineHeight: 20,
   },
   statLabel: {
@@ -524,7 +526,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 18,
     marginBottom: 12,
-    
   },
   progressHeader: {
     flexDirection: 'row',
@@ -561,8 +562,7 @@ const styles = StyleSheet.create({
     height: 9,
     backgroundColor: '#C9C9C9',
     borderRadius: 39.12,
-    overflow: 'hidden'
-    
+    overflow: 'hidden',
   },
   progressBar: {
     height: '100%',

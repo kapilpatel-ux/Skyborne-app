@@ -163,7 +163,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <Text style={styles.sessionSubtitle}>{meeting.service.title}</Text>
         </View>
         <Image
-          source={require('../../assets/images/home/session-image.png')}
+          source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/session-image.png'}}
           style={styles.sessionImage}
           resizeMode="cover"
         />
@@ -209,7 +209,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         activeOpacity={0.7}
       >
         <Image
-          source={require('../../assets/images/home/yoga-flow.png')}
+          source={HomeImages?.yogaFlow}
           style={styles.classImage}
           resizeMode="cover"
         />
@@ -856,6 +856,8 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 24,
     marginBottom: 0,
+    height:12,
+    width:16,
     color: '#000000',
     fontWeight: '600',
   },
