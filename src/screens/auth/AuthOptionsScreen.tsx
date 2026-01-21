@@ -20,7 +20,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import Toast from 'react-native-toast-message';
 import { useSignup } from '../../store/SignupContext';
-import { IconImages } from '../../assets/icons';
+import { IconImages, UserIcon } from '../../assets/icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AuthOptions'>;
 type AuthProviderProps = 'email' | 'google' | 'apple';
@@ -75,6 +75,10 @@ export default function AuthOptionsScreen({ navigation }: Props) {
     } catch (error) {
       console.error('Configuration error:', error);
     }
+  };
+
+  const handleGuestSignIn = () => {
+    navigation.navigate('GuestHome');
   };
 
   const handleGoogleSignIn = async () => {
@@ -186,6 +190,11 @@ export default function AuthOptionsScreen({ navigation }: Props) {
               text="Continue with Apple"
               onPress={handleAppleSignIn}
             /> */}
+            <AuthButton
+              icon={UserIcon}
+              text="Continue as Guest"
+              onPress={handleGuestSignIn}
+            />
             <AuthButton
               icon={IconImages?.google}
               text="Continue with Google"

@@ -29,6 +29,7 @@ import EditProfileScreen from '../screens/home/EditProfileScreen';
 import ClassDetailsScreen from '../screens/home/ClassDetailScreen';
 import ViewAll from '../screens/home/ViewAll';
 import UpgradePlanScreen from '../screens/home/UpgradePlan';
+import GuestScreen from '../screens/home/GuestScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -49,8 +50,9 @@ export type RootStackParamList = {
   Explore: undefined;
   Schedule: undefined;
   ViewAll: undefined;
-  UpgradePlan:undefined;
+  UpgradePlan: undefined;
   Profile: undefined;
+  GuestHome: undefined;
   ManageSubscription: undefined;
   SessionHistory: undefined;
   Support: undefined;
@@ -118,6 +120,7 @@ export default function AppNavigator() {
         <Stack.Screen name="ClassDetails" component={ClassDetailsScreen} />
         <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} />
         <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
+        <Stack.Screen name="GuestHome" component={GuestScreen} />
 
         <Stack.Screen name="Support" component={SupportScreen} />
         <Stack.Screen name="Feedback" component={FeedbackScreen} />
