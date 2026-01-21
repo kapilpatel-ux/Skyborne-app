@@ -26,41 +26,45 @@ interface UserRegion {
   region: string;
 }
 
-  const categories = [
-    {
-      id: 1,
-      title: 'Yoga',
-      subTitle: 'Find your balance',
-      source: ExploreImages.trending1,
-    },
-    {
-      id: 2,
-      title: 'Fitness Classes',
-      subTitle: 'Get fit together',
-      source: ExploreImages.fitness,
-    },
-    {
-      id: 3,
-      title: 'Zumba Dance',
-      subTitle: 'Dance your heart out',
-      source: ExploreImages.zumba,
-    },
-    {
-      id: 4,
-      title: 'Diet & Nutrition',
-      source: ExploreImages.diet,
-      subTitle: 'Nourish your body',
-    },
-  ];
+const categories = [
+  {
+    id: 1,
+    title: 'Yoga',
+    subTitle: 'Find your balance',
+    source: ExploreImages.trending1,
+  },
+  {
+    id: 2,
+    title: 'Fitness Classes',
+    subTitle: 'Get fit together',
+    source: ExploreImages.fitness,
+  },
+  {
+    id: 3,
+    title: 'Zumba Dance',
+    subTitle: 'Dance your heart out',
+    source: ExploreImages.zumba,
+  },
+  {
+    id: 4,
+    title: 'Diet & Nutrition',
+    source: ExploreImages.diet,
+    subTitle: 'Nourish your body',
+  },
+];
 
 const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const [localSearchQuery, setLocalSearchQuery] = useState('');
 
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
   const [isRegionLoading, setIsRegionLoading] = useState(true);
 
   const [upcomingMeetings, setUpcomingMeetings] = useState<any[]>([]);
   const [todayMeetings, setTodayMeetings] = useState<any[]>(categories);
+
+
+  const handleNavigate = () =>{
+    navigation.navigate('Login');
+  }
 
   // Initialize user region on mount - critical for timezone handling
   useEffect(() => {
@@ -83,56 +87,54 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     // navigation.navigate('ClassDetails', { classId });
   };
 
- const DynamicSessionCard = ({ meeting }: any) => {
-  console.log("meeting", meeting);
-
-  return (
-    <TouchableOpacity
-      style={styles.sessionCard}
-      key={meeting.id}
-      onPress={() => handleClassPress(meeting.id)}
-      activeOpacity={0.7}
-    >
-
-      
-      <View style={styles.sessionContent}>
-        <Text style={styles.sessionTitle}>{meeting.title}</Text>
-        <Text style={styles.sessionSubtitle}>{meeting.subTitle}</Text>
-      </View>
-
-      <Image
-        source={meeting?.source}
-        style={styles.sessionImage}
-        resizeMode="cover"
-      />
-      <TouchableOpacity
-        style={styles.joinButton}
-        onPress={() => handleClassPress(meeting.id)}
-      >
-        <Text style={styles.joinButtonText}>Join now</Text>
-        <View style={styles.arrowContainer}>
-          <Image
-            source={{
-              uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/arrow-black.png',
-            }}
-            style={styles.arrow}
-          />
-        </View>
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
-};
-
-
-  const DynamicClassCard = ({ meeting }: any) => {
- 
+  const DynamicSessionCard = ({ meeting }: any) => {
+    console.log('meeting', meeting);
 
     return (
       <TouchableOpacity
-        style={styles.classCard}
+        style={styles.sessionCard}
+        key={meeting.id}
+        onPress={() => handleClassPress(meeting.id)}
         activeOpacity={0.7}
       >
+        <View style={styles.sessionContent}>
+          <Text style={styles.sessionTitle}>{meeting.title}</Text>
+          <Text style={styles.sessionSubtitle}>{meeting.subTitle}</Text>
+        </View>
 
+        <Image
+          source={meeting?.source}
+          style={styles.sessionImage}
+          resizeMode="cover"
+        />
+        <TouchableOpacity
+          style={styles.joinButton}
+          onPress={() => handleClassPress(meeting.id)}
+        >
+          <Text style={styles.joinButtonText}>Join now</Text>
+          <View style={styles.arrowContainer}>
+            <Image
+              source={{
+                uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/arrow-black.png',
+              }}
+              style={styles.arrow}
+            />
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  };
+
+  const DynamicClassCard = () => {
+    return (
+      <TouchableOpacity style={styles.classCard} activeOpacity={0.7}>
+        <Image
+          source={{
+            uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/shimmer.jpg',
+          }}
+          style={styles.classImage}
+          resizeMode="cover"
+        />
       </TouchableOpacity>
     );
   };
@@ -155,9 +157,9 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             <Text style={styles.headerTitle}>Skyborne Drop</Text>
             <TouchableOpacity
               style={styles.searchContainer}
-              //   onPress={handleSearchIconPress}
+                onPress={handleNavigate}
             >
-                <Text style={styles.loginText}>Login</Text>
+              <Text style={styles.loginText}>Login</Text>
             </TouchableOpacity>
           </View>
 
@@ -214,7 +216,7 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               {upcomingMeetings.map((meeting, idx) => (
                 <DynamicClassCard
                   key={`${meeting._id}-${idx}`}
-                  meeting={meeting}
+                 
                 />
               ))}
             </>
@@ -224,12 +226,9 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           {todayMeetings.length > 0 && (
             <>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Find Your Flow, Every Day</Text>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('ViewAll')}
-                >
-                  <Text style={styles.viewAllText}>View all</Text>
-                </TouchableOpacity>
+                <Text style={styles.sectionTitle}>
+                  Find Your Flow, Every Day
+                </Text>
               </View>
 
               <ScrollView
@@ -246,18 +245,14 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           )}
 
           {/* Upcoming Classes Section */}
-          {(
+          {
             <View style={styles.upcomingSection}>
               <Text style={styles.upcomingTitle}>Trending for you</Text>
-              {
-                [1,2,3].map((item) => (
-                  <DynamicClassCard key={item} />
-                ))
-              }
+              {[1, 2, 3].map(item => (
+                <DynamicClassCard key={item} />
+              ))}
             </View>
-          )}
-
-        
+          }
         </ScrollView>
       </SafeAreaView>
     </GradientBackground>
@@ -547,25 +542,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 16,
   },
-sessionCard: {
-  width: 265,
-  borderRadius: 12,
-  borderColor: '#ECECEC',
-  borderWidth: 1,
-  borderStyle: 'solid',
-  overflow: 'hidden',
-  backgroundColor: '#FFFFFF',
-  minHeight: 320,
-  paddingBlock: 26,
-  paddingInline: 15,
-},
+  sessionCard: {
+    width: 265,
+    borderRadius: 12,
+    borderColor: '#ECECEC',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    minHeight: 320,
+    paddingBlock: 26,
+    paddingInline: 15,
+  },
 
-sessionImage: {
-  width: '100%',
-  height: 250,
-  borderRadius: 10, // Remove border radius as it's inside a bordered container
-  objectFit: 'cover',
-},
+  sessionImage: {
+    width: '100%',
+    height: 250,
+    borderRadius: 10, // Remove border radius as it's inside a bordered container
+    objectFit: 'cover',
+  },
   sessionContent: {
     marginBottom: 19,
   },
@@ -615,7 +610,7 @@ sessionImage: {
   },
   classCard: {
     width: '100%',
-    height: 335,
+    height:88,
     borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
@@ -623,7 +618,8 @@ sessionImage: {
   },
   classImage: {
     width: '100%',
-    height: '100%',
+    height:88,
+
   },
   classOverlay: {
     ...StyleSheet.absoluteFillObject,
