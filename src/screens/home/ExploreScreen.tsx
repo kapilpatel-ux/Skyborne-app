@@ -274,8 +274,14 @@ const ExploreScreen = ({ navigation }: any) => {
                       animated: true,
                     });
                   }}
+                  style={styles.navArrowLeft}
                 >
-                  <ArrowLeft size={24} color="#494949" strokeWidth={2} />
+                  <ImageBackground
+                    // source={ExploreImages.ArrowLeftBg} // create or reuse a circular bg image or gradient if needed
+                    style={styles.navArrowIconContainer}
+                  >
+                    <ArrowLeft size={18} color="#000000" strokeWidth={2} />
+                  </ImageBackground>
                 </Pressable>
 
                 {/* RIGHT ARROW */}
@@ -286,8 +292,14 @@ const ExploreScreen = ({ navigation }: any) => {
                       animated: true,
                     });
                   }}
+                  style={styles.navArrowRight}
                 >
-                  <ArrowRight size={24} color="#494949" strokeWidth={2} />
+                  <ImageBackground
+                    // source={ExploreImages.ArrowRightBg} // same here for right bg
+                    style={styles.navArrowIconContainer}
+                  >
+                    <ArrowRight size={18} color="#FFFFFF" strokeWidth={2} />
+                  </ImageBackground>
                 </Pressable>
               </View>
             </View>
@@ -558,6 +570,30 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
+  },
+  navArrowLeft: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#F1F3F0', 
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  navArrowRight: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#676767', 
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  navArrowIconContainer: {
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   viewAllText: {
     fontFamily: 'Satoshi',
