@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   dropdownInputDisabled: {
-    opacity: 0.5,
+    // opacity: 0.5,
   },
   dropdownText: {
     fontFamily: 'Satoshi-Medium',

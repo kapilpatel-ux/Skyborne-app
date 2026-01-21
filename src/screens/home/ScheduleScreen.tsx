@@ -309,6 +309,7 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
                   <Image
                     source={ScheduleImages.ArrowImage2}
                     resizeMode="contain"
+                    style={styles.navArrowIcon}
                   />
                 </TouchableOpacity>
 
@@ -323,6 +324,7 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
                   <Image
                     source={ScheduleImages.ArrowImage3}
                     resizeMode="contain"
+                    style={styles.navArrowIcon}
                   />
                 </TouchableOpacity>
               </View>
@@ -378,7 +380,9 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
                         {/* Middle: Title and Duration */}
                         <View style={styles.sessionInfo}>
                           <Text style={styles.sessionTitle}>
-                            {meeting.title}
+                            {meeting.title
+                              ?.toLowerCase()
+                              .replace(/\b\w/g, char => char.toUpperCase())}
                           </Text>
                           <Text style={styles.sessionDuration}>
                             {meeting.duration} min - {meeting.service?.title}
@@ -397,7 +401,11 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
                                 styles.playButtonCircleDark,
                             ]}
                           >
-                            <Image source={ScheduleImages.ArrowImage4} />
+                            <View style={styles.arrowBgCircle}>
+                              <Image source={ScheduleImages.ArrowImage4}
+                                style={styles.navArrowIcon4}
+                              />
+                            </View>
                           </View>
                         </TouchableOpacity>
                       </TouchableOpacity>
@@ -670,6 +678,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     top: 8,
+  },
+  navArrowIcon: {
+    width: 28,
+    height: 28,
+  },
+  arrowBgCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#B95E82',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navArrowIcon4: {
+    width: 14,
+    height: 14,
+    resizeMode: 'contain',
   },
   sessionsList: {
     paddingBottom: 20,

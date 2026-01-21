@@ -474,7 +474,10 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <View style={styles.topNav}>
-            <TouchableOpacity onPress={handleClosePress} disabled={isProcessingPayment}>
+            <TouchableOpacity onPress={handleClosePress} 
+              disabled={true}
+              style={styles.hiddenCloseButton}
+            >
               <Image
                 style={styles.closeIcon}
                 source={{uri:Images.crossIcon}}
@@ -599,20 +602,34 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   container: {
     flex: 1,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 24,
   },
   topNav: { alignItems: 'flex-end' },
+  // closeIcon: {
+  //   fontSize: 22,
+  //   color: '#3A3A3A',
+  //   fontWeight: '600',
+  //   marginTop: 70,
+  //   marginBottom: -65,
+  //   marginRight: 10,
+  // },
+  hiddenCloseButton: {
+    opacity: 0,          
+    pointerEvents: 'none', 
+  },
   closeIcon: {
-    fontSize: 22,
-    color: '#3A3A3A',
-    fontWeight: '600',
+    width: 22,
+    height: 22,
     marginTop: 70,
     marginBottom: -65,
-    marginRight: 10,
+    // marginRight: 10,
   },
-  headerSection: { alignItems: 'center', marginTop: 50 },
+  headerSection: { 
+    alignItems: 'center', 
+    marginTop: 35,
+  },
   title: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 30,
@@ -623,7 +640,7 @@ const styles = StyleSheet.create({
     width: 263,
   },
   subtitle: {
-    marginTop: 8,
+    marginTop: 10,
     fontFamily: 'Satoshi-Regular',
     fontSize: 14,
     fontWeight: '400',

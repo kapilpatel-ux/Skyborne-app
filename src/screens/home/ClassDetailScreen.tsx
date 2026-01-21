@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { ChevronLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import GradientBackground from '../../components/GradientBackground';
 import { useClassDetailsViewModel } from '../../viewmodels/useClassDetailsViewModel';
 import { useJoinMeeting } from '../../viewmodels/useJoinMeeting'; // Import join hook
@@ -322,7 +322,8 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <ChevronLeft size={24} color="#494949" strokeWidth={2} />
+              {/* <ChevronLeft size={24} color="#494949" strokeWidth={2} /> */}
+              <ArrowLeft size={24} color="#494949" strokeWidth={2} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Details</Text>
             <View style={styles.headerSpacer} />
@@ -347,7 +348,11 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
           <View style={styles.titleSection}>
             <View style={styles.titleRow}>
               <View style={styles.titleLeft}>
-                <Text style={styles.className}>{classDetails.title}</Text>
+                <Text style={styles.className}>
+                  {classDetails.title
+                    ?.toLowerCase()
+                    .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                </Text>
                 <Text style={styles.trainerText}>
                   Trainer: {classDetails.trainer?.name}{' '}
                 </Text>
@@ -406,7 +411,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
           {/* About Class Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About class</Text>
+            <Text style={styles.sectionTitle}>About Class</Text>
             <Text style={styles.aboutText}>{getDisplayedDescription()}</Text>
             {shouldShowReadMore() && (
               <TouchableOpacity
@@ -421,7 +426,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
           {/* What You'll Need Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>What you'll need</Text>
+            <Text style={styles.sectionTitle}>What You'll Need</Text>
             <View style={styles.needsCard}>
               {classDetails.requirements &&
               classDetails.requirements.length > 0 ? (
@@ -636,7 +641,6 @@ const styles = StyleSheet.create({
   /* DETAILS CARD */
   detailsCard: {
     flexDirection: 'row',
-    width: 358,
     height: 121,
     marginHorizontal: 16,
     marginBottom: 28,
@@ -714,7 +718,6 @@ const styles = StyleSheet.create({
 
   /* NEEDS CARD */
   needsCard: {
-    width: 358,
     backgroundColor: '#FFE8E8',
     borderRadius: 10,
     paddingHorizontal: 14,

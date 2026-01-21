@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, ArrowLeft } from 'lucide-react-native';
 import TextInput from '../../components/TextInput';
 import Button from '../../components/Button';
 import { FontFamilies } from '../../constants/fonts';
@@ -114,7 +114,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <ChevronLeft size={24} color="#494949" strokeWidth={2} />
+              <ArrowLeft size={24} color="#494949" strokeWidth={2} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Edit Profile</Text>
             <View style={styles.headerSpacer} />

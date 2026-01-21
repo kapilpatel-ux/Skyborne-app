@@ -15,6 +15,8 @@ import { ExploreImages } from '../../assets/images/explore';
 import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
 import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
+import { ArrowRight, ArrowLeft } from 'lucide-react-native';
+import { useRef } from 'react';
 
 interface UserRegion {
   timezone: string;
@@ -51,6 +53,11 @@ const ExploreScreen = ({ navigation }: any) => {
       source: ExploreImages.diet,
     },
   ];
+
+  const categoryScrollRef = useRef<ScrollView>(null);
+  const SCROLL_OFFSET = 300;
+  const scrollX = useRef(0);
+  const CARD_WIDTH = 299; 
 
   const { upcomingMeetings, isLoading, error, fetchSearch } = useHomeViewModel();
 
@@ -171,7 +178,11 @@ const ExploreScreen = ({ navigation }: any) => {
           <View style={styles.sessionImagePlaceholder} />
         </View>
         <View style={styles.sessionInfo}>
-          <Text style={styles.sessionTitle}>{meeting.title}</Text>
+          <Text style={styles.sessionTitle}>
+            {meeting.title
+              ?.toLowerCase()
+              .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+          </Text>
           <Text style={styles.sessionDuration}>
             {formattedDate} • {formattedTime} ({meeting.service?.title})
           </Text>
@@ -251,16 +262,47 @@ const ExploreScreen = ({ navigation }: any) => {
         {/* Trending Categories Section - Hidden when searching */}
         {!hasSearched && (
           <>
-            <View style={styles.sectionHeader}>
+            <View style={styles.sectionHeaderWithAction}>
               <Text style={styles.sectionTitle}>Trending for You</Text>
+
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                {/* LEFT ARROW */}
+                <Pressable
+                  onPress={() => {
+                    categoryScrollRef.current?.scrollTo({
+                      x: Math.max(0, scrollX.current - CARD_WIDTH),
+                      animated: true,
+                    });
+                  }}
+                >
+                  <ArrowLeft size={24} color="#494949" strokeWidth={2} />
+                </Pressable>
+
+                {/* RIGHT ARROW */}
+                <Pressable
+                  onPress={() => {
+                    categoryScrollRef.current?.scrollTo({
+                      x: scrollX.current + CARD_WIDTH,
+                      animated: true,
+                    });
+                  }}
+                >
+                  <ArrowRight size={24} color="#494949" strokeWidth={2} />
+                </Pressable>
+              </View>
             </View>
 
             {/* Horizontal Scroll for Categories */}
             <ScrollView
+              ref={categoryScrollRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.categoriesScroll}
               contentContainerStyle={styles.categoriesContent}
+              onScroll={(e) => {
+                scrollX.current = e.nativeEvent.contentOffset.x;
+              }}
+              scrollEventThrottle={16}
             >
               {categories.map((category, index) => (
                 <Pressable
@@ -268,6 +310,7 @@ const ExploreScreen = ({ navigation }: any) => {
                   style={[
                     styles.categoryCard,
                     index === 0 && styles.categoryCardFirst,
+                    index === categories.length - 1 && { marginRight: 0 },
                   ]}
                 >
                   <View style={styles.categoryImageContainer}>
@@ -530,7 +573,7 @@ const styles = StyleSheet.create({
   },
   categoriesContent: {
     paddingLeft: 16,
-    paddingRight: 1,
+    paddingRight: 32,
   },
   categoryCard: {
     width: 284,

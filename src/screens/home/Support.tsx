@@ -70,7 +70,10 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
             <View key={option.id}>
               <TouchableOpacity style={styles.contactItem}>
                 <View style={styles.contactIconContainer}>
-                  <Image source={{uri:option.icon}} />
+                  <Image source={{ uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/emailIcon.png' }} 
+                    style={styles.contactIcon} 
+                    resizeMode="contain" 
+                  />
                 </View>
                 <View style={styles.contactTextContainer}>
                   <Text style={styles.contactTitle}>{option.title}</Text>
@@ -195,8 +198,8 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   contactIcon: {
-    width: 24,
-    height: 24,
+    width: 52,
+    height: 52,
   },
   contactTextContainer: {
     flex: 1,

@@ -9,7 +9,7 @@ const fitnessLevels = [
     id: 'beginner',
     title: 'Beginner',
     subtitle: 'Just starting my wellness journey',
-    image: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/community.jpg',
+    image: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/onboardingfitnesslevel.png',
   },
   {
     id: 'intermediate',
@@ -22,7 +22,7 @@ const fitnessLevels = [
     id: 'advanced',
     title: 'Advanced',
     subtitle: 'Very active and experienced',
-    image: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/advanced.jpg',
+    image: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/onboadingfitnesslevel1.png',
   },
 ];
 
@@ -70,7 +70,7 @@ const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
         </View>
         <View style={styles.container}>
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>What's your fitness level?</Text>
+            <Text style={styles.title}>What's Your Fitness Level?</Text>
             <Text style={styles.subtitle}>
               We'll recommend the right classes for you
             </Text>

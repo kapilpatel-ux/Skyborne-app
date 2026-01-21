@@ -375,7 +375,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               {/* Today's Sessions Results */}
               {todayMeetings.length > 0 && (
                 <>
-                  <Text style={styles.sectionTitle}>Today's Sessions</Text>
+                  <Text style={styles.sectionTitle}>Today's Session</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}

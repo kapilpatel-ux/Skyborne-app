@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, SafeAreaView } from 'react-native';
 import GradientBackground from '../../components/GradientBackground';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../../components/Button';
 
 const { width } = Dimensions.get('window');
 
-const OnboardingTimeCommitmentScreen = ({ navigation }) => {
+type Props = {
+  navigation: NativeStackNavigationProp<any>;
+};
+
+const OnboardingTimeCommitmentScreen = ({ navigation }: Props)  => {
   const [busyLevel, setBusyLevel] = useState('moderately_busy');
   const [timeCommitment, setTimeCommitment] = useState('30_minutes');
 
@@ -41,7 +46,7 @@ const OnboardingTimeCommitmentScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>Tell us about your day</Text>
+            <Text style={styles.title}>Tell Us About Your Day</Text>
             <Text style={styles.subtitle}>We’ll recommend the right classes for you</Text>
           </View>
 
