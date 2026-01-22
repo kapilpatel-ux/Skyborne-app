@@ -316,7 +316,7 @@ comingSoonBadge: {
   borderColor: '#B95E82',
 },
 comingSoonText: {
-  fontFamily: 'Satoshi',
+  fontFamily: 'Satoshi-Medium',
   fontWeight: '600',
   fontSize: 12,
   color: '#B95E82',

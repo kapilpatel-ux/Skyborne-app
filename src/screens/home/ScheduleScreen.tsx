@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   headerTitle: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 30,
     lineHeight: 33,
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   bannerTitle: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   bannerDescription: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
     fontWeight: '400',
     fontSize: 12,
     lineHeight: 16,
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   calendarTitle: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 22,
     lineHeight: 24,
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayLabel: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Medium',
     fontWeight: '500',
     fontSize: 14,
     lineHeight: 22,
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#494949',
   },
   dateText: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Medium',
     fontWeight: '500',
     fontSize: 15,
     lineHeight: 22,
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: '#494949',
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
   },
   errorContainer: {
     backgroundColor: '#FFE5E5',
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#D32F2F',
     fontSize: 14,
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
     marginBottom: 8,
   },
   retryButton: {
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sessionsCount: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Medium',
     fontWeight: '500',
     fontSize: 14,
     lineHeight: 19,
@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   scheduleDate: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   timeLabel: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Medium',
     fontWeight: '500',
     fontSize: 14,
     lineHeight: 22,
@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
     paddingTop: 17,
   },
   sessionTitle: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
@@ -757,14 +757,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   sessionDuration: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
     fontWeight: '400',
     fontSize: 14,
     lineHeight: 19,
     color: '#FFFFFF',
   },
   sessionTrainer: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Medium',
     position: 'absolute',
     top: 95,
     minWidth: 131,
@@ -796,7 +796,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     fontWeight: '500',
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Medium',
   },
 });
 

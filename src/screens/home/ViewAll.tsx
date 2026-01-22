@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: '#494949',
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
   },
   loadingMoreContainer: {
     flexDirection: 'row',
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
     color: '#494949',
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
   },
   endOfListContainer: {
     alignItems: 'center',
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   endOfListText: {
     fontSize: 14,
     color: '#959595',
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
   },
 });
 

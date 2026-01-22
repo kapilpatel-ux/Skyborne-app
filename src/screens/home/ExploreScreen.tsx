@@ -467,7 +467,7 @@ comingSoonBadge: {
   borderColor: '#B95E82',
 },
 comingSoonText: {
-  fontFamily: 'Satoshi',
+  fontFamily: 'Satoshi-Medium',
   fontWeight: '600',
   fontSize: 12,
   color: '#B95E82',
@@ -480,7 +480,7 @@ comingSoonText: {
     marginBottom: 25,
   },
   headerTitle: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 30,
     lineHeight: 33,
@@ -494,7 +494,7 @@ comingSoonText: {
   },
   noRecordsText: {
     fontSize: 16,
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
     color: '#959595',
     fontWeight: '400',
     marginBottom: 16,
@@ -507,7 +507,7 @@ comingSoonText: {
   },
   tryAgainButtonText: {
     fontSize: 14,
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Medium',
     color: '#FFFFFF',
     fontWeight: '600',
   },
@@ -586,7 +586,7 @@ comingSoonText: {
     marginBottom: 10,
   },
   bannerTitle: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 20.1125,
     lineHeight: 22,
@@ -595,7 +595,7 @@ comingSoonText: {
     marginBottom: 10,
   },
   bannerDescription: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
     fontWeight: '400',
     fontSize: 12,
     lineHeight: 16,
@@ -617,7 +617,7 @@ comingSoonText: {
     alignItems: 'center',
   },
   sectionTitle: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
@@ -648,7 +648,7 @@ comingSoonText: {
     alignItems: 'center',
   },
   viewAllText: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Medium',
     fontWeight: '500',
     fontSize: 16,
     lineHeight: 22,
@@ -689,7 +689,7 @@ comingSoonText: {
     left: 21,
   },
   categoryTitle: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
@@ -725,7 +725,7 @@ comingSoonText: {
     flex: 1,
   },
   sessionTitle: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Bold',
     fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
@@ -733,7 +733,7 @@ comingSoonText: {
     marginBottom: 6,
   },
   sessionDuration: {
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
     fontWeight: '400',
     fontSize: 14,
     lineHeight: 19,
@@ -789,7 +789,7 @@ comingSoonText: {
     marginTop: 12,
     fontSize: 14,
     color: '#494949',
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
   },
 
   errorContainer: {
@@ -804,7 +804,7 @@ comingSoonText: {
   errorText: {
     color: '#D32F2F',
     fontSize: 14,
-    fontFamily: 'Satoshi',
+    fontFamily: 'Satoshi-Regular',
   },
 });
 
