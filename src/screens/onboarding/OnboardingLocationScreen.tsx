@@ -337,7 +337,6 @@ const styles = StyleSheet.create({
     width: 263,
     height: 66,
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 30,
     lineHeight: 33,
     letterSpacing: 0,
@@ -360,7 +359,6 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 16,
     lineHeight: 18,
     color: '#494949',
@@ -390,14 +388,12 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 14,
     lineHeight: 15.4,
     color: '#000000B2',
   },
   dropdownPlaceholder: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 14,
     lineHeight: 15.4,
     color: '#000000B2',

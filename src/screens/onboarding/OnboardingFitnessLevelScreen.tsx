@@ -137,7 +137,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: '700',
-    color: '#3D4C5E', // dark gray
+    fontFamily: 'Satoshi-Bold',
+    color: '#3D4C5E', 
     textAlign: 'center',
     lineHeight: 26 * 1.25,
   },
@@ -145,6 +146,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
     fontWeight: '400',
+    fontFamily: 'Satoshi-Regular', 
     color: '#494949', // medium gray
     textAlign: 'center',
   },
@@ -184,12 +186,14 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: 'Satoshi-Medium',
     color: '#000000', // dark gray
   },
   cardSubtitle: {
     marginTop: 5,
     fontSize: 13,
     fontWeight: '400',
+    fontFamily: 'Satoshi-Regular',
     color: '#8A95A5', // medium gray
   },
   buttonContainer: {

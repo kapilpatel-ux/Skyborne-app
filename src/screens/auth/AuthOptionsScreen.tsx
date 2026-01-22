@@ -38,7 +38,7 @@ const AuthButton = ({ icon, text, onPress }: AuthButtonProps) => (
     ) : (
       <Image source={icon} style={styles.authButtonImage} />
     )}
-    <ThemedText weight="medium" style={styles.authButtonText}>
+    <ThemedText style={styles.authButtonText}>
       {text}
     </ThemedText>
   </TouchableOpacity>
@@ -171,13 +171,13 @@ export default function AuthOptionsScreen({ navigation }: Props) {
             source={require('../../assets/images/logo.png')}
             style={styles.logo}
           />
-          <ThemedText weight="medium" style={styles.appName}>
+          <ThemedText style={styles.appName}>
             Skyborne Drop
           </ThemedText>
         </View>
 
         <View style={styles.content}>
-          <ThemedText weight="bold" style={styles.title}>
+          <ThemedText style={styles.title}>
             Let's Get Started
           </ThemedText>
           <ThemedText style={styles.subtitle}>
@@ -206,7 +206,7 @@ export default function AuthOptionsScreen({ navigation }: Props) {
             style={styles.loginButton}
             onPress={() => navigation.navigate('Login')}
           >
-            <ThemedText weight="medium" style={styles.loginButtonText}>
+            <ThemedText style={styles.loginButtonText}>
               Login
             </ThemedText>
           </TouchableOpacity>
@@ -215,7 +215,7 @@ export default function AuthOptionsScreen({ navigation }: Props) {
             style={styles.signupButton}
             onPress={() => navigation.navigate('Signup')}
           >
-            <ThemedText weight="medium" style={styles.signupText}>
+            <ThemedText style={styles.signupText}>
               Signup
             </ThemedText>
           </TouchableOpacity>
@@ -253,7 +253,6 @@ const styles = StyleSheet.create({
   appName: {
     fontFamily: FontFamilies.SatoshiMedium,
     fontSize: 15,
-    fontWeight: '500',
     color: '#494949',
   },
   content: {
@@ -263,14 +262,12 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: FontFamilies.SatoshiBold,
     fontSize: 30,
-    fontWeight: 'bold',
     color: '#494949',
     marginBottom: 8,
   },
   subtitle: {
     fontFamily: FontFamilies.SatoshiRegular,
     fontSize: 14,
-    fontWeight: '400',
     color: '#494949',
     marginBottom: 52,
   },
@@ -301,7 +298,6 @@ const styles = StyleSheet.create({
   authButtonText: {
     fontFamily: FontFamilies.SatoshiMedium,
     fontSize: 16,
-    fontWeight: '500',
     color: '#494949',
   },
   loginButton: {
@@ -314,9 +310,9 @@ const styles = StyleSheet.create({
     marginBottom: 11,
   },
   loginButtonText: {
+    fontFamily: FontFamilies.SatoshiMedium,
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '500',
   },
   signupButton: {
     width: '85%',
@@ -328,17 +324,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   signupText: {
+    fontFamily: FontFamilies.SatoshiMedium,
     color: '#494949',
     fontSize: 16,
-    fontWeight: '500',
   },
   legalText: {
     position: 'absolute',
     bottom: 49,
     fontSize: 13,
+    fontFamily: FontFamilies.SatoshiRegular,
     color: '#A3A4A6',
     textAlign: 'center',
     width: '80%',
-    fontWeight: '400',
   },
 });

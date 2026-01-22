@@ -439,8 +439,8 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   appName: {
+    fontFamily: FontFamilies.SatoshiMedium,
     fontSize: 15,
-    fontWeight: '500',
     color: '#3A3A3A',
   },
   scrollView: {
@@ -454,14 +454,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    fontWeight: '700',
     color: '#494949',
     marginBottom: 8,
     maxWidth: '80%',
+    fontFamily: FontFamilies.SatoshiBold,
   },
   subtitle: {
     fontSize: 14,
-    fontWeight: '400',
     color: '#666666',
     marginBottom: 20,
     fontFamily: FontFamilies.SatoshiRegular,
@@ -485,7 +484,6 @@ const styles = StyleSheet.create({
     color: '#494949',
     marginBottom: 8,
     marginTop: 14,
-    fontWeight: '500',
     fontFamily: FontFamilies.SatoshiMedium,
   },
   passwordContainer: {
@@ -542,7 +540,6 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontFamily: FontFamilies.SatoshiMedium,
     fontSize: 16,
-    fontWeight: '500',
     color: '#494949',
   },
   signupContainer: {
@@ -554,13 +551,11 @@ const styles = StyleSheet.create({
   signupText: {
     fontSize: 14,
     color: '#0A0A0A',
-    fontWeight: '400',
     fontFamily: FontFamilies.SatoshiRegular,
   },
   signupLink: {
     fontSize: 14,
     color: '#B95E82',
-    fontWeight: '600',
     fontFamily: FontFamilies.SatoshiMedium,
   },
 });

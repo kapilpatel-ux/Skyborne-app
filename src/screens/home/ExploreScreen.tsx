@@ -271,7 +271,7 @@ const ExploreScreen = ({ navigation }: any) => {
         {!hasSearched && (
           <>
             <View style={styles.sectionHeaderWithAction}>
-              <Text style={styles.sectionTitle}>Explore  Our Services</Text>
+              <Text style={styles.sectionTitle}>Explore Our Services</Text>
 
               <View style={{ flexDirection: 'row', gap: 16 }}>
                 {/* LEFT ARROW */}
@@ -468,7 +468,6 @@ comingSoonBadge: {
 },
 comingSoonText: {
   fontFamily: 'Satoshi-Medium',
-  fontWeight: '600',
   fontSize: 12,
   color: '#B95E82',
   textTransform: 'uppercase',
@@ -481,7 +480,6 @@ comingSoonText: {
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 30,
     lineHeight: 33,
     color: '#494949',
@@ -496,7 +494,6 @@ comingSoonText: {
     fontSize: 16,
     fontFamily: 'Satoshi-Regular',
     color: '#959595',
-    fontWeight: '400',
     marginBottom: 16,
   },
   tryAgainButton: {
@@ -509,7 +506,6 @@ comingSoonText: {
     fontSize: 14,
     fontFamily: 'Satoshi-Medium',
     color: '#FFFFFF',
-    fontWeight: '600',
   },
 
   searchContainer: {
@@ -587,7 +583,6 @@ comingSoonText: {
   },
   bannerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20.1125,
     lineHeight: 22,
     width: 105,
@@ -596,7 +591,6 @@ comingSoonText: {
   },
   bannerDescription: {
     fontFamily: 'Satoshi-Regular',
-    fontWeight: '400',
     fontSize: 12,
     lineHeight: 16,
     color: '#FFFFFF',
@@ -618,7 +612,6 @@ comingSoonText: {
   },
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -649,7 +642,6 @@ comingSoonText: {
   },
   viewAllText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 16,
     lineHeight: 22,
     textAlign: 'center',
@@ -690,7 +682,6 @@ comingSoonText: {
   },
   categoryTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#FFFFFF',
@@ -726,7 +717,6 @@ comingSoonText: {
   },
   sessionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -734,7 +724,6 @@ comingSoonText: {
   },
   sessionDuration: {
     fontFamily: 'Satoshi-Regular',
-    fontWeight: '400',
     fontSize: 14,
     lineHeight: 19,
     color: '#050505',

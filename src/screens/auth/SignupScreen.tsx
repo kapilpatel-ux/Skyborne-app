@@ -286,8 +286,8 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: 15,
-    fontWeight: '500',
     color: '#3A3A3A',
+    fontFamily: FontFamilies.SatoshiMedium,
   },
   scrollView: {
     flex: 1,
@@ -297,17 +297,16 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    fontWeight: '700',
     color: '##494949',
     marginBottom: 42,
     maxWidth: '80%',
+    fontFamily: FontFamilies.SatoshiBold,
   },
   label: {
     fontSize: 14,
     color: '#494949',
     marginBottom: 8,
     marginTop: 14,
-    fontWeight: '500',
     fontFamily: FontFamilies.SatoshiMedium,
   },
   passwordContainer: {
@@ -344,7 +343,7 @@ const styles = StyleSheet.create({
   termsText: {
     fontSize: 13,
     color: '#0A0A0A',
-    fontWeight: '500',
+    fontFamily: FontFamilies.SatoshiMedium,
   },
   link: {
     color: '#B95E82',
@@ -364,13 +363,11 @@ const styles = StyleSheet.create({
   loginText: {
     fontSize: 14,
     color: '#0A0A0A',
-    fontWeight: '400',
     fontFamily: FontFamilies.SatoshiRegular,
   },
   loginLink: {
     fontSize: 14,
     color: '#B95E82',
-    fontWeight: '600',
     fontFamily: FontFamilies.SatoshiMedium,
   },
 });

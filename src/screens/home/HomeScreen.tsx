@@ -251,7 +251,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 style={styles.hamburgerIcon}
               />
             </View>
-            <Text style={styles.headerTitle}>Skyborne Drop</Text>
+            <Text style={styles.headerTitle}></Text>
             <TouchableOpacity
               style={styles.searchContainer}
               onPress={handleSearchIconPress}
@@ -607,7 +607,6 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '600',
     fontFamily: 'Satoshi-Bold',
   },
   avatar: {
@@ -736,7 +735,6 @@ const styles = StyleSheet.create({
     lineHeight: 48,
     color: '#FFFFFF',
     marginTop: 6,
-    fontWeight: 'bold',
   },
   getStartedImage: {
     width: 215,
@@ -765,7 +763,6 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     color: '#B95E82',
     textAlign: 'center',
-    fontWeight: 'bold',
   },
   imageContainer: {
     width: '45%',
@@ -784,7 +781,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: 'bold',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -865,8 +861,8 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   upcomingTitle: {
+    fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    fontWeight: '700',
     color: '#494949',
     marginBottom: 16,
   },

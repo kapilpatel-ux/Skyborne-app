@@ -436,7 +436,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -459,7 +458,6 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -533,7 +531,6 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 25,
     lineHeight: 28,
     color: '#000000',
@@ -546,7 +543,6 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 14,
     lineHeight: 19,
     color: '#000000',
@@ -558,7 +554,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -585,7 +580,6 @@ const styles = StyleSheet.create({
   },
   progressTitle: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 18,
     lineHeight: 28,
     color: '#000000',
@@ -595,14 +589,12 @@ const styles = StyleSheet.create({
   },
   progressCredits: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 13,
     lineHeight: 18,
     color: '#000000',
   },
   progressPercentage: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 14,
     lineHeight: 20,
     color: '#000000',
@@ -667,7 +659,6 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 16,
     lineHeight: 22,
     letterSpacing: 0.01,
@@ -676,7 +667,6 @@ const styles = StyleSheet.create({
   },
   settingSubtitle: {
     fontFamily: 'Satoshi-Regular',
-    fontWeight: '400',
     fontSize: 13,
     lineHeight: 18,
     color: 'rgba(5, 5, 5, 0.5)',
@@ -709,7 +699,6 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 16,
     lineHeight: 22,
     color: '#FFFFFF',

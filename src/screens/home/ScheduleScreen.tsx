@@ -443,7 +443,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 30,
     lineHeight: 33,
     color: '#494949',
@@ -501,7 +500,6 @@ const styles = StyleSheet.create({
   },
   bannerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#FFFFFF',
@@ -509,7 +507,6 @@ const styles = StyleSheet.create({
   },
   bannerDescription: {
     fontFamily: 'Satoshi-Regular',
-    fontWeight: '400',
     fontSize: 12,
     lineHeight: 16,
     color: '#FFFFFF',
@@ -532,7 +529,6 @@ const styles = StyleSheet.create({
   },
   calendarTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 22,
     lineHeight: 24,
     color: '#494949',
@@ -547,7 +543,6 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',
@@ -567,7 +562,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 15,
     lineHeight: 22,
     color: '#494949',
@@ -644,7 +638,6 @@ const styles = StyleSheet.create({
   },
   sessionsCount: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 14,
     lineHeight: 19,
     color: 'rgba(73, 73, 73, 0.8)',
@@ -652,7 +645,6 @@ const styles = StyleSheet.create({
   },
   scheduleDate: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#000000',
@@ -706,7 +698,6 @@ const styles = StyleSheet.create({
   },
   timeLabel: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'right',
@@ -750,7 +741,6 @@ const styles = StyleSheet.create({
   },
   sessionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#FFFFFF',
@@ -758,7 +748,6 @@ const styles = StyleSheet.create({
   },
   sessionDuration: {
     fontFamily: 'Satoshi-Regular',
-    fontWeight: '400',
     fontSize: 14,
     lineHeight: 19,
     color: '#FFFFFF',
@@ -768,7 +757,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 95,
     minWidth: 131,
-    fontWeight: '500',
     fontSize: 14,
     lineHeight: 19,
   },
@@ -795,7 +783,6 @@ const styles = StyleSheet.create({
   emptyMessage: {
     fontSize: 16,
     color: '#999',
-    fontWeight: '500',
     fontFamily: 'Satoshi-Medium',
   },
 });

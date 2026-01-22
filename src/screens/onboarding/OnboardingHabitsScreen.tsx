@@ -192,6 +192,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: '700',
+    fontFamily: 'Satoshi-Bold',
     color: '#3D4C5E', // dark gray
     textAlign: 'center',
     lineHeight: 26 * 1.25,
@@ -200,6 +201,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
     fontWeight: '400',
+    fontFamily: 'Satoshi-Regular',
     color: '#494949', // medium gray
     textAlign: 'center',
   },
@@ -209,6 +211,7 @@ const styles = StyleSheet.create({
   questionLabel: {
     fontSize: 16,
     fontWeight: '700',
+    fontFamily: 'Satoshi-Bold',
     color: '#494949', // dark gray
     textAlign: 'left',
   },
@@ -238,6 +241,7 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: 'Satoshi-Medium',
     color: '#000000', // dark gray
   },
   // Sleep Quality Styles
@@ -261,6 +265,7 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: 'Satoshi-Medium',
     color: '#000000',
   },
   // Exercise Frequency Styles
@@ -281,6 +286,7 @@ const styles = StyleSheet.create({
   verticalCardText: {
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: 'Satoshi-Medium',
     color: '#000000',
   },
   selectedCard: {
