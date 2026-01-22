@@ -62,16 +62,39 @@ const ProfileScreen = () => {
   }, []);
 
   // Calculate progress items dynamically from classCredits
+  // Calculate progress items dynamically from classCredits based on plan
+  // Calculate progress items dynamically from classCredits based on plan
   const getProgressItems = (): ProgressItem[] => {
-    if (!user?.classCredits) return [];
+    if (!user?.classCredits || !user?.plan) return [];
 
-    // Get all class types dynamically from classCredits
+    const plan = user.plan.toLowerCase();
     const classNames = Object.keys(user.classCredits).filter(
       key => key !== '_id',
     );
     const items: ProgressItem[] = [];
 
+    // Define which credit types to show based on plan
+    let allowedCredits: string[] = [];
+
+    if (plan === 'gold-yoga') {
+      allowedCredits = ['yoga'];
+    } else if (plan === 'gold-zumba') {
+      allowedCredits = ['zumba'];
+    } else if (plan === 'gold-mixed') {
+      allowedCredits = ['yoga', 'zumba'];
+    } else if (plan === 'diamond') {
+      allowedCredits = ['yoga', 'zumba']; // Diamond doesn't get specialty according to planConfig
+    } else if (plan === 'platinum') {
+      allowedCredits = ['yoga', 'zumba', 'specialty'];
+    }
+
+    // Filter and create progress items only for allowed credits
     classNames.forEach((className, index) => {
+      // Only show if this credit type is allowed for the user's plan
+      if (!allowedCredits.includes(className)) {
+        return;
+      }
+
       const remainingCredits = user.classCredits[className] ?? 0;
       const totalCredits = user.overAllclassCredits?.[className] ?? 0;
 
@@ -82,9 +105,15 @@ const ProfileScreen = () => {
       const percentage =
         totalCredits > 0 ? Math.round((usedCredits / totalCredits) * 100) : 0;
 
+      // Display name mapping
+      let displayTitle = className.charAt(0).toUpperCase() + className.slice(1);
+      // if (className === 'specialty') {
+      //   displayTitle = 'Speciality'; // Map specialty to proper display name
+      // }
+
       items.push({
         id: index + 1,
-        title: className.charAt(0).toUpperCase() + className.slice(1),
+        title: displayTitle,
         percentage,
         progress: totalCredits > 0 ? usedCredits / totalCredits : 0,
         current: usedCredits,
@@ -273,35 +302,44 @@ const ProfileScreen = () => {
         </View>
 
         {/* Current Progress Section */}
+       {/* Current Progress Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Current Progress</Text>
         </View>
 
-        <View style={styles.progressList}>
-          {progressItems.map(item => (
-            <View key={item.id} style={styles.progressCard}>
-              <View style={styles.progressHeader}>
-                <Text style={styles.progressTitle}>{item.title}</Text>
-                <View style={styles.progressInfo}>
-                  <Text style={styles.progressCredits}>
-                    {item.current}/{item.total}
-                  </Text>
-                  <Text style={styles.progressPercentage}>
-                    {item.percentage}%
-                  </Text>
+        {progressItems.length > 0 ? (
+          <View style={styles.progressList}>
+            {progressItems.map(item => (
+              <View key={item.id} style={styles.progressCard}>
+                <View style={styles.progressHeader}>
+                  <Text style={styles.progressTitle}>{item.title}</Text>
+                  <View style={styles.progressInfo}>
+                    <Text style={styles.progressCredits}>
+                      {item.current}/{item.total}
+                    </Text>
+                    <Text style={styles.progressPercentage}>
+                      {item.percentage}%
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.progressBarContainer}>
+                  <LinearGradient
+                    colors={['#B95E82', '#F39F9F']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.progressBar, { width: `${item.percentage}%` }]}
+                  />
                 </View>
               </View>
-              <View style={styles.progressBarContainer}>
-                <LinearGradient
-                  colors={['#B95E82', '#F39F9F']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.progressBar, { width: `${item.percentage}%` }]}
-                />
-              </View>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyProgressContainer}>
+            <Text style={styles.emptyProgressText}>
+              No progress data available for your current plan
+            </Text>
+          </View>
+        )}
 
         {/* Settings Section */}
         <View style={styles.settingsContainer}>
@@ -579,6 +617,19 @@ const styles = StyleSheet.create({
   progressBar: {
     height: '100%',
     borderRadius: 39.12,
+  },
+  emptyProgressContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 30,
+    marginBottom: 40,
+    alignItems: 'center',
+  },
+  emptyProgressText: {
+    fontFamily: 'Satoshi-Regular',
+    fontSize: 14,
+    lineHeight: 19,
+    color: 'rgba(5, 5, 5, 0.5)',
+    textAlign: 'center',
   },
   sessionList: {
     paddingHorizontal: 16,

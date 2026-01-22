@@ -263,7 +263,7 @@ const ExploreScreen = ({ navigation }: any) => {
         {!hasSearched && (
           <>
             <View style={styles.sectionHeaderWithAction}>
-              <Text style={styles.sectionTitle}>Trending for You</Text>
+              <Text style={styles.sectionTitle}>Explore Our Services</Text>
 
               <View style={{ flexDirection: 'row', gap: 16 }}>
                 {/* LEFT ARROW */}
