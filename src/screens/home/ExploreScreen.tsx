@@ -36,21 +36,25 @@ const ExploreScreen = ({ navigation }: any) => {
       id: 1,
       title: 'Yoga',
       source: ExploreImages.trending1,
+      page:'YogaDetails'
     },
     {
       id: 2,
       title: 'Fitness Classes',
       source: ExploreImages.fitness,
+      page:'FitnessDetails'
     },
     {
       id: 3,
       title: 'Zumba Dance',
       source: ExploreImages.zumba,
+      page:'ZumbaDetails'
     },
     {
       id: 4,
       title: 'Diet & Nutrition',
       source: ExploreImages.diet,
+      comingSoon: true,
     },
   ];
 
@@ -130,6 +134,10 @@ const ExploreScreen = ({ navigation }: any) => {
     setSearchInput('');
     setHasSearched(false);
     setSearchResults([]);
+  };
+
+  const handleNavigation = (screenName: string) => {
+    navigation.navigate(screenName);
   };
 
   // Determine which classes to display
@@ -263,7 +271,7 @@ const ExploreScreen = ({ navigation }: any) => {
         {!hasSearched && (
           <>
             <View style={styles.sectionHeaderWithAction}>
-              <Text style={styles.sectionTitle}>Explore Our Services</Text>
+              <Text style={styles.sectionTitle}>Explore  Our Services</Text>
 
               <View style={{ flexDirection: 'row', gap: 16 }}>
                 {/* LEFT ARROW */}
@@ -316,28 +324,43 @@ const ExploreScreen = ({ navigation }: any) => {
               }}
               scrollEventThrottle={16}
             >
-              {categories.map((category, index) => (
-                <Pressable
-                  key={category.id}
-                  style={[
-                    styles.categoryCard,
-                    index === 0 && styles.categoryCardFirst,
-                    index === categories.length - 1 && { marginRight: 0 },
-                  ]}
-                >
-                  <View style={styles.categoryImageContainer}>
-                    <ImageBackground
-                      source={category?.source}
-                      style={styles.categoryImage}
-                      resizeMode="cover"
-                    >
-                      <View style={styles.categoryInfo}>
-                        <Text style={styles.categoryTitle}>{category.title}</Text>
-                      </View>
-                    </ImageBackground>
-                  </View>
-                </Pressable>
-              ))}
+{categories.map((category, index) => (
+  <Pressable
+    key={category.id}
+    style={[
+      styles.categoryCard,
+      index === 0 && styles.categoryCardFirst,
+      index === categories.length - 1 && { marginRight: 0 },
+      category.comingSoon && styles.categoryCardDisabled, // Add this
+    ]}
+    onPress={() => handleNavigation(category.page as string)}
+    disabled={category.comingSoon} // Add this
+  >
+    <View style={styles.categoryImageContainer}>
+      <ImageBackground
+        source={category?.source}
+        style={styles.categoryImage}
+        resizeMode="cover"
+      >
+        {/* Add dark overlay for coming soon */}
+        {category.comingSoon && (
+          <View style={styles.comingSoonOverlay} />
+        )}
+        
+        {/* Add Coming Soon Badge */}
+        {category.comingSoon && (
+          <View style={styles.comingSoonBadge}>
+            <Text style={styles.comingSoonText}>Coming Soon</Text>
+          </View>
+        )}
+        
+        <View style={styles.categoryInfo}>
+          <Text style={styles.categoryTitle}>{category.title}</Text>
+        </View>
+      </ImageBackground>
+    </View>
+  </Pressable>
+))}
             </ScrollView>
           </>
         )}
@@ -421,7 +444,36 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-
+categoryCardDisabled: {
+  opacity: 0.9,
+},
+comingSoonOverlay: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.4)',
+},
+comingSoonBadge: {
+  position: 'absolute',
+  top: 16,
+  right: 16,
+  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 6,
+  borderWidth: 1.5,
+  borderColor: '#B95E82',
+},
+comingSoonText: {
+  fontFamily: 'Satoshi',
+  fontWeight: '600',
+  fontSize: 12,
+  color: '#B95E82',
+  textTransform: 'uppercase',
+  letterSpacing: 0.5,
+},
   header: {
     paddingHorizontal: 16,
     marginTop: 35,

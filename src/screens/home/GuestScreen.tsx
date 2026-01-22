@@ -26,32 +26,33 @@ interface UserRegion {
   region: string;
 }
 
-const categories = [
-  {
-    id: 1,
-    title: 'Yoga',
-    subTitle: 'Find your balance',
-    source: ExploreImages.trending1,
-  },
-  {
-    id: 2,
-    title: 'Fitness Classes',
-    subTitle: 'Get fit together',
-    source: ExploreImages.fitness,
-  },
-  {
-    id: 3,
-    title: 'Zumba Dance',
-    subTitle: 'Dance your heart out',
-    source: ExploreImages.zumba,
-  },
-  {
-    id: 4,
-    title: 'Diet & Nutrition',
-    source: ExploreImages.diet,
-    subTitle: 'Nourish your body',
-  },
-];
+  const categories = [
+    {
+      id: 1,
+      title: 'Yoga',
+      source: ExploreImages.trending1,
+      page:'YogaDetails'
+    },
+    {
+      id: 2,
+      title: 'Fitness Classes',
+      source: ExploreImages.fitness,
+      page:'FitnessDetails'
+    },
+    {
+      id: 3,
+      title: 'Zumba Dance',
+      source: ExploreImages.zumba,
+      page:'ZumbaDetails'
+    },
+    {
+      id: 4,
+      title: 'Diet & Nutrition',
+      source: ExploreImages.diet,
+      comingSoon: true,
+    },
+  ];
+
 
 const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
@@ -84,33 +85,50 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   // Debounced search - send request to backend
 
   const handleClassPress = (classId: string) => {
-    // navigation.navigate('ClassDetails', { classId });
+    navigation.navigate(classId as any );
   };
 
-  const DynamicSessionCard = ({ meeting }: any) => {
-    console.log('meeting', meeting);
+const DynamicSessionCard = ({ meeting }: any) => {
+  const isComingSoon = meeting?.comingSoon;
 
-    return (
-      <TouchableOpacity
-        style={styles.sessionCard}
-        key={meeting.id}
-        onPress={() => handleClassPress(meeting.id)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.sessionContent}>
-          <Text style={styles.sessionTitle}>{meeting.title}</Text>
-          <Text style={styles.sessionSubtitle}>{meeting.subTitle}</Text>
-        </View>
+  return (
+    <TouchableOpacity
+      style={[
+        styles.sessionCard,
+        isComingSoon , // same like categories
+      ]}
+      key={meeting.id}
+      onPress={() => !isComingSoon && handleClassPress(meeting.page)}
+      activeOpacity={0.7}
+      disabled={isComingSoon}
+    >
+      <View style={styles.sessionContent}>
+        <Text style={styles.sessionTitle}>{meeting.title}</Text>
+        <Text style={styles.sessionSubtitle}>{meeting.subTitle}</Text>
+      </View>
 
+      <View>
         <Image
           source={meeting?.source}
           style={styles.sessionImage}
           resizeMode="cover"
         />
 
-      </TouchableOpacity>
-    );
-  };
+        {/* Overlay */}
+        {isComingSoon && <View style={styles.comingSoonOverlay} />}
+
+        {/* Badge */}
+        {isComingSoon && (
+          <View style={styles.comingSoonBadge}>
+            <Text style={styles.comingSoonText}>Coming Soon</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+
 
   const DynamicClassCard = () => {
     return (
@@ -278,6 +296,33 @@ const styles = StyleSheet.create({
     color: '#494949',
     fontFamily: 'Satoshi-Regular',
   },
+  comingSoonOverlay: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.4)',
+},
+comingSoonBadge: {
+  position: 'absolute',
+  top: 16,
+  right: 16,
+  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 6,
+  borderWidth: 1.5,
+  borderColor: '#B95E82',
+},
+comingSoonText: {
+  fontFamily: 'Satoshi',
+  fontWeight: '600',
+  fontSize: 12,
+  color: '#B95E82',
+  textTransform: 'uppercase',
+  letterSpacing: 0.5,
+},
   clearButton: {
     fontSize: 18,
     color: '#B95E82',
