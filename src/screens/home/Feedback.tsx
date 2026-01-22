@@ -7,11 +7,16 @@ import {
   TouchableOpacity,
   Image,
   ImageSourcePropType,
+  ActivityIndicator,
 } from 'react-native';
 import {
   Star
 } from 'lucide-react-native';
 import { Images } from '../../assets/images';
+import { useFeedbackViewModel } from '../../viewmodels/useFeedbackViewModel';
+// import { Alert } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { useEffect } from 'react';
 
 interface FeelingOption {
   id: number;
@@ -22,6 +27,8 @@ interface FeelingOption {
 const FeedbackScreen = ({ navigation }: { navigation: any }) => {
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [selectedFeeling, setSelectedFeeling] = useState<number | null>(null);
+
+  const { submitFeedback, isSubmitting, isSuccess, error, clearFeedbackState } = useFeedbackViewModel();
 
   const feelingOptions: FeelingOption[] = [
     {
@@ -46,16 +53,68 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
     },
   ];
 
-  const handleSubmitFeedback = () => {
-    // Handle feedback submission
-    console.log('Rating:', selectedRating);
-    console.log('Feeling:', selectedFeeling);
-    navigation.goBack();
+  const handleSubmitFeedback = async () => {
+    // Validation
+    if (selectedRating === 0) {
+      Toast.show({
+        type: 'error',
+        text1: 'Rating required',
+        text2: 'Please select a rating',
+      });
+      return;
+    }
+
+    if (!selectedFeeling) {
+      Toast.show({
+        type: 'error',
+        text1: 'Feeling required',
+        text2: 'Please select how you feel',
+      });
+      return;
+    }
+
+    // Map feeling to comment
+    const feelingLabel = feelingOptions.find(f => f.id === selectedFeeling)?.label || '';
+
+    try {
+      await submitFeedback({
+        rating: selectedRating,
+        comment: `I feel ${feelingLabel} after this class.`,
+      });
+    } catch (err) {
+      console.error('Submit feedback error:', err);
+    }
   };
 
   const handleSkip = () => {
     navigation.goBack();
   };
+
+  useEffect(() => {
+    if (isSuccess) {
+      Toast.show({
+        type: 'success',
+        text1: 'Thank you!',
+        text2: 'Your feedback has been submitted successfully',
+      });
+
+      clearFeedbackState();
+      navigation.goBack();
+    }
+  }, [isSuccess]);
+
+
+  useEffect(() => {
+    if (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Submission failed',
+        text2: typeof error === 'string' ? error : 'Failed to submit feedback',
+      });
+
+      clearFeedbackState();
+    }
+  }, [error]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -122,8 +181,16 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
         </View>
 
         {/* Submit Button */}
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmitFeedback}>
-          <Text style={styles.submitButtonText}>Submit Feedback</Text>
+        <TouchableOpacity 
+          style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]} 
+          onPress={handleSubmitFeedback}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.submitButtonText}>Submit Feedback</Text>
+          )}
         </TouchableOpacity>
 
         {/* Skip Button */}

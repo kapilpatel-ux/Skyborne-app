@@ -12,6 +12,7 @@ import {
   Image,
   ImageSourcePropType,
 } from 'react-native';
+import { MessageCircleMore } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { AllItems, ProfileImages } from '../../assets/images/profile';
 import BottomNav from '../../components/BottomNav';
@@ -41,7 +42,7 @@ interface SettingItem {
   id: number;
   title: string;
   subtitle: string;
-  icon: ImageSourcePropType;
+  icon?: ImageSourcePropType;
   iconBgColor: string;
   screen?: keyof RootStackParamList;
 }
@@ -144,6 +145,13 @@ const ProfileScreen = () => {
       icon: ProfileImages.historyIcon,
       iconBgColor: '#FFE8E8',
       screen: 'SessionHistory',
+    },
+    {
+      id: 3,
+      title: 'Feedback',
+      subtitle: 'Give us your feedback',
+      iconBgColor: '#FFE8E8',
+      screen: 'Feedback',
     },
     {
       id: 4,
@@ -313,7 +321,11 @@ const ProfileScreen = () => {
                     { backgroundColor: item.iconBgColor },
                   ]}
                 >
-                  <Image source={item.icon} style={styles.settingIcon} />
+                  {item.id === 3 ? (
+                    <MessageCircleMore size={22} color="#B95E82" />
+                  ) : (
+                    <Image source={item.icon} style={styles.settingIcon} />
+                  )}
                 </View>
                 <View style={styles.settingTextContainer}>
                   <Text style={styles.settingTitle}>{item.title}</Text>
