@@ -30,6 +30,7 @@ import ClassDetailsScreen from '../screens/home/ClassDetailScreen';
 import ViewAll from '../screens/home/ViewAll';
 import UpgradePlanScreen from '../screens/home/UpgradePlan';
 import GuestScreen from '../screens/home/GuestScreen';
+import PaymentHistory from '../screens/home/PaymentHistory';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -53,6 +54,7 @@ export type RootStackParamList = {
   UpgradePlan: undefined;
   Profile: undefined;
   GuestHome: undefined;
+  PaymentHistory: undefined;
   ManageSubscription: undefined;
   SessionHistory: undefined;
   Support: undefined;
@@ -121,6 +123,7 @@ export default function AppNavigator() {
         <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} />
         <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
         <Stack.Screen name="GuestHome" component={GuestScreen} />
+        <Stack.Screen name="PaymentHistory" component={PaymentHistory} />
 
         <Stack.Screen name="Support" component={SupportScreen} />
         <Stack.Screen name="Feedback" component={FeedbackScreen} />

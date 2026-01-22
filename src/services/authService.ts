@@ -2,8 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 import { SignupPayload } from '../viewmodels/useAuthViewModel';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
 // const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
 
 
 export interface SignupResponse {
@@ -72,6 +72,7 @@ class AuthService {
   constructor() {
     this.api = axios.create({
       baseURL: API_BASE_URL,
+       timeout: 15000,
       headers: {
         'Content-Type': 'application/json',
       },

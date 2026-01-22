@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
 
 export interface DashboardStats {
   totalCredits: number;
@@ -22,6 +22,28 @@ export interface CancelSubscriptionResponse {
   success: boolean;
   message: string;
   subscription?: any;
+}
+
+export interface PaymentHistoryResponse {
+  success: boolean;
+  payments: any[];
+  total?: number;
+}
+
+export interface PaymentStatsResponse {
+  success: boolean;
+  stats: {
+    totalSpent?: number;
+    thisMonth?: number;
+    lastPaymentAmount?: number;
+    totalCount?: number;
+    completedCount?: number;
+    failedCount?: number;
+    pendingCount?: number;
+    successRate?: number;
+    averageTransactionValue?: number;
+    activeSubscriptions?: number;
+  };
 }
 
 class ProfileService {
@@ -55,6 +77,16 @@ class ProfileService {
 
   cancelSubscription(userId: string) {
     return this.api.post(`/subscription/${userId}/cancel`);
+  }
+
+  async getPaymentHistory(userId: string): Promise<PaymentHistoryResponse> {
+    const res = await this.api.get<PaymentHistoryResponse>(`/payment/history/${userId}`);
+    return res.data;
+  }
+
+  async getPaymentStats(userId: string): Promise<PaymentStatsResponse> {
+    const res = await this.api.get<PaymentStatsResponse>(`/payment/stats/${userId}`);
+    return res.data;
   }
 }
 

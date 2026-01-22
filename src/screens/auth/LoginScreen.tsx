@@ -17,7 +17,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import { useDispatch } from 'react-redux';
 import { IconImages } from '../../assets/icons';
-import { setUser } from '../../store/authSlice';
+import { clearError, setUser } from '../../store/authSlice';
 import { socialLoginService } from '../../services/authService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -26,6 +26,10 @@ type FormData = {
   email: string;
   password: string;
 };
+
+
+
+
 
 const validationSchema = Yup.object().shape({
   email: Yup.string()
@@ -48,9 +52,11 @@ export default function LoginScreen({ navigation }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  useEffect(() => {
+ useEffect(() => {
     configureGoogleSignIn();
-  }, []);
+    // Clear any stuck auth state when component mounts
+    dispatch(clearError());
+  }, [dispatch]);
 
   const configureGoogleSignIn = () => {
     try {
@@ -184,12 +190,13 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
+
   const initialValues: FormData = {
     email: '',
     password: '',
   };
 
-  const onSubmit = async (
+const onSubmit = async (
     data: FormData,
     { setSubmitting }: FormikHelpers<FormData>
   ) => {
@@ -208,13 +215,13 @@ export default function LoginScreen({ navigation }: Props) {
           position: 'top',
           visibilityTime: 2500,
         });
-  
+
         if (onboardingCompleted) {
-            console.log("hitting the true");
-            navigation.navigate('Home');
-          } else {
-            console.log("hitting the false");
-            navigation.navigate('Pricing');
+          console.log("hitting the true");
+          navigation.navigate('Home');
+        } else {
+          console.log("hitting the false");
+          navigation.navigate('Pricing');
         }
       } else {
         const msg = result.message || 'Login failed. Please try again.';
@@ -227,6 +234,9 @@ export default function LoginScreen({ navigation }: Props) {
           position: 'top',
           visibilityTime: 3000,
         });
+
+        // Explicitly reset submitting state on error
+        setSubmitting(false);
       }
     } catch (error: any) {
       const msg = error.message || 'An unexpected error occurred';
@@ -239,10 +249,12 @@ export default function LoginScreen({ navigation }: Props) {
         position: 'top',
         visibilityTime: 3000,
       });
-    } finally {
+
+      // Explicitly reset submitting state on error
       setSubmitting(false);
     }
   };
+
 
   return (
     <GradientBackground>

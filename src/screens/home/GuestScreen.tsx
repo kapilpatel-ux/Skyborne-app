@@ -107,20 +107,7 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           style={styles.sessionImage}
           resizeMode="cover"
         />
-        <TouchableOpacity
-          style={styles.joinButton}
-          onPress={() => handleClassPress(meeting.id)}
-        >
-          <Text style={styles.joinButtonText}>Join now</Text>
-          <View style={styles.arrowContainer}>
-            <Image
-              source={{
-                uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/arrow-black.png',
-              }}
-              style={styles.arrow}
-            />
-          </View>
-        </TouchableOpacity>
+
       </TouchableOpacity>
     );
   };

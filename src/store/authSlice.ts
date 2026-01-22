@@ -34,6 +34,7 @@ export interface User {
   lastName?: string;
   country?: string;
   timezone?: string;
+  onboardingCompleted?: boolean;
   [key: string]: any;
 }
 
@@ -57,6 +58,7 @@ const initialState: AuthState = {
   tempUserId: undefined,
   accessToken: undefined,
   refreshToken: undefined,
+  error: undefined,
 };
 
 /**
@@ -163,11 +165,22 @@ export const verifyOtp = createAsyncThunk(
   }
 );
 
+/**
+ * Login thunk with timeout handling
+ */
 export const login = createAsyncThunk(
   'auth/login',
-  async (payload: { email: string; password: string }, { rejectWithValue }) => {
+  async (payload: { email: string; password: string }, { rejectWithValue, signal }) => {
     try {
+      // Create abort timeout - 20 seconds
+      const timeoutId = setTimeout(() => {
+        if (signal) {
+          signal.dispatchEvent(new Event('abort'));
+        }
+      }, 20000);
+
       const res = await loginService(payload);
+      clearTimeout(timeoutId);
 
       if (!res.success) {
         return rejectWithValue(res.message || 'Login failed');
@@ -191,7 +204,10 @@ export const login = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('Login error:', error);
-      return rejectWithValue(error.message || 'Login failed');
+      const errorMessage = error.message === 'Aborted' 
+        ? 'Login request timed out. Please try again.'
+        : error.message || 'Login failed';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -212,14 +228,31 @@ const authSlice = createSlice({
       state.accessToken = undefined;
       state.refreshToken = undefined;
       state.onboardingCompleted = false;
+      state.status = 'idle';
+      state.error = undefined;
       removeAuthToken();
     },
     clearError(state) {
       state.error = undefined;
+      state.status = 'idle';
     },
     setUser(state, action) {
       state.user = action.payload;
       state.loggedIn = true;
+      state.status = 'idle';
+      state.error = undefined;
+    },
+    resetAuthState(state) {
+      state.loggedIn = false;
+      state.user = undefined;
+      state.phone = undefined;
+      state.email = undefined;
+      state.tempUserId = undefined;
+      state.accessToken = undefined;
+      state.refreshToken = undefined;
+      state.onboardingCompleted = false;
+      state.status = 'idle';
+      state.error = undefined;
     },
   },
   extraReducers: (builder) => {
@@ -238,6 +271,7 @@ const authSlice = createSlice({
         state.email = action.payload.data?.user?.email;
         state.phone = action.payload.data?.user?.phone;
         state.onboardingCompleted = action.payload.data?.user?.onboardingCompleted;
+        state.error = undefined;
       })
       .addCase(signup.rejected, (state, action) => {
         state.status = 'failed';
@@ -259,6 +293,7 @@ const authSlice = createSlice({
         state.email = action.payload.data?.user?.email;
         state.phone = action.payload.data?.user?.phone;
         state.onboardingCompleted = action.payload.data?.user?.onboardingCompleted;
+        state.error = undefined;
       })
       .addCase(login.rejected, (state, action) => {
         state.status = 'failed';
@@ -273,6 +308,7 @@ const authSlice = createSlice({
       })
       .addCase(sendOtp.fulfilled, (state) => {
         state.status = 'idle';
+        state.error = undefined;
       })
       .addCase(sendOtp.rejected, (state, action) => {
         state.status = 'failed';
@@ -290,6 +326,7 @@ const authSlice = createSlice({
           state.tempUserId = action.payload.data?.tempUserId;
           state.accessToken = action.payload.data?.token;
           state.refreshToken = action.payload.data?.refreshToken;
+          state.error = undefined;
           // Don't set loggedIn yet - wait for final signup
         }
       })
@@ -300,5 +337,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setOnboardingCompleted, logout, clearError, setUser } = authSlice.actions;
+export const { setOnboardingCompleted, logout, clearError, setUser, resetAuthState } = authSlice.actions;
 export default authSlice.reducer;

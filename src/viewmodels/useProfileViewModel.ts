@@ -3,6 +3,8 @@ import { RootState } from '../store';
 import {
   fetchProfile,
   fetchDashboardStats,
+  fetchPaymentHistory,
+  fetchPaymentStats,
   updateProfile,
   cancelSubscription,
 } from '../store/profileSlice';
@@ -13,8 +15,14 @@ export function useProfileViewModel() {
   const state = useSelector((s: RootState) => s.profile);
 
   const loadProfile = useCallback(() => {
-    dispatch(fetchProfile());
-    dispatch(fetchDashboardStats());
+    dispatch(fetchProfile()).then((action: any) => {
+      const userId = action.payload?._id;
+      if (userId) {
+        dispatch(fetchDashboardStats());
+        dispatch(fetchPaymentHistory(userId));
+        dispatch(fetchPaymentStats(userId));
+      }
+    });
   }, [dispatch]);
 
   const updateProfileAction = useCallback(
@@ -30,6 +38,8 @@ export function useProfileViewModel() {
   return {
     user: state.user,
     dashboardStats: state.dashboardStats,
+    paymentHistory: state.paymentHistory,
+    paymentStats: state.paymentStats,
     isLoading: state.status === 'loading',
     error: state.error,
     isCancellingSubscription: state.cancelSubscriptionStatus === 'loading',

@@ -37,6 +37,8 @@ export function useAuthViewModel() {
   const dispatch = useDispatch<any>();
   const authState = useSelector((state: RootState) => state.auth);
 
+  
+
   /**
    * Complete signup with all onboarding data
    * Includes: location, timezone, onboarding preferences, pricing plan

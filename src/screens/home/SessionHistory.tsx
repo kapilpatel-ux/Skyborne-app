@@ -9,11 +9,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import {
-  Star,
-  Dumbbell,
-  ArrowLeft,
-} from 'lucide-react-native';
+import { Star, Dumbbell, ArrowLeft } from 'lucide-react-native';
 import { Images } from '../../assets/images';
 import { usePastSessionsViewModel } from '../../viewmodels/usePastSessionsViewModel';
 
@@ -21,7 +17,11 @@ const ITEMS_PER_PAGE = 10;
 
 const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
   // Use usePastSessionsViewModel
-  const { pastSessions, isLoading: isInitialLoading, fetchSessions } = usePastSessionsViewModel();
+  const {
+    pastSessions,
+    isLoading: isInitialLoading,
+    fetchSessions,
+  } = usePastSessionsViewModel();
 
   const [displayedItems, setDisplayedItems] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -91,7 +91,7 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
       <Text style={styles.emptyStateDescription}>
         Your completed classes will appear here
       </Text>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.exploreButton}
         onPress={() => navigation.navigate('Home')}
       >
@@ -102,20 +102,18 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
 
   const renderSessionList = () => (
     <View style={styles.sessionListContainer}>
-      {displayedItems.map((session) => (
-        <TouchableOpacity 
-          key={session._id} 
+      {displayedItems.map(session => (
+        <TouchableOpacity
+          key={session._id}
           style={styles.sessionCard}
           onPress={() => handleSessionPress(session._id)}
         >
           {/* Session Image */}
           <View style={styles.sessionImageContainer}>
             <Image
-              source={
-                session.recordingUrl 
-                  ? { uri: session.recordingUrl }
-                  : {uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/arrow-black.png'}
-              }
+              source={{
+                uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/session-image.png',
+              }}
               style={styles.sessionImage}
               resizeMode="cover"
             />

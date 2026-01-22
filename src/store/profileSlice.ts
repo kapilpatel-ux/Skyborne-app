@@ -25,6 +25,30 @@ export const fetchDashboardStats = createAsyncThunk(
   }
 );
 
+export const fetchPaymentHistory = createAsyncThunk(
+  'profile/fetchPaymentHistory',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const res = await profileService.getPaymentHistory(userId);
+      return res.payments || [];
+    } catch (e: any) {
+      return rejectWithValue(e.message);
+    }
+  }
+);
+
+export const fetchPaymentStats = createAsyncThunk(
+  'profile/fetchPaymentStats',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const res = await profileService.getPaymentStats(userId);
+      return res.stats;
+    } catch (e: any) {
+      return rejectWithValue(e.message);
+    }
+  }
+);
+
 export const updateProfile = createAsyncThunk(
   'profile/updateProfile',
   async (payload: any, { rejectWithValue }) => {
@@ -54,6 +78,8 @@ const profileSlice = createSlice({
   initialState: {
     user: null,
     dashboardStats: null,
+    paymentHistory: [],
+    paymentStats: null,
     status: 'idle',
     error: null,
     cancelSubscriptionStatus: 'idle',
@@ -62,12 +88,18 @@ const profileSlice = createSlice({
   extraReducers: builder => {
     builder
       .addCase(fetchProfile.pending, s => { s.status = 'loading'; })
-      .addCase(fetchProfile.fulfilled, (s:any, a) => {
+      .addCase(fetchProfile.fulfilled, (s: any, a) => {
         s.status = 'idle';
         s.user = a.payload;
       })
       .addCase(fetchDashboardStats.fulfilled, (s, a) => {
         s.dashboardStats = a.payload;
+      })
+      .addCase(fetchPaymentHistory.fulfilled, (s: any, a) => {
+        s.paymentHistory = a.payload;
+      })
+      .addCase(fetchPaymentStats.fulfilled, (s: any, a) => {
+        s.paymentStats = a.payload;
       })
       .addCase(updateProfile.fulfilled, (s, a) => {
         s.user = a.payload;

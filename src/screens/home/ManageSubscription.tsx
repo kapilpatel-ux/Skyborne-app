@@ -190,6 +190,12 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       icon: SubscriptionImages.upgradeIcon,
       page: 'UpgradePlan',
     },
+     {
+      id: 2,
+      title: 'Payment History',
+      icon: SubscriptionImages.paymentIcon,
+      page: 'PaymentHistory',
+    },
     // {
     //   id: 2,
     //   title: 'Update payment method',
@@ -354,7 +360,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
                   <Image source={option.icon} style={styles.settingIcon} />
                 </View>
                 <Text style={styles.settingTitle}>{option.title}</Text>
-                <Image source={SubscriptionImages.rightIcon} />
+                <Image source={SubscriptionImages.rightIcon}  style={styles.rightArrow}/>
               </TouchableOpacity>
               {index < settingOptions.length && (
                 <View style={styles.settingsdivider} />
@@ -407,6 +413,12 @@ const styles = StyleSheet.create({
   backIcon: {
     width: 16,
     height: 16,
+  },
+    rightArrow: {
+    width: 14,
+    height: 14,
+    resizeMode: 'contain',
+    opacity: 0.6,
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
