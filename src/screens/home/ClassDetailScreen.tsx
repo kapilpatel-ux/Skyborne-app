@@ -576,7 +576,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    fontWeight: '700',
     lineHeight: 22,
     textAlign: 'center',
     color: '#494949',
@@ -625,7 +624,6 @@ const styles = StyleSheet.create({
   className: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    fontWeight: '700',
     lineHeight: 22,
     color: '#494949',
     marginBottom: 8,
@@ -633,7 +631,6 @@ const styles = StyleSheet.create({
   trainerText: {
     fontFamily: 'Satoshi-Medium',
     fontSize: 14,
-    fontWeight: '500',
     lineHeight: 19,
     color: 'rgba(0, 0, 0, 0.6)',
   },
@@ -669,7 +666,6 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontFamily: 'Satoshi-Regular',
     fontSize: 13,
-    fontWeight: '400',
     lineHeight: 18,
     textAlign: 'center',
     color: 'rgba(5, 5, 5, 0.5)',
@@ -678,7 +674,6 @@ const styles = StyleSheet.create({
   detailValue: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 16,
-    fontWeight: '700',
     lineHeight: 22,
     textAlign: 'center',
     letterSpacing: 0.16,
@@ -693,7 +688,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 18,
-    fontWeight: '700',
     lineHeight: 24,
     color: '#494949',
     marginBottom: 13,
@@ -726,7 +720,6 @@ const styles = StyleSheet.create({
   needItem: {
     fontFamily: 'Satoshi-Regular',
     fontSize: 13,
-    fontWeight: '400',
     lineHeight: 15.6,
     color: '#494949',
     marginBottom: 7.59,
@@ -758,7 +751,6 @@ const styles = StyleSheet.create({
   joinButtonText: {
     fontFamily: 'Satoshi-Medium',
     fontSize: 16,
-    fontWeight: '500',
     lineHeight: 22,
     textAlign: 'center',
     color: '#FFFFFF',

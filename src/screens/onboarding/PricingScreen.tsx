@@ -633,7 +633,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 30,
-    fontWeight: '700',
     color: '#494949',
     textAlign: 'center',
     lineHeight: 33,
@@ -643,7 +642,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontFamily: 'Satoshi-Regular',
     fontSize: 14,
-    fontWeight: '400',
     color: '#494949',
     textAlign: 'center',
     lineHeight: 14,
@@ -673,7 +671,6 @@ const styles = StyleSheet.create({
   planName: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    fontWeight: '700',
     color: '#000000',
   },
   planRight: { alignItems: 'flex-end' },
@@ -681,7 +678,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     marginTop: 28,
     marginBottom: 5,
   },
@@ -708,11 +704,10 @@ const styles = StyleSheet.create({
     width: 79.78,
     height: 24.45,
   },
-  badgeText: { fontSize: 13, fontWeight: '400' },
+  badgeText: { fontSize: 13, fontFamily: 'Satoshi-Regular' },
   valueBadgeText: { color: '#B95E82' },
   premiumBadgeText: {
     fontFamily: 'Satoshi-Regular',
-    fontWeight: '400',
     fontSize: 12,
     color: '#FFFFFF',
   },
@@ -738,11 +733,10 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '700',
     color: '#494949',
     fontFamily: 'Satoshi-Bold',
   },
-  closeButton: { fontSize: 24, color: '#494949', fontWeight: '600' },
+  closeButton: { fontSize: 24, color: '#494949', fontFamily: 'Satoshi-Medium' },
   goldOptionsContainer: { gap: 12, marginBottom: 24 },
   goldOptionCard: {
     flexDirection: 'row',
@@ -774,14 +768,12 @@ const styles = StyleSheet.create({
   },
   goldOptionLabel: {
     fontSize: 16,
-    fontWeight: '500',
     color: '#000000',
     fontFamily: 'Satoshi-Medium',
   },
   modalButtonContainer: { marginBottom: 12 },
   modalCancel: {
     fontSize: 15,
-    fontWeight: '500',
     color: '#B95E82',
     textAlign: 'center',
     fontFamily: 'Satoshi-Medium',

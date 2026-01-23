@@ -402,14 +402,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#494949',
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
   },
   retryText: {
     marginTop: 12,
     fontSize: 13,
     color: '#999',
     fontFamily: 'Satoshi-Regular',
-    fontWeight: '400',
   },
   progressBar: {
     marginTop: 16,
@@ -429,7 +427,6 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     fontSize: 24,
-    fontWeight: '700',
     color: '#D32F2F',
     marginBottom: 8,
     fontFamily: 'Satoshi-Bold',
@@ -448,7 +445,6 @@ const styles = StyleSheet.create({
   },
   failedTitle: {
     fontSize: 24,
-    fontWeight: '700',
     color: '#D32F2F',
     marginBottom: 8,
     fontFamily: 'Satoshi-Bold',
@@ -467,7 +463,6 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 28,
-    fontWeight: '700',
     color: '#4CAF50',
     marginBottom: 8,
     fontFamily: 'Satoshi-Bold',
@@ -506,14 +501,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     flex: 0.4,
   },
   detailValue: {
     fontSize: 12,
     color: '#333',
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '600',
     flex: 0.6,
     textAlign: 'right',
   },
@@ -532,7 +525,6 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: '#B95E82',
     fontSize: 16,
-    fontWeight: '600',
     fontFamily: 'Satoshi-Medium',
   },
 });

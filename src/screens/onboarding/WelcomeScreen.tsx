@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Button from '../../components/Button';
 import GradientBackground from '../../components/GradientBackground';
-import { FontFamilies, FontWeights } from '../../constants/fonts';
+import { FontFamilies} from '../../constants/fonts';
 
 const { width } = Dimensions.get('window');
 
@@ -98,7 +98,6 @@ const styles = StyleSheet.create({
   headline: {
     fontFamily: FontFamilies.SatoshiBold,
     fontSize: 25,
-    fontWeight: FontWeights.bold as 'bold',
     color: '#494949',
     textAlign: 'center',
     marginBottom: 13,
@@ -106,7 +105,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: FontFamilies.SatoshiRegular,
     fontSize: 14,
-    fontWeight: FontWeights.regular as 'regular',
     color: '#494949',
     textAlign: 'center',
     lineHeight: 22,
@@ -120,7 +118,6 @@ const styles = StyleSheet.create({
   },
   getStartedButtonText: {
     color: '#FFFFFF',
-    fontWeight: '500',
     fontSize: 18,
     fontFamily: FontFamilies.SatoshiMedium,
   },

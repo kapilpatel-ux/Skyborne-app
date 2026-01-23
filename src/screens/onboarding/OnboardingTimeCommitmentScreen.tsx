@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'Satoshi-Bold',
     color: '#3D4C5E', // dark gray
     textAlign: 'center',
     lineHeight: 24 * 1.25,
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: 8,
     fontSize: 15,
-    fontWeight: '400',
+    fontFamily: 'Satoshi-Regular',
     color: '#8A95A5', // medium gray
     textAlign: 'center',
     maxWidth: '90%',
@@ -171,13 +171,13 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'Satoshi-Medium',
     color: '#3D4C5E', // dark gray
   },
   sectionLabel: {
     marginTop: 24 - 12, // 24dp below last card, card has 12dp margin bottom
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Satoshi-SemiBold',
     color: '#3D4C5E', // dark gray
     textAlign: 'left',
   },
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   gridCardText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Satoshi-Medium',
     color: '#3D4C5E', // dark gray
   },
   buttonContainer: {

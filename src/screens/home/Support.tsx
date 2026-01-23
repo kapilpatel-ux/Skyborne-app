@@ -151,7 +151,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -167,7 +166,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -206,7 +204,6 @@ const styles = StyleSheet.create({
   },
   contactTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 16,
     lineHeight: 22,
     letterSpacing: 0.01,
@@ -250,7 +247,6 @@ const styles = StyleSheet.create({
   },
   faqQuestion: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 14,
     lineHeight: 15.4,
     color: '#494949',

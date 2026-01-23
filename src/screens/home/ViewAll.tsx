@@ -16,6 +16,8 @@ import {
 import { Images } from '../../assets/images';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
 
+const capitalizeWords = (text: string = '') =>
+  text.replace(/\b\w/g, char => char.toUpperCase());
 
 const ITEMS_PER_PAGE = 10;
 
@@ -109,9 +111,12 @@ const ViewAll = ({ navigation }: { navigation: any }) => {
       {/* Session Content */}
       <View style={styles.sessionContent}>
         {/* Title and Instructor */}
-        <Text style={styles.sessionTitle}>{session.title}</Text>
+        <Text style={styles.sessionTitle}>
+          {capitalizeWords(session.title)}
+        </Text>
+
         <Text style={styles.sessionInstructor}>
-          {session.trainer?.name || 'Unknown Trainer'}
+          {capitalizeWords(session.trainer?.name || 'Unknown Trainer')}
         </Text>
 
         {/* Session Details */}
@@ -234,7 +239,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -261,7 +265,6 @@ const styles = StyleSheet.create({
   },
   emptyStateTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -286,7 +289,6 @@ const styles = StyleSheet.create({
   },
   exploreButtonText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 16,
     lineHeight: 22,
     color: '#FFFFFF',
@@ -330,7 +332,6 @@ const styles = StyleSheet.create({
   },
   sessionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -389,7 +390,6 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 14,
     lineHeight: 19,
     color: '#494949',

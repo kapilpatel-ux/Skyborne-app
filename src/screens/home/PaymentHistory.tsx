@@ -259,7 +259,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -293,7 +292,6 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 28,
     color: '#000000',
@@ -302,7 +300,6 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 12,
     lineHeight: 16,
     color: '#000000',
@@ -314,7 +311,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 18,
     lineHeight: 22,
     color: '#494949',
@@ -340,7 +336,6 @@ const styles = StyleSheet.create({
   },
   orderRef: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '600',
     fontSize: 14,
     lineHeight: 20,
     color: '#1A1A1A',
@@ -357,7 +352,6 @@ const styles = StyleSheet.create({
   },
   paymentAmount: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 16,
     lineHeight: 20,
     color: '#1A1A1A',
@@ -370,7 +364,6 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 11,
     lineHeight: 14,
   },
@@ -381,7 +374,6 @@ const styles = StyleSheet.create({
   },
   planName: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 13,
     lineHeight: 18,
     color: '#6B6B6B',

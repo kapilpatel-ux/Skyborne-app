@@ -422,7 +422,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -465,7 +464,6 @@ const styles = StyleSheet.create({
   },
   diamondText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 10,
     lineHeight: 14,
     color: '#FFFFFF',
@@ -473,7 +471,6 @@ const styles = StyleSheet.create({
   },
   planPrice: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 30,
     lineHeight: 33,
     color: '#FFFFFF',
@@ -493,7 +490,6 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 14,
     lineHeight: 19,
     color: '#FFFFFF',
@@ -524,14 +520,12 @@ const styles = StyleSheet.create({
   },
   sessionTitle: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 18,
     lineHeight: 28,
     color: '#000000',
   },
   sessionRemaining: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 12,
     lineHeight: 20,
     color: 'rgba(0, 0, 0, 0.6)',
@@ -561,7 +555,6 @@ const styles = StyleSheet.create({
   },
   billingTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 16,
     lineHeight: 22,
     letterSpacing: 0.01,
@@ -576,14 +569,12 @@ const styles = StyleSheet.create({
   },
   billingLabel: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 13,
     lineHeight: 20,
     color: 'rgba(0, 0, 0, 0.6)',
   },
   billingValue: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 13,
     lineHeight: 20,
     color: 'rgba(0, 0, 0, 0.6)',
@@ -630,7 +621,6 @@ const styles = StyleSheet.create({
   settingTitle: {
     flex: 1,
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 16,
     lineHeight: 22,
     letterSpacing: 0.01,
@@ -655,7 +645,6 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 16,
     lineHeight: 22,
     color: '#FFFFFF',

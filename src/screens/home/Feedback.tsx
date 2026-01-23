@@ -233,7 +233,6 @@ const styles = StyleSheet.create({
   // Title and Description
   title: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 25,
     lineHeight: 28,
     color: '#494949',
@@ -263,7 +262,6 @@ const styles = StyleSheet.create({
   },
   ratingQuestion: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 15.8,
     lineHeight: 23,
     color: '#494949',
@@ -295,7 +293,6 @@ const styles = StyleSheet.create({
   // Feeling Section
   feelingQuestion: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 15.8,
     lineHeight: 23,
     color: '#494949',
@@ -333,7 +330,6 @@ const styles = StyleSheet.create({
   },
   feelingLabel: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 13,
     lineHeight: 18,
     color: 'rgba(5, 5, 5, 0.8)',
@@ -351,7 +347,6 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 16,
     lineHeight: 22,
     color: '#FFFFFF',
@@ -363,7 +358,6 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 16,
     lineHeight: 22,
     color: '#B95E82',

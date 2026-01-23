@@ -236,7 +236,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: FontFamilies.SatoshiBold,
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -288,7 +287,6 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.SatoshiMedium,
     fontSize: 14,
     color: '#B95E82',
-    fontWeight: '500',
   },
   formSection: {
     marginBottom: 20,
@@ -300,7 +298,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#494949',
     marginBottom: 8,
-    fontWeight: '500',
     fontFamily: FontFamilies.SatoshiMedium,
   },
   disabledInputContainer: {

@@ -29,6 +29,9 @@ interface UserRegion {
   region: string;
 }
 
+const capitalizeWords = (text: string = '') =>
+  text.replace(/\b\w/g, char => char.toUpperCase());
+
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const MAX_WATER = 2.5;
   const STEP = 0.25;
@@ -159,8 +162,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         activeOpacity={0.7}
       >
         <View style={styles.sessionContent}>
-          <Text style={styles.sessionTitle}>{meeting.title}</Text>
-          <Text style={styles.sessionSubtitle}>{meeting.service.title}</Text>
+        <Text style={styles.sessionTitle}>
+          {capitalizeWords(meeting.title)}
+        </Text>
+
+        <Text style={styles.sessionSubtitle}>
+          {capitalizeWords(meeting.service?.title)}
+        </Text>
         </View>
         <Image
           source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/session-image.png'}}
@@ -215,7 +223,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         />
         <View style={styles.classOverlay}>
           <View style={styles.classContent}>
-            <Text style={styles.className}>{meeting.title}</Text>
+            <Text style={styles.className}>{capitalizeWords(meeting.title)}</Text>
             <Text style={styles?.classTime}>
               {formattedDate} • {formattedTime} ({meeting.service?.title})
             </Text>
@@ -823,12 +831,12 @@ const styles = StyleSheet.create({
   },
   sessionTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'Satoshi-Bold',
     color: '#494949',
   },
   sessionSubtitle: {
     fontSize: 14,
-    fontWeight: '400',
+    fontFamily: 'Satoshi-Regular',
     color: '#050505',
     marginTop: 3,
   },
@@ -901,12 +909,13 @@ const styles = StyleSheet.create({
   },
   className: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'Satoshi-Bold',
     color: '#494949',
   },
   classTime: {
     fontSize: 14,
     fontWeight: '400',
+    fontFamily: 'Satoshi-Regular',
     color: '#050505',
     marginTop: 4,
   },

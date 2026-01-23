@@ -317,7 +317,6 @@ comingSoonBadge: {
 },
 comingSoonText: {
   fontFamily: 'Satoshi-Medium',
-  fontWeight: '600',
   fontSize: 12,
   color: '#B95E82',
   textTransform: 'uppercase',
@@ -375,7 +374,6 @@ comingSoonText: {
   retryButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '600',
     fontFamily: 'Satoshi-Bold',
   },
   avatar: {
@@ -465,7 +463,6 @@ comingSoonText: {
   greetingText: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#494949',
   },
   subGreetingText: {
@@ -506,7 +503,6 @@ comingSoonText: {
     width: 154,
     color: '#FFFFFF',
     marginTop: 6,
-    fontWeight: 'bold',
   },
   getStartedImage: {
     width: 215,
@@ -535,7 +531,6 @@ comingSoonText: {
     lineHeight: 15,
     color: '#B95E82',
     textAlign: 'center',
-    fontWeight: 'bold',
   },
   imageContainer: {
     width: '45%',
@@ -554,7 +549,6 @@ comingSoonText: {
   },
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: 'bold',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',

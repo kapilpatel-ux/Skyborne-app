@@ -320,7 +320,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -362,7 +361,6 @@ const styles = StyleSheet.create({
   bannerTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 28,
-    fontWeight: '700',
     color: '#FFFFFF',
     lineHeight: 34,
   },
@@ -392,7 +390,6 @@ const styles = StyleSheet.create({
   aboutTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 24,
-    fontWeight: '700',
     color: '#494949',
     marginBottom: 12,
     lineHeight: 30,
@@ -414,7 +411,6 @@ const styles = StyleSheet.create({
   signupButtonText: {
     fontFamily: 'Satoshi-Medium',
     fontSize: 14,
-    fontWeight: '600',
     color: '#FFFFFF',
   },
 
@@ -450,7 +446,6 @@ const styles = StyleSheet.create({
   powerTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 22,
-    fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 12,
     lineHeight: 28,
@@ -472,7 +467,6 @@ const styles = StyleSheet.create({
   bookButtonText: {
     fontFamily: 'Satoshi-Medium',
     fontSize: 14,
-    fontWeight: '600',
     color: '#494949',
   },
 
@@ -484,7 +478,6 @@ const styles = StyleSheet.create({
   featuresTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    fontWeight: '700',
     color: '#494949',
     textAlign: 'center',
     marginBottom: 20,
@@ -525,7 +518,6 @@ const styles = StyleSheet.create({
   percentageText: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    fontWeight: '700',
     color: '#FFFFFF',
   },
   statsLabel: {
@@ -562,7 +554,6 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 18,
-    fontWeight: '700',
     color: '#494949',
     marginBottom: 8,
     lineHeight: 22,
@@ -593,7 +584,6 @@ const styles = StyleSheet.create({
   keyFeaturesTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    fontWeight: '700',
     color: '#494949',
     marginBottom: 16,
     lineHeight: 26,
@@ -624,7 +614,6 @@ const styles = StyleSheet.create({
   featureCardTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 16,
-    fontWeight: '700',
     color: '#494949',
     flex: 1,
   },
@@ -650,7 +639,6 @@ const styles = StyleSheet.create({
   journeyTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 24,
-    fontWeight: '700',
     color: '#494949',
     marginBottom: 12,
     lineHeight: 30,
@@ -672,7 +660,6 @@ const styles = StyleSheet.create({
   claimButtonText: {
     fontFamily: 'Satoshi-Medium',
     fontSize: 14,
-    fontWeight: '600',
     color: '#FFFFFF',
   },
 

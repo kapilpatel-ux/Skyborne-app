@@ -168,7 +168,6 @@ const styles = StyleSheet.create({
     width: 320,
     fontFamily: 'Satoshi-Bold',
     fontSize: 30,
-    fontWeight: '700',
     lineHeight: 33,
     textAlign: 'center',
     color: '#494949',
@@ -179,7 +178,6 @@ const styles = StyleSheet.create({
     width: 348,
     height: 57,
     fontFamily: 'Satoshi-Regular',
-    fontWeight: '400',
     fontSize: 14,
     lineHeight: 20,          
     textAlign: 'center',
@@ -198,7 +196,6 @@ const styles = StyleSheet.create({
   getStartedButtonText: {
     fontFamily: 'Satoshi-Medium',
     fontSize: 16,
-    fontWeight: '500',
     lineHeight: 16,
     color: '#FFFFFF',
     textAlign: 'center',

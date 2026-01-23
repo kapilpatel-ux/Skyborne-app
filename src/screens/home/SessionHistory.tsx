@@ -244,7 +244,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -271,7 +270,6 @@ const styles = StyleSheet.create({
   },
   emptyStateTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -296,7 +294,6 @@ const styles = StyleSheet.create({
   },
   exploreButtonText: {
     fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
     fontSize: 16,
     lineHeight: 22,
     color: '#FFFFFF',
@@ -340,7 +337,6 @@ const styles = StyleSheet.create({
   },
   sessionTitle: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 20,
     lineHeight: 22,
     color: '#494949',
@@ -399,7 +395,6 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontFamily: 'Satoshi-Bold',
-    fontWeight: '700',
     fontSize: 14,
     lineHeight: 19,
     color: '#494949',

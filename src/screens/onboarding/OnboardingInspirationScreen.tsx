@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    fontWeight: '700',
     fontFamily: 'Satoshi-Bold',
     color: '#494949',
     marginBottom: 38,
@@ -149,7 +148,6 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 14,
-    fontWeight: '500',
     fontFamily: 'Satoshi-Medium',
     color: '#000000',
   },
