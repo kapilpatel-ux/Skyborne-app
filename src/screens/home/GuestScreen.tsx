@@ -14,6 +14,7 @@ import { HomeImages } from '../../assets/images/home';
 import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import { ExploreImages } from '../../assets/images/explore';
+import GuestSidebar from './GuestSidebar';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -56,6 +57,7 @@ interface UserRegion {
 
 const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
   const [isRegionLoading, setIsRegionLoading] = useState(true);
 
@@ -153,12 +155,16 @@ const DynamicSessionCard = ({ meeting }: any) => {
         >
           {/* Top Header with Menu and Search */}
           <View style={styles.header}>
-            <View style={styles.hamburgerContainer}>
+            <TouchableOpacity 
+              style={styles.hamburgerContainer}
+              onPress={() => setSidebarVisible(true)}
+              activeOpacity={0.7}
+            >
               <Image
                 source={HomeImages.hamburgerMenu}
                 style={styles.hamburgerIcon}
               />
-            </View>
+            </TouchableOpacity>
             <Text style={styles.headerTitle}>Skyborne Drop</Text>
             <TouchableOpacity
               style={styles.searchContainer}
@@ -260,6 +266,13 @@ const DynamicSessionCard = ({ meeting }: any) => {
           }
         </ScrollView>
       </SafeAreaView>
+       {/* Guest Sidebar Menu */}
+      <GuestSidebar
+        visible={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+        navigation={navigation}
+        activeScreen="Home"
+      />
     </GradientBackground>
   );
 };

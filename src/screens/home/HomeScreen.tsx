@@ -17,6 +17,7 @@ import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
 import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
+import HomeSidebar from './HomeSidebar';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -36,6 +37,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const MAX_WATER = 2.5;
   const STEP = 0.25;
 
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [currentWater, setCurrentWater] = useState(2.0);
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
@@ -253,12 +255,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         >
           {/* Top Header with Menu and Search */}
           <View style={styles.header}>
-            <View style={styles.hamburgerContainer}>
+            <TouchableOpacity 
+              style={styles.hamburgerContainer}
+              onPress={() => setSidebarVisible(true)}
+              activeOpacity={0.7}
+            >
               <Image
                 source={HomeImages.hamburgerMenu}
                 style={styles.hamburgerIcon}
               />
-            </View>
+            </TouchableOpacity>
             <Text style={styles.headerTitle}></Text>
             <TouchableOpacity
               style={styles.searchContainer}
@@ -532,6 +538,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         </ScrollView>
         <BottomNav active="Home" />
       </SafeAreaView>
+       {/* Sidebar Menu */}
+      <HomeSidebar
+        visible={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+        navigation={navigation}
+        activeScreen="Home"
+        user={user}
+      />
     </GradientBackground>
   );
 };
