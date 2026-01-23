@@ -165,7 +165,7 @@ const DynamicSessionCard = ({ meeting }: any) => {
                 style={styles.hamburgerIcon}
               />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Skyborne Drop</Text>
+            <Text style={styles.headerTitle}></Text>
             <TouchableOpacity
               style={styles.searchContainer}
                 onPress={handleNavigate}

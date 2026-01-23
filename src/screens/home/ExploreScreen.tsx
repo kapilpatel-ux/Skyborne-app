@@ -557,7 +557,7 @@ comingSoonText: {
 
   quickStartBanner: {
     marginHorizontal: 16,
-    marginBottom: 48,
+    // marginBottom: 48,
     height: 172,
     borderRadius: 8,
     overflow: 'hidden',

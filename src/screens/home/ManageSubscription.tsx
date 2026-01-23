@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   // Current Plan Card
   planCard: {
     marginHorizontal: 16,
-    height: 162,
+    height: 170,
     borderRadius: 12,
     paddingLeft: 22,
     paddingRight: 12.26,
@@ -478,6 +478,7 @@ const styles = StyleSheet.create({
   },
   planFeatures: {
     gap: 9,
+    // marginBottom: 12,
   },
   featureItem: {
     flexDirection: 'row',

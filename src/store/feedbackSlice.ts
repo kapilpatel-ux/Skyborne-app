@@ -3,7 +3,7 @@ import { feedbackService } from '../services/feedbackService';
 
 export const submitFeedback = createAsyncThunk(
   'feedback/submitFeedback',
-  async (payload: { rating: number; comment: string }, { rejectWithValue }) => {
+  async (payload: { rating: number; comment: string; feeling?: string }, { rejectWithValue }) => {
     try {
       const res = await feedbackService.submitFeedback(payload);
       return res.data;

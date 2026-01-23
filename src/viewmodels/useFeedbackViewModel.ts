@@ -7,8 +7,14 @@ export function useFeedbackViewModel() {
   const dispatch = useDispatch<any>();
   const state = useSelector((s: RootState) => s.feedback);
 
+  // const submitFeedbackAction = useCallback(
+  //   (payload: { rating: number; comment: string }) => 
+  //     dispatch(submitFeedback(payload)).unwrap(),
+  //   [dispatch]
+  // );
+
   const submitFeedbackAction = useCallback(
-    (payload: { rating: number; comment: string }) => 
+    (payload: { rating: number; comment: string; feeling?: string }) => 
       dispatch(submitFeedback(payload)).unwrap(),
     [dispatch]
   );
