@@ -149,13 +149,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const DynamicSessionCard = ({ meeting }: any) => {
-    // Find region-specific info from meeting regions array
-    // const regionInfo = meeting?.regions?.find(
-    //   (r: any) => r.region === userRegion?.region,
-    // );
+    const regionInfo = meeting?.regions?.find(
+      (r: any) => r.region === userRegion?.region,
+    );
 
-    // Fallback to first region if user region not found
-    // const displayRegionInfo = regionInfo || meeting?.regions?.[0];
+    const displayRegionInfo = regionInfo || meeting?.regions?.[0];
 
     return (
       <TouchableOpacity

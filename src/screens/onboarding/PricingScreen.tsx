@@ -19,7 +19,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setOnboardingCompleted } from '../../store/authSlice';
 import { Images } from '../../assets/images';
 import { useOnboardingStore } from '../../store/onboardingSlice';
-import { 
+import {
   createPaymentOrder,
   clearPaymentCache,
 } from '../../services/paymentService';
@@ -33,7 +33,7 @@ const plans = [
     name: 'Gold',
     price: '$100 / 2 Sessions',
     amount: 100,
-    badge: 'Best Value',
+    badge: 'Beginner',
     badgeType: 'value',
     hasSubOptions: true,
   },
@@ -66,11 +66,17 @@ const goldSubOptions = [
 const PricingScreen = ({ navigation }: { navigation: any }) => {
   const [selectedPlan, setSelectedPlan] = useState('diamond');
   const [showGoldModal, setShowGoldModal] = useState(false);
-  const [selectedGoldOption, setSelectedGoldOption] = useState<number | null>(null);
+  const [selectedGoldOption, setSelectedGoldOption] = useState<number | null>(
+    null,
+  );
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isListeningForPayment, setIsListeningForPayment] = useState(false);
-  const [paymentTimeout, setPaymentTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [paymentTimeout, setPaymentTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
+    null,
+  );
   const [pollingAttempts, setPollingAttempts] = useState(0);
 
   const { setPricingPlan, pricingPlan } = useOnboardingStore();
@@ -83,7 +89,10 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
   useEffect(() => {
     if (user?.id) {
       console.log('🔌 Initializing Socket.io for user:', user.id);
-       const apiUrl = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
+      const apiUrl =
+        process.env.REACT_APP_API_URL ||
+        'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
+      // const apiUrl = process.env.REACT_APP_API_URL || 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
 
       SocketService.connect(apiUrl, user.id);
     }
@@ -395,7 +404,9 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
       Toast.show({
         type: 'info',
         text1: 'Opening Payment Gateway',
-        text2: `Gateway: ${response.gateway === 'ngenius' ? 'nGenius' : 'Stripe'}`,
+        text2: `Gateway: ${
+          response.gateway === 'ngenius' ? 'nGenius' : 'Stripe'
+        }`,
       });
 
       // Open payment link
@@ -413,7 +424,6 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
       }, 60000); // 60 second timeout
 
       setPaymentTimeout(timeout);
-
     } catch (error: any) {
       console.error('❌ Payment transaction error:', error);
       Toast.show({
@@ -448,6 +458,12 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
       </View>
       <View style={styles.planRight}>
         <Text style={styles.planPrice}>{plan.price}</Text>
+        {plan?.name == 'Diamond' && (
+          <Text style={styles.planDesc}>2 Yoga + 2 Zumba</Text>
+        )}
+        {plan?.name == 'Platinum' && (
+          <Text style={styles.planDesc}>2 Yoga + 2 Zumba + 1 Special</Text>
+        )}
       </View>
       {plan.badge && (
         <View
@@ -474,13 +490,14 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <View style={styles.topNav}>
-            <TouchableOpacity onPress={handleClosePress} 
+            <TouchableOpacity
+              onPress={handleClosePress}
               disabled={true}
               style={styles.hiddenCloseButton}
             >
               <Image
                 style={styles.closeIcon}
-                source={{uri:Images.crossIcon}}
+                source={{ uri: Images.crossIcon }}
                 resizeMode="cover"
               />
             </TouchableOpacity>
@@ -495,12 +512,12 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
 
           <View style={styles.illustrationArea}>
             <Image
-              source={{uri:Images.pricingIllustration1}}
+              source={{ uri: Images.pricingIllustration1 }}
               style={[styles.illustrationPlaceholder, { flex: 0.4 }]}
               resizeMode="cover"
             />
             <Image
-              source={{uri:Images.pricingIllustration2}}
+              source={{ uri: Images.pricingIllustration2 }}
               style={[styles.illustrationPlaceholder, { flex: 0.6 }]}
               resizeMode="cover"
             />
@@ -520,7 +537,9 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
 
           <View style={styles.ctaButtonContainer}>
             <Button
-              title={isProcessingPayment ? 'Processing...' : 'Continue to Payment'}
+              title={
+                isProcessingPayment ? 'Processing...' : 'Continue to Payment'
+              }
               onPress={handleContinue}
               disabled={isProcessingPayment}
             />
@@ -616,8 +635,8 @@ const styles = StyleSheet.create({
   //   marginRight: 10,
   // },
   hiddenCloseButton: {
-    opacity: 0,          
-    pointerEvents: 'none', 
+    opacity: 0,
+    pointerEvents: 'none',
   },
   closeIcon: {
     width: 22,
@@ -626,8 +645,8 @@ const styles = StyleSheet.create({
     marginBottom: -65,
     // marginRight: 10,
   },
-  headerSection: { 
-    alignItems: 'center', 
+  headerSection: {
+    alignItems: 'center',
     marginTop: 35,
   },
   title: {
@@ -666,7 +685,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  selectedPlanCard: { backgroundColor: '#FFE8E8', borderColor: '#B95E82', borderWidth: 1.5 },
+  selectedPlanCard: {
+    backgroundColor: '#FFE8E8',
+    borderColor: '#B95E82',
+    borderWidth: 1.5,
+  },
   planLeft: {},
   planName: {
     fontFamily: 'Satoshi-Bold',
@@ -679,6 +702,14 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: 'Satoshi-Medium',
     marginTop: 28,
+    marginBottom: 5,
+  },
+    planDesc: {
+    fontSize: 16,
+    color: '#000000',
+    fontFamily: 'Satoshi-Medium',
+    fontWeight: '500',
+    marginTop: 5,
     marginBottom: 5,
   },
   badge: {

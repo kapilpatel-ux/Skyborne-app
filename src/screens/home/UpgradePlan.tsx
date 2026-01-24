@@ -34,7 +34,7 @@ const plans = [
     name: 'Gold',
     price: '$100 / 2 Sessions',
     amount: 100,
-    badge: 'Best Value',
+    badge: 'Beginner',
     badgeType: 'value',
     hasSubOptions: true,
   },
@@ -447,6 +447,13 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
       </View>
       <View style={styles.planRight}>
         <Text style={styles.planPrice}>{plan.price}</Text>
+        {plan?.name == 'Diamond' && (
+                  <Text style={styles.planDesc}>2 Yoga + 2 Zumba</Text>
+                )}
+                {plan?.name == 'Platinum' && (
+                  <Text style={styles.planDesc}>2 Yoga + 2 Zumba + 1 Special</Text>
+                )}
+
       </View>
       {plan.badge && (
         <View
@@ -488,7 +495,7 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
           </View>
 
           <View style={styles.headerSection}>
-            <Text style={styles.title}>Choose Your Plan</Text>
+            <Text style={styles.title}>Upgrade Your Plan</Text>
             <Text style={styles.subtitle}>
               Select the perfect wellness package for you
             </Text>
@@ -615,6 +622,14 @@ const styles = StyleSheet.create({
     marginTop: 70,
     marginBottom: -65,
     marginRight: 10,
+  },
+     planDesc: {
+    fontSize: 16,
+    color: '#000000',
+    fontFamily: 'Satoshi-Medium',
+    fontWeight: '500',
+    marginTop: 5,
+    marginBottom: 5,
   },
     backButton: {
     width: 24,
