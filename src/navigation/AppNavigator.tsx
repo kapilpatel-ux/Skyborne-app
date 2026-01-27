@@ -34,6 +34,10 @@ import PaymentHistory from '../screens/home/PaymentHistory';
 import YogaDetailsScreen from '../screens/home/YogaDetail';
 import ZumbaDetailsScreen from '../screens/home/ZumbaDetail';
 import FitnessDetailsScreen from '../screens/home/FitnessDetail';
+// Import forgot password screens
+import ForgotPasswordEmailScreen from '../screens/auth/ForgotPasswordEmailScreen';
+import ForgotPasswordOTPScreen from '../screens/auth/ForgotPasswordOTPScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -71,7 +75,12 @@ export type RootStackParamList = {
   PaymentVerification: undefined;
   Login: undefined;
   EditProfile: undefined;
+  // Forgot Password routes
+  ForgotPasswordEmail: undefined;
+  ForgotPasswordOTP: { email: string };
+  ResetPassword: { email: string };
 };
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
@@ -83,6 +92,12 @@ export default function AppNavigator() {
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="OTP" component={OTPVerificationScreen} />
+        
+        {/* Forgot Password Screens */}
+        <Stack.Screen name="ForgotPasswordEmail" component={ForgotPasswordEmailScreen} />
+        <Stack.Screen name="ForgotPasswordOTP" component={ForgotPasswordOTPScreen} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+        
         <Stack.Screen
           name="OnboardingInspiration"
           component={OnboardingInspirationScreen}
