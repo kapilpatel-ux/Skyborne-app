@@ -12,6 +12,7 @@ import { FontFamilies } from '../../constants/fonts';
 import { useSignup } from '../../store/SignupContext';
 import Svg, { Path } from 'react-native-svg';
 import { EyeIcon, EyeOffIcon } from '../../icons/FormIcons';
+import { Linking } from 'react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
@@ -187,6 +188,10 @@ export default function SignupScreen({ navigation }: Props) {
                       onChangeText={handleChange('password')}
                       onBlur={handleBlur('password')}
                       placeholder="Enter password"
+                      style={{ color: '#000000' }} 
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      textContentType="password"
                     />
                     <TouchableOpacity
                       style={styles.eyeIcon}
@@ -218,8 +223,22 @@ export default function SignupScreen({ navigation }: Props) {
                       ]}
                     />
                     <Text style={styles.termsText}>
-                      I agree to Skyborne's <Text style={styles.link}>Terms</Text>{' '}
-                      and <Text style={styles.link}>Data Policy</Text>
+                      I agree to Skyborne's{' '}
+                      <Text
+                        style={styles.link}
+                        onPress={() => Linking.openURL('https://skybornedrop.com/terms')}
+                      >
+                        Terms
+                      </Text>{' '}
+                      and{' '}
+                      <Text
+                        style={styles.link}
+                        onPress={() =>
+                          Linking.openURL('https://skybornedrop.com/cookie-policy')
+                        }
+                      >
+                        Data Policy
+                      </Text>
                     </Text>
                   </TouchableOpacity>
                   {touched.agreeTerms && errors.agreeTerms && (
@@ -297,7 +316,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    color: '##494949',
+    color: '#494949',
     marginBottom: 42,
     maxWidth: '80%',
     fontFamily: FontFamilies.SatoshiBold,

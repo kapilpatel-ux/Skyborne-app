@@ -1,3 +1,5 @@
+// @ts-ignore
+
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
@@ -13,6 +15,8 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import GradientBackground from '../../components/GradientBackground';
 import { useAuthViewModel } from '../../viewmodels/useAuthViewModel';
 import Toast from 'react-native-toast-message';
+import RNOtpVerify from 'react-native-otp-auto-fill';
+import { Platform } from 'react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OTP'>;
 
@@ -51,6 +55,28 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
       handleSendOtp();
     }
   }, [userEmail]);
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      // Listener only
+      try {
+        RNOtpVerify.addListener((message: string) => {
+          const otpFromSms = message.match(/\d{6}/)?.[0]; // 6 digit OTP
+          if (otpFromSms) {
+            setOtp(otpFromSms.split(''));
+            inputs.current[5]?.focus();
+            RNOtpVerify.removeListener(); // OTP milte hi remove kar do
+          }
+        });
+      } catch (err) {
+        console.log('OTP Listener Error:', err);
+      }
+
+      return () => {
+        RNOtpVerify.removeListener();
+      };
+    }
+  }, []);
 
   // Timer countdown
   useEffect(() => {

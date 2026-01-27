@@ -135,8 +135,6 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
             },
       };
 
-      console.log('Signup payload:', JSON.stringify(signupPayload, null, 2));
-
       // Call signup API
       const response = await signup(signupPayload);
 

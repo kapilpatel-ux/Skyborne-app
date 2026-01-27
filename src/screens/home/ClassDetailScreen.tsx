@@ -94,7 +94,6 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
     try {
       const region = getUserRegion();
       setUserRegion(region);
-      console.log('✅ User Region Initialized:', region);
     } catch (err) {
       console.error('❌ Failed to get user region:', err);
       // Fallback to UTC if region detection fails
@@ -117,7 +116,6 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
       try {
         const details = await getClassDetails(classId);
-        console.log('Class details:', details);
 
         if (isMounted) {
           if (details) {

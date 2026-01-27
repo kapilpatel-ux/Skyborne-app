@@ -74,7 +74,6 @@ const ExploreScreen = ({ navigation }: any) => {
     try {
       const region = getUserRegion();
       setUserRegion(region);
-      console.log('✅ User Region Initialized:', region);
     } catch (err) {
       console.error('❌ Failed to get user region:', err);
       // Fallback to UTC if region detection fails
@@ -116,7 +115,6 @@ const ExploreScreen = ({ navigation }: any) => {
       if (result.success && result.data) {
         const meetings = result.data.upcomingMeetings || result.data.upcoming?.meetings || [];
         setSearchResults(meetings);
-        console.log('✅ Search successful:', meetings.length, 'results found');
       } else {
         setSearchResults([]);
         console.warn('⚠️ Search returned no results');
@@ -160,17 +158,6 @@ const ExploreScreen = ({ navigation }: any) => {
 
     // Get the correct date by converting UTC ISO to region timezone
     const formattedDate = getRegionDateFromISO(meeting.localTime, timezone);
-
-    // Debug logging
-    console.log('📅 Meeting Display Info:', {
-      meetingTitle: meeting.title,
-      userRegion: userRegion?.region,
-      meetingISOTime: meeting.localTime,
-      displayRegionInfo,
-      regionTimezone: timezone,
-      formattedDate,
-      formattedTime,
-    });
 
     return (
       <Pressable 

@@ -88,7 +88,6 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
   // Initialize socket connection when component mounts
   useEffect(() => {
     if (user?.id) {
-      console.log('🔌 Initializing Socket.io for user:', user.id);
       const apiUrl =
         process.env.REACT_APP_API_URL ||
         'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
@@ -107,13 +106,11 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
    * Poll /me API every 60 seconds for 10 minutes (fallback if Socket.io fails)
    */
   const startPollingUserProfile = () => {
-    console.log('📱 Starting /me API polling (every 60s for 10 minutes)');
     setPollingAttempts(0);
 
     const interval = setInterval(async () => {
       setPollingAttempts(prev => {
         const newAttempts = prev + 1;
-        console.log(`📲 Polling attempt ${newAttempts}/10...`);
         return newAttempts;
       });
 
@@ -123,13 +120,7 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
         if (meResult.meta.requestStatus === 'fulfilled') {
           const userData = meResult.payload;
 
-          console.log('✅ User data:', {
-            onboardingCompleted: userData?.onboardingCompleted,
-            plan: userData?.plan,
-          });
-
           if (userData?.onboardingCompleted) {
-            console.log('🎉 Subscription confirmed via polling!');
 
             if (interval) clearInterval(interval);
             setPollingInterval(null);
@@ -146,7 +137,6 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
             setTimeout(() => {
               setIsProcessingPayment(false);
               setIsListeningForPayment(false);
-              console.log('🚀 Navigating to Home screen');
               navigation.replace('Home');
             }, 800);
 
@@ -171,7 +161,7 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
           return;
         }
       } catch (error) {
-        console.error(`❌ Polling attempt failed:`, error);
+        console.error(`Polling attempt failed:`, error);
       }
     }, 60000); // Poll every 60 seconds
 
@@ -182,10 +172,6 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
    * Handle payment success via Socket.io
    */
   const handlePaymentSuccess = async (paymentData: any) => {
-    console.log('💳 Payment success event received:', {
-      gateway: paymentData?.gateway,
-      status: paymentData?.status,
-    });
 
     // Clear polling if active
     if (pollingInterval) {
@@ -205,17 +191,10 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
     });
 
     try {
-      console.log('📲 Calling /me API to fetch updated user profile...');
       const meResult = await dispatch(fetchUserProfile());
 
       if (meResult.meta.requestStatus === 'fulfilled') {
         const userData = meResult.payload;
-
-        console.log('✅ Updated user data:', {
-          onboardingCompleted: userData?.onboardingCompleted,
-          plan: userData?.plan,
-          subscription: userData?.subscription?.status,
-        });
 
         if (userData?.onboardingCompleted) {
           dispatch(setOnboardingCompleted(true));

@@ -45,8 +45,6 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
   const { subscription, paymentHistory, fetchSubscription, fetchHistory } =
     useBillingViewModel();
 
-  console.log('user', user?.subscription?.status);
-
   const [billingInfo, setBillingInfo] = useState<BillingInfo[]>([]);
 
   useEffect(() => {
@@ -243,7 +241,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
           },
         ]);
       } catch (e) {
-        console.log('Billing info error', e);
+        console.log('Billing info error');
       }
     };
 

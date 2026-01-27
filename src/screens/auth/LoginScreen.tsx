@@ -61,13 +61,10 @@ export default function LoginScreen({ navigation }: Props) {
   const configureGoogleSignIn = () => {
     try {
       const webClientId = process.env.GOOGLE_KEY || '';
-      console.log('Configuring with Web Client ID:', webClientId);
-
       GoogleSignin.configure({
         webClientId: webClientId,
         offlineAccess: false,
       });
-      console.log('Google Sign-In configured successfully');
     } catch (error) {
       console.error('Configuration error:', error);
     }
@@ -76,7 +73,6 @@ export default function LoginScreen({ navigation }: Props) {
   const handleGoogleSignIn = async () => {
     try {
       setGoogleLoading(true);
-      console.log('Starting Google Sign-In...');
 
       if (Platform.OS === 'android') {
         await GoogleSignin.hasPlayServices({
@@ -85,8 +81,6 @@ export default function LoginScreen({ navigation }: Props) {
       }
 
       const userInfo: any = await GoogleSignin.signIn();
-      console.log('Google Sign-In successful:', userInfo);
-
       const googleId = userInfo?.data?.user.id;
       const email = userInfo?.data?.user.email;
       const firstName = userInfo?.data?.user.givenName || '';
@@ -99,11 +93,7 @@ export default function LoginScreen({ navigation }: Props) {
         googleId: googleId,
       };
 
-      console.log('Calling social-login with payload:', payload);
-
       const response = await socialLoginService(payload);
-      console.log('Social login response:', response);
-
       if (response.success) {
         const { user, accessToken, refreshToken } = response.data;
 
@@ -157,7 +147,6 @@ export default function LoginScreen({ navigation }: Props) {
       console.error('Google Sign-In Error:', error);
 
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log('User cancelled the sign-in');
       } else if (error.code === statusCodes.IN_PROGRESS) {
         Toast.show({
           type: 'info',
@@ -217,10 +206,8 @@ const onSubmit = async (
         });
 
         if (onboardingCompleted) {
-          console.log("hitting the true");
           navigation.navigate('Home');
         } else {
-          console.log("hitting the false");
           navigation.navigate('Pricing');
         }
       } else {

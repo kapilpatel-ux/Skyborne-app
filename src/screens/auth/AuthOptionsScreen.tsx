@@ -54,11 +54,6 @@ export default function AuthOptionsScreen({ navigation }: Props) {
   const configureGoogleSignIn = () => {
     try {
       const webClientId = process.env.GOOGLE_KEY || '';
-      console.log(
-        'Configuring with Web Client ID:',
-        webClientId,
-        process.env.REACT_APP_API_URL,
-      );
 
       GoogleSignin.configure({
         // IMPORTANT: This must be your WEB client ID from Google Cloud Console
@@ -71,7 +66,6 @@ export default function AuthOptionsScreen({ navigation }: Props) {
         // Optional: iOS client ID (only if you have one)
         // iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
       });
-      console.log('Google Sign-In configured successfully');
     } catch (error) {
       console.error('Configuration error:', error);
     }
@@ -83,8 +77,6 @@ export default function AuthOptionsScreen({ navigation }: Props) {
 
   const handleGoogleSignIn = async () => {
     try {
-      console.log('Starting Google Sign-In...');
-
       // Check if device supports Google Play Services (Android only)
       if (Platform.OS === 'android') {
         await GoogleSignin.hasPlayServices({
@@ -122,14 +114,12 @@ export default function AuthOptionsScreen({ navigation }: Props) {
       console.error('Error message:', error.message);
 
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log('User cancelled the sign-in');
         Toast.show({
           type: 'info',
           text1: 'Cancelled',
           text2: 'Sign-in was cancelled',
         });
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log('Sign-in is in progress');
         Toast.show({
           type: 'info',
           text1: 'In Progress',

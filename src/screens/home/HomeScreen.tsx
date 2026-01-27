@@ -73,7 +73,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     try {
       const region = getUserRegion();
       setUserRegion(region);
-      console.log('✅ User Region Initialized:', region);
     } catch (err) {
       console.error('❌ Failed to get user region:', err);
       // Fallback to UTC if region detection fails

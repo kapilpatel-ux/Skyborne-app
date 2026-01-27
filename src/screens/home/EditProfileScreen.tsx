@@ -73,18 +73,13 @@ const EditProfileScreen = ({ navigation }: Props) => {
       lastName: lastName.trim(),
     };
 
-    console.log('🟡 EditProfileScreen → payload:', payload);
-
     setIsSubmitting(true);
     try {
       const res = await updateProfile(payload);
-      console.log('🟢 EditProfileScreen → updateProfile response:', res);
-
       Alert.alert('Success', 'Profile updated successfully', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (error: any) {
-      console.log('🔴 EditProfileScreen → update error:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     } finally {
       setIsSubmitting(false);

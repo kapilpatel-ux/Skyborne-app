@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
+import { LogOut as LogOutIcon } from 'lucide-react-native';
+import LogoutModal from '../../components/LogoutModal';
+import { removeAuthToken } from '../../services/authService';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -49,6 +52,16 @@ const HomeSidebar: React.FC<HomeSidebarProps> = ({
     const first = firstName?.charAt(0).toUpperCase() ?? '';
     const last = lastName?.charAt(0).toUpperCase() ?? '';
     return `${first}${last}`;
+  };
+
+  const [logoutVisible, setLogoutVisible] = useState(false);
+
+  const handleLogoutConfirm = async () => {
+    setLogoutVisible(false);
+    onClose();
+
+    await removeAuthToken(); 
+    navigation.replace('Login'); 
   };
 
   const handleNavigation = (screen: keyof RootStackParamList) => {
@@ -118,6 +131,16 @@ const HomeSidebar: React.FC<HomeSidebarProps> = ({
                 </TouchableOpacity>
               ))}
             </View>
+            <View style={styles.logoutContainer}>
+              <TouchableOpacity
+                style={styles.logoutItem}
+                activeOpacity={0.7}
+                onPress={() => setLogoutVisible(true)}
+              >
+                <Text style={styles.logoutText}>Logout</Text>
+                <LogOutIcon size={18} color="#B95E82" />
+              </TouchableOpacity>
+            </View>
           </SafeAreaView>
         </View>
 
@@ -128,7 +151,11 @@ const HomeSidebar: React.FC<HomeSidebarProps> = ({
           onPress={onClose}
         />
       </View>
-
+      <LogoutModal
+        visible={logoutVisible}
+        onClose={() => setLogoutVisible(false)}
+        onConfirm={handleLogoutConfirm}
+      />
     </Modal>
   );
 };
@@ -239,6 +266,27 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: '#B95E82',
+  },
+  logoutContainer: {
+    marginTop: 'auto',
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+
+  logoutItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: '#FFF7F9',
+  },
+
+  logoutText: {
+    fontSize: 16,
+    fontFamily: 'Satoshi-Bold',
+    color: '#B95E82',
   },
 });
 

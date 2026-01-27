@@ -48,8 +48,6 @@ const PaymentVerification = ({ navigation }: { navigation: any }) => {
       // Get stored payment details
       const paymentDetails = await getStoredPaymentDetails();
 
-      console.log('📱 Payment details from storage:', paymentDetails);
-
       if (!paymentDetails.orderRef && !paymentDetails.sessionId && !paymentDetails.reference) {
         setError('Payment information not found. Please try again.');
         setLoading(false);
@@ -69,12 +67,8 @@ const PaymentVerification = ({ navigation }: { navigation: any }) => {
         verificationPayload.reference = paymentDetails.reference;
       }
 
-      console.log('🔄 Sending verification payload:', verificationPayload);
-
       // Call verification endpoint
       const response = await verifyMobilePayment(verificationPayload);
-
-      console.log('✅ Verification response:', response);
 
       // Handle successful payment
       if (response.success && response.status === 'SUCCESS') {
@@ -99,9 +93,9 @@ const PaymentVerification = ({ navigation }: { navigation: any }) => {
       }
       // Payment still processing - retry
       else if (response.status === 'PENDING' && retryCount < MAX_RETRIES) {
-        console.log(
-          `⏳ Payment still processing... Retry ${retryCount + 1}/${MAX_RETRIES}`
-        );
+        // console.log(
+        //   `⏳ Payment still processing... Retry ${retryCount + 1}/${MAX_RETRIES}`
+        // );
         setAutoRetrying(true);
         setPaymentData(response);
 
@@ -136,9 +130,9 @@ const PaymentVerification = ({ navigation }: { navigation: any }) => {
 
       // Retry on error
       if (retryCount < MAX_RETRIES) {
-        console.log(
-          `⏳ Retrying due to error... Attempt ${retryCount + 1}/${MAX_RETRIES}`
-        );
+        // console.log(
+        //   `⏳ Retrying due to error... Attempt ${retryCount + 1}/${MAX_RETRIES}`
+        // );
         setAutoRetrying(true);
 
         retryTimeoutRef.current = setTimeout(() => {

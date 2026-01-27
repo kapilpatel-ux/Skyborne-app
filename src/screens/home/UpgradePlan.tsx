@@ -82,7 +82,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
 
   useEffect(() => {
     if (user?.id) {
-      console.log('🔌 Initializing Socket.io for user:', user.id);
        const apiUrl = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
       SocketService.connect(apiUrl, user.id);
     }
@@ -97,13 +96,11 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
    * Poll /me API every 60 seconds for 10 minutes (fallback if Socket.io fails)
    */
   const startPollingUserProfile = () => {
-    console.log('📱 Starting /me API polling (every 60s for 10 minutes)');
     setPollingAttempts(0);
 
     const interval = setInterval(async () => {
       setPollingAttempts(prev => {
         const newAttempts = prev + 1;
-        console.log(`📲 Polling attempt ${newAttempts}/10...`);
         return newAttempts;
       });
 
@@ -113,13 +110,7 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         if (meResult.meta.requestStatus === 'fulfilled') {
           const userData = meResult.payload;
 
-          console.log('✅ User data:', {
-            onboardingCompleted: userData?.onboardingCompleted,
-            plan: userData?.plan,
-          });
-
           if (userData?.onboardingCompleted) {
-            console.log('🎉 Subscription confirmed via polling!');
 
             if (interval) clearInterval(interval);
             setPollingInterval(null);
@@ -136,7 +127,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
             setTimeout(() => {
               setIsProcessingPayment(false);
               setIsListeningForPayment(false);
-              console.log('🚀 Navigating to Home screen');
               navigation.replace('Home');
             }, 800);
 
@@ -172,10 +162,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
    * Handle payment success via Socket.io
    */
   const handlePaymentSuccess = async (paymentData: any) => {
-    console.log('💳 Payment success event received:', {
-      gateway: paymentData?.gateway,
-      status: paymentData?.status,
-    });
 
     // Clear polling if active
     if (pollingInterval) {
@@ -195,17 +181,10 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
     });
 
     try {
-      console.log('📲 Calling /me API to fetch updated user profile...');
       const meResult = await dispatch(fetchUserProfile());
 
       if (meResult.meta.requestStatus === 'fulfilled') {
         const userData = meResult.payload;
-
-        console.log('✅ Updated user data:', {
-          onboardingCompleted: userData?.onboardingCompleted,
-          plan: userData?.plan,
-          subscription: userData?.subscription?.status,
-        });
 
         if (userData?.onboardingCompleted) {
           dispatch(setOnboardingCompleted(true));
@@ -222,7 +201,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
           setTimeout(() => {
             setIsProcessingPayment(false);
             setIsListeningForPayment(false);
-            console.log('🚀 Navigating to Home screen');
             navigation.replace('Home');
           }, 800);
         } else {
@@ -330,11 +308,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
       }
 
       setIsProcessingPayment(true);
-      console.log('💳 Creating payment order:', {
-        plan: pricingPlan,
-        amount: planDetails.amount,
-        currency: 'USD',
-      });
 
       // Create payment order (backend will determine gateway)
       const response = await createPaymentOrder({
@@ -345,13 +318,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         email: email,
         phone: phone,
         source: 'app',
-      });
-
-      console.log('✅ Payment order created:', {
-        gateway: response.gateway,
-        orderRef: response.orderRef,
-        hasReference: !!response.reference,
-        hasSessionId: !!response.sessionId,
       });
 
       if (!response.success) {

@@ -123,7 +123,6 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
 
   // Filter by search query
   const filteredMeetings = selectedDayMeetings.filter(meeting => {
-    console.log('aaaa', meeting);
     if (!searchQuery.trim()) return true;
     const searchLower = searchQuery.toLowerCase();
 
