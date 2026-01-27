@@ -8,7 +8,7 @@ import weeklyScheduleReducer from  './weeklyScheduleSlice';
 import billingReducer from  './billingslice';
 import pastSessionReducer from  './pastSessionSlice';
 import feedbackReducer from './feedbackSlice';
-
+import forgotPasswordReducer from './forgotPasswordSlice';
 
 
 import {
@@ -34,6 +34,7 @@ const rootReducer = combineReducers({
   billing:billingReducer,
   pastSessions:pastSessionReducer,
   feedback: feedbackReducer,
+  forgotPassword: forgotPasswordReducer,
 });
 
 const persistConfig = {

@@ -348,6 +348,19 @@ const onSubmit = async (
                     <Text style={styles.errorText}>{errors.password}</Text>
                   )}
 
+                  <TouchableOpacity 
+                    onPress={() => navigation.navigate('ForgotPasswordEmail')}
+                    style={{ alignSelf: 'flex-end', marginTop: 8, marginBottom: 16 }}
+                  >
+                    <Text style={{ 
+                      fontFamily: 'Satoshi-Medium',
+                      fontSize: 14,
+                      color: '#B95E82',
+                    }}>
+                      Forgot password?
+                    </Text>
+                  </TouchableOpacity>
+
                   {/* CTA */}
                   <Button
                     title={isSubmitting || isLoading ? 'Logging in...' : 'Login'}
