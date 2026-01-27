@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
+import LogoutModal from './../../components/LogoutModal';
+
 import {
   View,
   Text,
@@ -17,8 +19,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { AllItems, ProfileImages } from '../../assets/images/profile';
 import BottomNav from '../../components/BottomNav';
 import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
-import { useEffect } from 'react';
-import { Alert } from 'react-native';
+import { useState, useEffect } from 'react';
 import { removeAuthToken } from '../../services/authService';
 
 interface StatCard {
@@ -56,6 +57,8 @@ const ProfileScreen = () => {
   const COMMON_URL = 'https://skyborne-images.s3.ap-south-1.amazonaws.com';
 
   const { user, dashboardStats, loadProfile }: any = useProfileViewModel();
+  const [showLogout, setShowLogout] = useState(false);
+
 
   useEffect(() => {
     loadProfile();
@@ -199,24 +202,7 @@ const ProfileScreen = () => {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'No',
-          style: 'cancel',
-        },
-        {
-          text: 'Yes',
-          onPress: async () => {
-            await removeAuthToken();
-            navigation.replace('Login');
-          },
-        },
-      ],
-      { cancelable: true },
-    );
+    setShowLogout(true);
   };
 
   return (
@@ -383,6 +369,17 @@ const ProfileScreen = () => {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
+      {showLogout && (
+        <LogoutModal
+          visible={showLogout}
+          onClose={() => setShowLogout(false)}
+          onConfirm={async () => {
+            await removeAuthToken();
+            setShowLogout(false);
+            navigation.replace('Login');
+          }}
+        />
+      )}
       <BottomNav active="Profile" />
     </SafeAreaView>
   );
