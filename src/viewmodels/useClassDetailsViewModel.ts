@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import {  useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { getClassDetails as getClassDetailsService } from '../services/homeService';
 import { HomeImages } from '../assets/images/home';
@@ -11,7 +11,6 @@ export interface ApiResponse<T = any> {
 }
 
 export function useClassDetailsViewModel() {
-  const dispatch = useDispatch();
   const homeState = useSelector((state: RootState) => state.home);
   const [isApiLoading, setIsApiLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -78,7 +77,6 @@ export function useClassDetailsViewModel() {
 
       // First, search in Redux store
       const allMeetings = [...homeState.todayMeetings, ...homeState.upcomingMeetings];
-      // const meeting = allMeetings.find(m => m._id === classId);
 
       console.log('📌 classId received in VM:', classId);
       console.log(
@@ -89,7 +87,7 @@ export function useClassDetailsViewModel() {
       const meeting = allMeetings.find(
         m => m._id === classId || m.id === classId
       );
-      console.log("meeting in api", meeting);
+      console.log("meeting in store", meeting);
 
       if (meeting) {
         setApiError(null);
@@ -124,11 +122,12 @@ export function useClassDetailsViewModel() {
   );
 
   /**
-   * Transform meeting data to ClassDetails format
+   * ✅ FIXED: Transform meeting data to ClassDetails format
+   * NOW INCLUDES regionTime (ISO format) for correct button disable logic
    */
   const transformMeetingToClassDetails = (meeting: any) => {
     const regionalInfo = getRegionalTime(meeting);
-    console.log("meeting", meeting);
+    console.log("🔄 Transforming meeting:", meeting);
     
 
     return {
@@ -149,15 +148,18 @@ export function useClassDetailsViewModel() {
         title: meeting.service?.title || 'Fitness',
         name: meeting.service?.name,
       },
-      // Use regional time information
-      startTime: regionalInfo.localTime,
-      localTime: regionalInfo.localTime,
-      regionTime:meeting?.localTime,
-      startDate: meeting.startDate, // Keep ISO format for backend
+      
+      // ✅ CRITICAL: Use these for button disable logic and time display
+      // regionTime = ISO format from backend (used for button disable)
+      // startTime = regionalInfo.localTime (formatted string from regions array)
+      regionTime: meeting?.localTime, // ISO format - used for button disable logic
+      startTime: regionalInfo.localTime, // Display format - pre-formatted from regions
+      localTime: meeting.localTime, // Display format
+      startDate: meeting.startDate, // Keep for backward compatibility
       timezone: regionalInfo.timezone,
       mode: regionalInfo.mode, // 'live' or 'replay'
       region: regionalInfo.region,
-      regions: meeting.regions,
+      regions: meeting.regions, // All region variants
       
       duration: meeting.duration || 60,
       level: meeting.level || 'All Levels',
@@ -174,7 +176,7 @@ export function useClassDetailsViewModel() {
       classType: meeting.classType,
       location: meeting.location,
       
-      // Add additional meeting info
+      // Additional meeting info
       isLive: meeting.isLive,
       liveRegion: meeting.liveRegion,
       joinUrl: meeting.joinUrl,

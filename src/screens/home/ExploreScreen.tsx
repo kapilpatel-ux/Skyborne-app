@@ -36,19 +36,19 @@ const ExploreScreen = ({ navigation }: any) => {
       id: 1,
       title: 'Yoga',
       source: ExploreImages.trending1,
-      page:'YogaDetails'
+      page: 'YogaDetails',
     },
     {
       id: 2,
       title: 'Fitness Classes',
       source: ExploreImages.fitness,
-      page:'FitnessDetails'
+      page: 'FitnessDetails',
     },
     {
       id: 3,
       title: 'Zumba Dance',
       source: ExploreImages.zumba,
-      page:'ZumbaDetails'
+      page: 'ZumbaDetails',
     },
     {
       id: 4,
@@ -61,7 +61,7 @@ const ExploreScreen = ({ navigation }: any) => {
   const categoryScrollRef = useRef<ScrollView>(null);
   const SCROLL_OFFSET = 300;
   const scrollX = useRef(0);
-  const CARD_WIDTH = 299; 
+  const CARD_WIDTH = 299;
 
   const { upcomingMeetings, isLoading, error, fetchSearch } = useHomeViewModel();
 
@@ -111,7 +111,7 @@ const ExploreScreen = ({ navigation }: any) => {
 
     try {
       const result = await fetchSearch(query);
-      
+
       if (result.success && result.data) {
         const meetings = result.data.upcomingMeetings || result.data.upcoming?.meetings || [];
         setSearchResults(meetings);
@@ -142,6 +142,94 @@ const ExploreScreen = ({ navigation }: any) => {
   const displayedClasses = hasSearched ? searchResults : upcomingMeetings;
   const upcomingClasses = displayedClasses.slice(0, 5);
 
+  // ✅ Helper function to format date with timezone awareness
+  // If region is not 'live' and region time has passed, shows next day date for recording
+  const formatDateWithTimezone = (
+    isoString: string,
+    timezone?: string,
+    regionTimeStr?: string,
+    mode?: string,
+  ) => {
+    console.log('🎯 formatDateWithTimezone called:', {
+      isoString,
+      timezone,
+      regionTimeStr,
+      mode,
+    });
+
+    if (!isoString) return 'N/A';
+
+    try {
+      let date = new Date(isoString);
+
+      // Validate date
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+
+      // ✅ NEW LOGIC: If region is not live and region time has passed,
+      // show next day's date for recording class
+      if (mode !== 'live' && regionTimeStr) {
+        const classDatetime = new Date(isoString);
+        const currentTime = Date.now();
+
+        console.log('📅 Recording Mode Detected:');
+        console.log('  ISO Time:', isoString);
+        console.log('  Region Time String:', regionTimeStr);
+        console.log('  Class DateTime:', classDatetime.toISOString());
+        console.log('  Current Time:', new Date(currentTime).toISOString());
+
+        // Parse region time string (e.g., "10:00 AM")
+        const [timeStr, period] = regionTimeStr.split(' ');
+        const [hours, minutes] = timeStr.split(':');
+
+        let hour = parseInt(hours, 10);
+        const minute = parseInt(minutes, 10);
+
+        // Convert to 24-hour format
+        if (period === 'PM' && hour !== 12) {
+          hour += 12;
+        } else if (period === 'AM' && hour === 12) {
+          hour = 0;
+        }
+
+        // Create a new date with the region's time for comparison
+        const regionDateTime = new Date(classDatetime);
+        regionDateTime.setHours(hour, minute, 0, 0);
+
+        console.log('  Region DateTime (for comparison):', regionDateTime.toISOString());
+        console.log('  Time Difference (ms):', currentTime - regionDateTime.getTime());
+
+        // If region time is in the past and mode is 'replay', add 1 day to the date
+        if (currentTime > regionDateTime.getTime()) {
+          console.log(
+            '📅 Recording class time has passed, showing next day date',
+          );
+          date = new Date(date.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours
+        }
+      }
+
+      // Use timezone if available, otherwise user's local timezone
+      const options = {
+        day: 'numeric' as const,
+        month: 'short' as const,
+        year: 'numeric' as const,
+        timeZone: timezone || undefined,
+      };
+
+      const formattedDate = date
+        .toLocaleDateString('en-GB', options)
+        .replace(',', '');
+      console.log('✅ Final Formatted Date:', formattedDate);
+
+      return formattedDate;
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'N/A';
+    }
+  };
+
+
   // Dynamic upcoming class card
   const DynamicSessionCard = ({ meeting }: any) => {
     // Find region-specific info from meeting regions array
@@ -155,18 +243,24 @@ const ExploreScreen = ({ navigation }: any) => {
     // Extract the pre-formatted localTime from the API response
     const formattedTime = displayRegionInfo?.localTime || 'N/A';
     const timezone = displayRegionInfo?.timezone || userRegion?.timezone;
+    const mode = displayRegionInfo?.mode || 'live';
 
-    // Get the correct date by converting UTC ISO to region timezone
-    const formattedDate = getRegionDateFromISO(meeting.localTime, timezone);
+    // ✅ Use the updated formatDateWithTimezone function
+    const formattedDate = formatDateWithTimezone(
+      meeting.localTime,
+      timezone,
+      regionInfo?.localTime,
+      mode,
+    );
 
     return (
-      <Pressable 
+      <Pressable
         style={styles.sessionCard}
         onPress={() => handleClassPress(meeting._id)}
       >
         <View style={styles.sessionImageContainer}>
           <ImageBackground
-            source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/session-image.png'}}
+            source={{ uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/session-image.png' }}
             style={styles.sessionImage}
             resizeMode="cover"
           />
@@ -223,7 +317,7 @@ const ExploreScreen = ({ navigation }: any) => {
             returnKeyType="search"
           />
           {searchInput.length > 0 && (
-            <Pressable 
+            <Pressable
               style={styles.clearButton}
               onPress={handleClearSearch}
             >
@@ -311,43 +405,43 @@ const ExploreScreen = ({ navigation }: any) => {
               }}
               scrollEventThrottle={16}
             >
-{categories.map((category, index) => (
-  <Pressable
-    key={category.id}
-    style={[
-      styles.categoryCard,
-      index === 0 && styles.categoryCardFirst,
-      index === categories.length - 1 && { marginRight: 0 },
-      category.comingSoon && styles.categoryCardDisabled, // Add this
-    ]}
-    onPress={() => handleNavigation(category.page as string)}
-    disabled={category.comingSoon} // Add this
-  >
-    <View style={styles.categoryImageContainer}>
-      <ImageBackground
-        source={category?.source}
-        style={styles.categoryImage}
-        resizeMode="cover"
-      >
-        {/* Add dark overlay for coming soon */}
-        {category.comingSoon && (
-          <View style={styles.comingSoonOverlay} />
-        )}
-        
-        {/* Add Coming Soon Badge */}
-        {category.comingSoon && (
-          <View style={styles.comingSoonBadge}>
-            <Text style={styles.comingSoonText}>Coming Soon</Text>
-          </View>
-        )}
-        
-        <View style={styles.categoryInfo}>
-          <Text style={styles.categoryTitle}>{category.title}</Text>
-        </View>
-      </ImageBackground>
-    </View>
-  </Pressable>
-))}
+              {categories.map((category, index) => (
+                <Pressable
+                  key={category.id}
+                  style={[
+                    styles.categoryCard,
+                    index === 0 && styles.categoryCardFirst,
+                    index === categories.length - 1 && { marginRight: 0 },
+                    category.comingSoon && styles.categoryCardDisabled,
+                  ]}
+                  onPress={() => handleNavigation(category.page as string)}
+                  disabled={category.comingSoon}
+                >
+                  <View style={styles.categoryImageContainer}>
+                    <ImageBackground
+                      source={category?.source}
+                      style={styles.categoryImage}
+                      resizeMode="cover"
+                    >
+                      {/* Add dark overlay for coming soon */}
+                      {category.comingSoon && (
+                        <View style={styles.comingSoonOverlay} />
+                      )}
+
+                      {/* Add Coming Soon Badge */}
+                      {category.comingSoon && (
+                        <View style={styles.comingSoonBadge}>
+                          <Text style={styles.comingSoonText}>Coming Soon</Text>
+                        </View>
+                      )}
+
+                      <View style={styles.categoryInfo}>
+                        <Text style={styles.categoryTitle}>{category.title}</Text>
+                      </View>
+                    </ImageBackground>
+                  </View>
+                </Pressable>
+              ))}
             </ScrollView>
           </>
         )}
@@ -367,7 +461,9 @@ const ExploreScreen = ({ navigation }: any) => {
         </View>
 
         {/* Loading State */}
-        {((isLoading && !hasSearched) || (isSearchLoading && hasSearched) || isRegionLoading) && (
+        {((isLoading && !hasSearched) ||
+          (isSearchLoading && hasSearched) ||
+          isRegionLoading) && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#B95E82" />
             <Text style={styles.loadingText}>
@@ -390,7 +486,7 @@ const ExploreScreen = ({ navigation }: any) => {
         {/* Dynamic Upcoming Classes - Max 5 */}
         {!isLoading && !isRegionLoading && !isSearchLoading && upcomingClasses.length > 0 && (
           <View style={styles.sessionsList}>
-            {upcomingClasses.map(meeting => (
+            {upcomingClasses.map((meeting) => (
               <DynamicSessionCard key={meeting._id} meeting={meeting} />
             ))}
           </View>
@@ -402,7 +498,7 @@ const ExploreScreen = ({ navigation }: any) => {
             <Text style={styles.noRecordsText}>
               No classes found for "{searchInput}"
             </Text>
-            <Pressable 
+            <Pressable
               style={styles.tryAgainButton}
               onPress={handleClearSearch}
             >
@@ -412,11 +508,15 @@ const ExploreScreen = ({ navigation }: any) => {
         )}
 
         {/* Fallback when no upcoming classes and not searching */}
-        {!hasSearched && !isLoading && !isRegionLoading && upcomingClasses.length === 0 && !error && (
-          <View style={styles.noRecordsContainer}>
-            <Text style={styles.noRecordsText}>No records found</Text>
-          </View>
-        )}
+        {!hasSearched &&
+          !isLoading &&
+          !isRegionLoading &&
+          upcomingClasses.length === 0 &&
+          !error && (
+            <View style={styles.noRecordsContainer}>
+              <Text style={styles.noRecordsText}>No records found</Text>
+            </View>
+          )}
       </ScrollView>
       <BottomNav active="Explore" />
     </SafeAreaView>
@@ -431,35 +531,35 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-categoryCardDisabled: {
-  opacity: 0.9,
-},
-comingSoonOverlay: {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.4)',
-},
-comingSoonBadge: {
-  position: 'absolute',
-  top: 16,
-  right: 16,
-  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 6,
-  borderWidth: 1.5,
-  borderColor: '#B95E82',
-},
-comingSoonText: {
-  fontFamily: 'Satoshi-Medium',
-  fontSize: 12,
-  color: '#B95E82',
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
-},
+  categoryCardDisabled: {
+    opacity: 0.9,
+  },
+  comingSoonOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  comingSoonBadge: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#B95E82',
+  },
+  comingSoonText: {
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 12,
+    color: '#B95E82',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   header: {
     paddingHorizontal: 16,
     marginTop: 35,
@@ -607,7 +707,7 @@ comingSoonText: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#F1F3F0', 
+    backgroundColor: '#F1F3F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -616,7 +716,7 @@ comingSoonText: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#676767', 
+    backgroundColor: '#676767',
     justifyContent: 'center',
     alignItems: 'center',
   },

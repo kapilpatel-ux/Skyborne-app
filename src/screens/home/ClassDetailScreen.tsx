@@ -1,4 +1,4 @@
-// ============ ClassDetailsScreen.tsx (Updated) ============
+// ============ ClassDetailsScreen.tsx (FIXED - Date Region Issue) ============
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -17,7 +17,7 @@ import { RouteProp } from '@react-navigation/native';
 import { ArrowLeft } from 'lucide-react-native';
 import GradientBackground from '../../components/GradientBackground';
 import { useClassDetailsViewModel } from '../../viewmodels/useClassDetailsViewModel';
-import { useJoinMeeting } from '../../viewmodels/useJoinMeeting'; // Import join hook
+import { useJoinMeeting } from '../../viewmodels/useJoinMeeting';
 import { getRegionDateFromISO, getUserRegion } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 
@@ -50,10 +50,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
   const [isJoinButtonDisabled, setIsJoinButtonDisabled] = useState(true);
 
-  // Use class details view model
   const { getClassDetails } = useClassDetailsViewModel();
-
-  // Use join meeting hook
   const {
     joinMeeting,
     isJoining,
@@ -61,46 +58,56 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
     clearError: clearJoinError,
   } = useJoinMeeting();
 
+  // ✅ FIXED: Use regionTime (ISO string) for button disable logic
   useEffect(() => {
-    if (!classDetails?.startDate) {
+    if (!classDetails?.regionTime) {
       setIsJoinButtonDisabled(true);
       return;
     }
 
     const checkJoinButtonStatus = () => {
-      const meetingStartTime = new Date(classDetails.startDate).getTime();
-      const currentTime = Date.now();
-      const timeUntilStart = meetingStartTime - currentTime;
-      const fiveMinutesInMs = 5 * 60 * 1000;
+      try {
+        const meetingStartTime = new Date(classDetails.regionTime).getTime();
+        const currentTime = Date.now();
+        const timeUntilStart = meetingStartTime - currentTime;
+        const fiveMinutesInMs = 5 * 60 * 1000;
 
-      // Enable button if within 5 minutes or meeting has already started
-      if (timeUntilStart <= fiveMinutesInMs) {
-        setIsJoinButtonDisabled(false);
-      } else {
+        console.log('🔔 Join Button Check:');
+        console.log('  Meeting Time:', new Date(classDetails.regionTime).toISOString());
+        console.log('  Current Time:', new Date(currentTime).toISOString());
+        console.log('  Minutes until start:', timeUntilStart / 1000 / 60);
+
+        if (timeUntilStart <= fiveMinutesInMs) {
+          setIsJoinButtonDisabled(false);
+          console.log('  ✅ Button ENABLED - Within 5 minutes or started');
+        } else {
+          setIsJoinButtonDisabled(true);
+          console.log('  ❌ Button DISABLED - More than 5 minutes away');
+        }
+      } catch (err) {
+        console.error('Error checking join button status:', err);
         setIsJoinButtonDisabled(true);
       }
     };
 
     checkJoinButtonStatus();
-
-    // Check every minute
     const interval = setInterval(checkJoinButtonStatus, 60000);
-
     return () => clearInterval(interval);
-  }, [classDetails?.startDate]);
+  }, [classDetails?.regionTime]);
 
   // Initialize user region on mount
   useEffect(() => {
     try {
       const region = getUserRegion();
       setUserRegion(region);
+      console.log('👤 User Region Set:', region);
     } catch (err) {
       console.error('❌ Failed to get user region:', err);
-      // Fallback to UTC if region detection fails
       setUserRegion({ timezone: 'UTC', region: 'APAC' });
     }
   }, []);
 
+  // Fetch class details
   useEffect(() => {
     let isMounted = true;
 
@@ -119,6 +126,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
         if (isMounted) {
           if (details) {
+            console.log('✅ Class Details Loaded:', details);
             setClassDetails(details);
             setError(null);
           } else {
@@ -139,7 +147,6 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
     };
 
     fetchDetails();
-
     return () => {
       isMounted = false;
     };
@@ -159,14 +166,11 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
       const joinUrl = await joinMeeting(classId);
 
       if (joinUrl) {
-        // For Zoom links, we use Linking.openURL which will open the default browser or Zoom app
         try {
           const canOpen = await Linking.canOpenURL(joinUrl);
           if (canOpen) {
-            // For better UX, try to open with default handler (will open Zoom app if installed)
             await Linking.openURL(joinUrl);
           } else {
-            // Fallback: show alert with link
             Alert.alert(
               'Open Zoom Meeting',
               'Would you like to open this meeting link?',
@@ -201,29 +205,141 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
     }
   };
 
+  // ✅ FIXED: Use regional timezone for correct date/time display
+  // This ensures dates match across all regions, even near midnight
   const getFormattedDateTime = () => {
     if (!classDetails || !userRegion) {
       return { date: '--', time: '--:--' };
     }
 
+    // Find region-specific timezone
     const regionInfo = classDetails?.regions?.find(
       (r: any) => r.region === userRegion.region,
     );
 
+    // Fallback to first region if user's region not found
     const displayRegionInfo = regionInfo || classDetails?.regions?.[0];
 
-    const formattedTime = displayRegionInfo?.localTime || '--:--';
+    // Use regionInfo timezone for accurate date/time in that region
     const timezone = displayRegionInfo?.timezone || userRegion?.timezone;
+    const mode = displayRegionInfo?.mode || 'live';
+    const regionTimeStr = displayRegionInfo?.localTime; // e.g., "10:00 AM"
 
-    const formattedDate = getRegionDateFromISO(
-      classDetails.regionTime,
+    console.log('📅 getFormattedDateTime Debug:');
+    console.log('  ISO Time (regionTime):', classDetails.regionTime);
+    console.log('  User Region:', userRegion.region);
+    console.log('  Region Info:', displayRegionInfo);
+    console.log('  Timezone:', timezone);
+    console.log('  Mode:', mode);
+    console.log('  Region Time Str:', regionTimeStr);
+
+    // ✅ CRITICAL: Format date using the region's timezone
+    // This ensures the date matches what the region sees, not what a generic formatter shows
+    const formattedDate = formatDateWithTimezone(
+      classDetails.localTime,
       timezone,
+      regionTimeStr,
+      mode,
     );
+
+    // Use pre-formatted time from regions array
+    const formattedTime = displayRegionInfo?.localTime || '--:--';
+
+    console.log('aaa:', formattedDate);
+    console.log('  Formatted Time:', formattedTime);
 
     return {
       date: formattedDate,
       time: formattedTime,
     };
+  };
+
+  // ✅ FIXED: Helper function to format date with timezone awareness
+  // This correctly handles dates near midnight boundaries
+  // If region is not 'live' and region time has passed, shows next day date for recording
+  const formatDateWithTimezone = (
+    isoString: string,
+    timezone?: string,
+    regionTimeStr?: string,
+    mode?: string,
+  ) => {
+    console.log('🎯 formatDateWithTimezone called:', {
+      isoString,
+      timezone,
+      regionTimeStr,
+      mode,
+    });
+
+    if (!isoString) return 'N/A';
+
+    try {
+      let date = new Date(isoString);
+
+      // Validate date
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+
+      // ✅ NEW LOGIC: If region is not live and region time has passed,
+      // show next day's date for recording class
+      if (mode !== 'live' && regionTimeStr) {
+        const classDatetime = new Date(isoString);
+        const currentTime = Date.now();
+
+        console.log('📅 Recording Mode Detected:');
+        console.log('  ISO Time:', isoString);
+        console.log('  Region Time String:', regionTimeStr);
+        console.log('  Class DateTime:', classDatetime.toISOString());
+        console.log('  Current Time:', new Date(currentTime).toISOString());
+
+        // Parse region time string (e.g., "10:00 AM")
+        const [timeStr, period] = regionTimeStr.split(' ');
+        const [hours, minutes] = timeStr.split(':');
+
+        let hour = parseInt(hours, 10);
+        const minute = parseInt(minutes, 10);
+
+        // Convert to 24-hour format
+        if (period === 'PM' && hour !== 12) {
+          hour += 12;
+        } else if (period === 'AM' && hour === 12) {
+          hour = 0;
+        }
+
+        // Create a new date with the region's time for comparison
+        const regionDateTime = new Date(classDatetime);
+        regionDateTime.setHours(hour, minute, 0, 0);
+
+        console.log('  Region DateTime (for comparison):', regionDateTime.toISOString());
+        console.log('  Time Difference (ms):', currentTime - regionDateTime.getTime());
+
+        // If region time is in the past and mode is 'replay', add 1 day to the date
+        if (currentTime > regionDateTime.getTime()) {
+          console.log(
+            '📅 Recording class time has passed, showing next day date',
+          );
+          date = new Date(date.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours
+        }
+      }
+
+      // Use timezone if available, otherwise user's local timezone
+      const options = {
+        day: 'numeric' as const,
+        month: 'short' as const,
+        year: 'numeric' as const,
+        timeZone: timezone || undefined,
+      };
+
+      const formattedDate = date
+        .toLocaleDateString('en-GB', options)
+        .replace(',', '');
+      console.log('✅ Final Formatted Date:', formattedDate);
+
+      return formattedDate;
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'N/A';
+    }
   };
 
   const { date, time } = getFormattedDateTime();
@@ -277,7 +393,10 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
               onPress={() => {
                 if (classId) {
                   setIsLoading(true);
-                  getClassDetails(classId).then(setClassDetails);
+                  getClassDetails(classId).then(details => {
+                    if (details) setClassDetails(details);
+                    setIsLoading(false);
+                  });
                 }
               }}
             >
@@ -320,7 +439,6 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              {/* <ChevronLeft size={24} color="#494949" strokeWidth={2} /> */}
               <ArrowLeft size={24} color="#494949" strokeWidth={2} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Details</Text>
@@ -464,6 +582,8 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
           >
             {isJoining ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : isJoinButtonDisabled ? (
+              <Text style={styles.joinButtonText}>Join soon</Text>
             ) : (
               <Text style={styles.joinButtonText}>Join class</Text>
             )}
@@ -744,7 +864,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   joinButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   joinButtonText: {
     fontFamily: 'Satoshi-Medium',

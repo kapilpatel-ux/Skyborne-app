@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
 import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import HomeSidebar from './HomeSidebar';
+import { UserProfile } from '../../services/homeService';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -32,6 +33,93 @@ interface UserRegion {
 
 const capitalizeWords = (text: string = '') =>
   text.replace(/\b\w/g, char => char.toUpperCase());
+
+// ✅ Helper function to format date with timezone awareness
+// If region is not 'live' and region time has passed, shows next day date for recording
+const formatDateWithTimezone = (
+  isoString: string,
+  timezone?: string,
+  regionTimeStr?: string,
+  mode?: string,
+) => {
+  console.log('🎯 formatDateWithTimezone called:', {
+    isoString,
+    timezone,
+    regionTimeStr,
+    mode,
+  });
+
+  if (!isoString) return 'N/A';
+
+  try {
+    let date = new Date(isoString);
+
+    // Validate date
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+
+    // ✅ NEW LOGIC: If region is not live and region time has passed,
+    // show next day's date for recording class
+    if (mode !== 'live' && regionTimeStr) {
+      const classDatetime = new Date(isoString);
+      const currentTime = Date.now();
+
+      console.log('📅 Recording Mode Detected:');
+      console.log('  ISO Time:', isoString);
+      console.log('  Region Time String:', regionTimeStr);
+      console.log('  Class DateTime:', classDatetime.toISOString());
+      console.log('  Current Time:', new Date(currentTime).toISOString());
+
+      // Parse region time string (e.g., "10:00 AM")
+      const [timeStr, period] = regionTimeStr.split(' ');
+      const [hours, minutes] = timeStr.split(':');
+
+      let hour = parseInt(hours, 10);
+      const minute = parseInt(minutes, 10);
+
+      // Convert to 24-hour format
+      if (period === 'PM' && hour !== 12) {
+        hour += 12;
+      } else if (period === 'AM' && hour === 12) {
+        hour = 0;
+      }
+
+      // Create a new date with the region's time for comparison
+      const regionDateTime = new Date(classDatetime);
+      regionDateTime.setHours(hour, minute, 0, 0);
+
+      console.log('  Region DateTime (for comparison):', regionDateTime.toISOString());
+      console.log('  Time Difference (ms):', currentTime - regionDateTime.getTime());
+
+      // If region time is in the past and mode is 'replay', add 1 day to the date
+      if (currentTime > regionDateTime.getTime()) {
+        console.log(
+          '📅 Recording class time has passed, showing next day date',
+        );
+        date = new Date(date.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours
+      }
+    }
+
+    // Use timezone if available, otherwise user's local timezone
+    const options = {
+      day: 'numeric' as const,
+      month: 'short' as const,
+      year: 'numeric' as const,
+      timeZone: timezone || undefined,
+    };
+
+    const formattedDate = date
+      .toLocaleDateString('en-GB', options)
+      .replace(',', '');
+    console.log('✅ Final Formatted Date:', formattedDate);
+
+    return formattedDate;
+  } catch (error) {
+    console.error('Date formatting error:', error);
+    return 'N/A';
+  }
+};
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const MAX_WATER = 2.5;
@@ -154,6 +242,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
     const displayRegionInfo = regionInfo || meeting?.regions?.[0];
 
+    // Extract the pre-formatted localTime from the API response
+    const formattedTime = displayRegionInfo?.localTime || 'N/A';
+    const timezone = displayRegionInfo?.timezone || userRegion?.timezone;
+    const mode = displayRegionInfo?.mode || 'live';
+
+    // ✅ Use the formatDateWithTimezone function with recording logic
+    const formattedDate = formatDateWithTimezone(
+      meeting.localTime,
+      timezone,
+      regionInfo?.localTime,
+      mode,
+    );
+
     return (
       <TouchableOpacity
         style={styles.sessionCard}
@@ -200,14 +301,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const displayRegionInfo = regionInfo || meeting?.regions?.[0];
 
     // Extract the pre-formatted localTime from the API response
-    // API already provides formatted time like "10:00 AM" in localTime field
     const formattedTime = displayRegionInfo?.localTime || 'N/A';
     const timezone = displayRegionInfo?.timezone || userRegion?.timezone;
-    const isLive = displayRegionInfo?.mode === 'live';
+    const mode = displayRegionInfo?.mode || 'live';
 
-    // Get the correct date by converting UTC ISO to region timezone
-    // This ensures date matches what the user sees in their timezone
-    const formattedDate = getRegionDateFromISO(meeting.localTime, timezone);
+    // ✅ Use the formatDateWithTimezone function with recording logic
+    const formattedDate = formatDateWithTimezone(
+      meeting.localTime,
+      timezone,
+      regionInfo?.localTime,
+      mode,
+    );
 
     return (
       <TouchableOpacity
@@ -541,7 +645,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         onClose={() => setSidebarVisible(false)}
         navigation={navigation}
         activeScreen="Home"
-        user={user}
+        user={user as UserProfile}
       />
     </GradientBackground>
   );
