@@ -77,6 +77,13 @@ export default function AuthOptionsScreen({ navigation }: Props) {
 
   const handleGoogleSignIn = async () => {
     try {
+        try {
+        await GoogleSignin.signOut();
+      } catch (error:any) {
+        // Silently fail if not signed in
+        console.log('Not previously signed in');
+      }
+
       // Check if device supports Google Play Services (Android only)
       if (Platform.OS === 'android') {
         await GoogleSignin.hasPlayServices({
@@ -98,7 +105,7 @@ export default function AuthOptionsScreen({ navigation }: Props) {
 
       updateStepData('step2', googleData);
 
-      navigation.navigate('OTP', { email: googleData?.email });
+     navigation.navigate('OnboardingInspiration');
 
       // You can navigate to next screen or handle the data as needed
       // navigation.navigate('NextScreen', { userData: googleData });

@@ -72,6 +72,12 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleGoogleSignIn = async () => {
     try {
+       try {
+              await GoogleSignin.signOut();
+            } catch (error:any) {
+              // Silently fail if not signed in
+              console.log('Not previously signed in');
+            }
       setGoogleLoading(true);
 
       if (Platform.OS === 'android') {
