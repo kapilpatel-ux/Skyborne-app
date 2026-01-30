@@ -56,16 +56,21 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
     }
   }, [userEmail]);
 
+  // FIX: Properly handle the OTP listener subscription
   useEffect(() => {
     if (Platform.OS === 'android') {
-      // Listener only
+      let subscription: any = null;
+      
       try {
-        RNOtpVerify.addListener((message: string) => {
+        subscription = RNOtpVerify.addListener((message: string) => {
           const otpFromSms = message.match(/\d{6}/)?.[0]; // 6 digit OTP
           if (otpFromSms) {
             setOtp(otpFromSms.split(''));
             inputs.current[5]?.focus();
-            RNOtpVerify.removeListener(); // OTP milte hi remove kar do
+            // Remove listener after OTP is received
+            if (subscription) {
+              subscription.remove();
+            }
           }
         });
       } catch (err) {
@@ -73,7 +78,14 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
       }
 
       return () => {
-        RNOtpVerify.removeListener();
+        // Cleanup on unmount
+        if (subscription) {
+          try {
+            subscription.remove();
+          } catch (err) {
+            console.log('Error removing OTP listener:', err);
+          }
+        }
       };
     }
   }, []);
@@ -354,4 +366,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-// ... rest of your styles remain the same
