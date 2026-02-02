@@ -1,5 +1,5 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/splash/SplashScreen';
 import AuthOptionsScreen from '../screens/auth/AuthOptionsScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
@@ -38,6 +38,7 @@ import FitnessDetailsScreen from '../screens/home/FitnessDetail';
 import ForgotPasswordEmailScreen from '../screens/auth/ForgotPasswordEmailScreen';
 import ForgotPasswordOTPScreen from '../screens/auth/ForgotPasswordOTPScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
+import VideoPlayer from '../screens/common/VideoPlayer';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -79,14 +80,24 @@ export type RootStackParamList = {
   ForgotPasswordEmail: undefined;
   ForgotPasswordOTP: { email: string };
   ResetPassword: { email: string };
+  VideoPlayer: {
+    videoUrl: string;
+    title?: string;
+  };
+
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+type VideoPlayerScreenProps = NativeStackScreenProps<
+  RootStackParamList,
+  'VideoPlayer'
+>;
+
 export default function AppNavigator() {
   return (
     <SignupProvider>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName='Home' screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="AuthOptions" component={AuthOptionsScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
@@ -152,6 +163,20 @@ export default function AppNavigator() {
         <Stack.Screen name="Support" component={SupportScreen} />
         <Stack.Screen name="Feedback" component={FeedbackScreen} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+        <Stack.Screen
+          name="VideoPlayer"
+          component={({
+            route,
+            navigation,
+          }: VideoPlayerScreenProps) => (
+            <VideoPlayer
+              url={route.params.videoUrl}
+              isVisible={true}
+              onClose={() => navigation.goBack()}
+            />
+          )}
+        />
+
       </Stack.Navigator>
     </SignupProvider>
   );

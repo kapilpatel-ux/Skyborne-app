@@ -123,7 +123,7 @@ export function useJoinMeeting() {
         }
 
         const joinUrl = response.data.data?.accessUrl || response.data.data?.joinUrl;
-
+        console.log("this is the joinurl data:- ", joinUrl);
         if (!joinUrl) {
           throw new Error('Join URL not found in response');
         }

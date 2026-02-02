@@ -14,18 +14,24 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Video, VideoOff } from 'lucide-react-native';
 import GradientBackground from '../../components/GradientBackground';
 import { useClassDetailsViewModel } from '../../viewmodels/useClassDetailsViewModel';
 import { useJoinMeeting } from '../../viewmodels/useJoinMeeting';
 import { getRegionDateFromISO, getUserRegion } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
+import VideoPlayer from '../common/VideoPlayer';
 
 type ClassDetailsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'ClassDetails'
 >;
 type ClassDetailsRouteProp = RouteProp<RootStackParamList, 'ClassDetails'>;
+
+type JoinMeetingResponse = {
+  accessUrl: string;
+  mode: 'live' | 'recorded';
+};
 
 interface ClassDetailsScreenProps {
   navigation: ClassDetailsNavigationProp;
@@ -49,6 +55,8 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
   const [isJoinButtonDisabled, setIsJoinButtonDisabled] = useState(true);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string>('');
 
   const { getClassDetails } = useClassDetailsViewModel();
   const {
@@ -163,44 +171,56 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
     try {
       clearJoinError();
-      const joinUrl = await joinMeeting(classId);
 
-      if (joinUrl) {
-        try {
-          const canOpen = await Linking.canOpenURL(joinUrl);
-          if (canOpen) {
-            await Linking.openURL(joinUrl);
-          } else {
-            Alert.alert(
-              'Open Zoom Meeting',
-              'Would you like to open this meeting link?',
-              [
-                { text: 'Cancel', onPress: () => {}, style: 'cancel' },
-                {
-                  text: 'Open',
-                  onPress: () => {
-                    Linking.openURL(joinUrl).catch(err => {
-                      console.error('Error opening URL:', err);
-                      Alert.alert('Error', 'Unable to open meeting link');
-                    });
-                  },
-                },
-              ],
-            );
-          }
-        } catch (err) {
-          console.error('Error opening Zoom link:', err);
-          Alert.alert(
-            'Error',
-            'Unable to open meeting link. Please try again.',
-          );
-        }
+      // joinMeeting returns string | null, so we need to parse it
+      const resStr = await joinMeeting(classId);
+
+      if (!resStr) {
+        Alert.alert('Error', 'Invalid meeting response');
+        return;
       }
+
+      // Parse the string into JSON
+      let res: JoinMeetingResponse;
+      try {
+        res = JSON.parse(resStr) as JoinMeetingResponse;
+      } catch (parseErr) {
+        console.error('Failed to parse joinMeeting response:', parseErr);
+        Alert.alert('Error', 'Invalid meeting response format');
+        return;
+      }
+
+      const { accessUrl, mode } = res;
+
+      if (!accessUrl) {
+        Alert.alert('Error', 'Invalid meeting link');
+        return;
+      }
+
+      if (mode === 'live') {
+        // 🔵 LIVE SESSION → open Zoom / browser
+        const canOpen = await Linking.canOpenURL(accessUrl);
+        if (canOpen) {
+          await Linking.openURL(accessUrl);
+        } else {
+          Alert.alert('Error', 'Unable to open live meeting');
+        }
+        return;
+      }
+
+      if (mode === 'recorded') {
+        // 🟡 RECORDED SESSION → show inline VideoPlayer
+        setVideoUrl(accessUrl);
+        setShowVideoPlayer(true);
+        return;
+      }
+
+      Alert.alert('Error', 'Unknown meeting mode');
     } catch (err) {
       console.error('Error joining class:', err);
       Alert.alert(
         'Join Failed',
-        joinError || 'Failed to join the meeting. Please try again.',
+        joinError || 'Failed to join the class. Please try again.'
       );
     }
   };
@@ -253,6 +273,13 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
       time: formattedTime,
     };
   };
+
+  const regionInfo = classDetails?.regions?.find(
+    (r: any) => r.region === userRegion?.region,
+  );
+
+  const displayRegionInfo = regionInfo || classDetails?.regions?.[0];
+  const isLive = displayRegionInfo?.mode === 'live';
 
   // ✅ FIXED: Helper function to format date with timezone awareness
   // This correctly handles dates near midnight boundaries
@@ -464,11 +491,35 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
           <View style={styles.titleSection}>
             <View style={styles.titleRow}>
               <View style={styles.titleLeft}>
-                <Text style={styles.className}>
-                  {classDetails.title
-                    ?.toLowerCase()
-                    .replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                </Text>
+                <View style={styles.titleInline}>
+                  <Text style={styles.className} numberOfLines={1}>
+                    {classDetails.title
+                      ?.toLowerCase()
+                      .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                  </Text>
+
+                  <View
+                    style={[
+                      styles.sessionBadgeInline,
+                      isLive ? styles.liveBadge : styles.recordBadge,
+                    ]}
+                  >
+                    {isLive ? (
+                      <Video size={14} color={isLive ? '#FFFFFF' : '#000000'} style={{ marginRight: 6 }} />
+                    ) : (
+                      <VideoOff size={14} color={isLive ? '#FFFFFF' : '#000000'} style={{ marginRight: 6 }} />
+                    )}
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        { color: isLive ? '#FFFFFF' : '#000000' },
+                      ]}
+                    >
+                      {isLive ? 'LIVE SESSION' : 'RECORDING'}
+                    </Text>
+                  </View>
+
+                </View>
                 <Text style={styles.trainerText}>
                   Trainer: {classDetails.trainer?.name}{' '}
                 </Text>
@@ -589,6 +640,11 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
             )}
           </TouchableOpacity>
         </View>
+        <VideoPlayer
+          url={videoUrl}
+          isVisible={showVideoPlayer}
+          onClose={() => setShowVideoPlayer(false)}
+        />
       </SafeAreaView>
     </GradientBackground>
   );
@@ -725,6 +781,37 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Regular',
   },
 
+  sessionBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+
+  liveBadge: {
+    backgroundColor: '#354FE5',
+    marginLeft: 8,
+  },
+
+  recordBadge: {
+    backgroundColor: '#F3E37C', 
+    marginLeft: 8,
+  },
+
+  badgeIcon: {
+    width: 14,
+    height: 14,
+    resizeMode: 'contain',
+    marginRight: 6,
+    tintColor: '#FFFFFF',
+  },
+
+  badgeText: {
+    fontFamily: 'Satoshi-Bold',
+    fontSize: 13,
+    color: '#FFFFFF',
+    letterSpacing: 0.6,
+  },
+
   /* TITLE SECTION */
   titleSection: {
     paddingHorizontal: 16,
@@ -739,6 +826,23 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+
+  titleInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+
+  sessionBadgeInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 18,
+    alignSelf: 'center',
+  },
+
   className: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
