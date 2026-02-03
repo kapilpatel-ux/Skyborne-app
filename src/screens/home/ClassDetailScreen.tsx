@@ -21,6 +21,7 @@ import { useJoinMeeting } from '../../viewmodels/useJoinMeeting';
 import { getRegionDateFromISO, getUserRegion } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import VideoPlayer from '../common/VideoPlayer';
+import { set } from 'react-hook-form';
 
 type ClassDetailsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -160,7 +161,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
     };
   }, [classId, getClassDetails]);
 
-  /**
+/**
    * Handle join class button press
    */
   const handleJoinClass = async () => {
@@ -171,59 +172,58 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
     try {
       clearJoinError();
+      const {accessUrl:joinUrl,recordUrl,mode} :any= await joinMeeting(classId);
 
-      // joinMeeting returns string | null, so we need to parse it
-      const resStr = await joinMeeting(classId);
+      console.log("Join URL:", joinUrl);
+      console.log("Record URL:", recordUrl);
+      console.log("Mode:", mode);
 
-      if (!resStr) {
-        Alert.alert('Error', 'Invalid meeting response');
-        return;
-      }
+      if (joinUrl) {
+        try {
+          const canOpen = await Linking.canOpenURL(joinUrl);
 
-      // Parse the string into JSON
-      let res: JoinMeetingResponse;
-      try {
-        res = JSON.parse(resStr) as JoinMeetingResponse;
-      } catch (parseErr) {
-        console.error('Failed to parse joinMeeting response:', parseErr);
-        Alert.alert('Error', 'Invalid meeting response format');
-        return;
-      }
-
-      const { accessUrl, mode } = res;
-
-      if (!accessUrl) {
-        Alert.alert('Error', 'Invalid meeting link');
-        return;
-      }
-
-      if (mode === 'live') {
-        // 🔵 LIVE SESSION → open Zoom / browser
-        const canOpen = await Linking.canOpenURL(accessUrl);
-        if (canOpen) {
-          await Linking.openURL(accessUrl);
-        } else {
-          Alert.alert('Error', 'Unable to open live meeting');
+          if(mode=='record') {
+            setVideoUrl(recordUrl);
+            setShowVideoPlayer(true);
+            return;
+          }
+          if (canOpen) {
+            await Linking.openURL(joinUrl);
+          } else {
+            Alert.alert(
+              'Open Zoom Meeting',
+              'Would you like to open this meeting link?',
+              [
+                { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+                {
+                  text: 'Open',
+                  onPress: () => {
+                    Linking.openURL(joinUrl).catch(err => {
+                      console.error('Error opening URL:', err);
+                      Alert.alert('Error', 'Unable to open meeting link');
+                    });
+                  },
+                },
+              ],
+            );
+          }
+        } catch (err) {
+          console.error('Error opening Zoom link:', err);
+          Alert.alert(
+            'Error',
+            'Unable to open meeting link. Please try again.',
+          );
         }
-        return;
       }
-
-      if (mode === 'recorded') {
-        // 🟡 RECORDED SESSION → show inline VideoPlayer
-        setVideoUrl(accessUrl);
-        setShowVideoPlayer(true);
-        return;
-      }
-
-      Alert.alert('Error', 'Unknown meeting mode');
     } catch (err) {
       console.error('Error joining class:', err);
       Alert.alert(
         'Join Failed',
-        joinError || 'Failed to join the class. Please try again.'
+        joinError || 'Failed to join the meeting. Please try again.',
       );
     }
   };
+
 
   // ✅ FIXED: Use regional timezone for correct date/time display
   // This ensures dates match across all regions, even near midnight
@@ -640,11 +640,11 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
             )}
           </TouchableOpacity>
         </View>
-        <VideoPlayer
+       { videoUrl && <VideoPlayer
           url={videoUrl}
           isVisible={showVideoPlayer}
           onClose={() => setShowVideoPlayer(false)}
-        />
+        />}
       </SafeAreaView>
     </GradientBackground>
   );
