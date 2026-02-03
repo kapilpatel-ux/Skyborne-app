@@ -126,9 +126,14 @@ export function useClassDetailsViewModel() {
    * NOW INCLUDES regionTime (ISO format) for correct button disable logic
    */
   const transformMeetingToClassDetails = (meeting: any) => {
+
+    console.log('🧪 RAW meeting.isLive:', meeting.isLive);
+    console.log('🧪 RAW meeting.regions:', meeting.regions);
+
     const regionalInfo = getRegionalTime(meeting);
     console.log("🔄 Transforming meeting:", meeting);
     
+    console.log('🧪 FINAL regional mode:', regionalInfo.mode);
 
     return {
       _id: meeting._id,

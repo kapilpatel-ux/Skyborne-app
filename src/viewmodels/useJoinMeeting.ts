@@ -7,8 +7,8 @@ import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 
-// const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
- const API_BASE_URL = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://nonmelting-enda-unilluminative.ngrok-free.dev/api/v1';
+ //const API_BASE_URL = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
 
 
 export interface JoinMeetingPayload {
@@ -93,6 +93,7 @@ export function useJoinMeeting() {
       try {
         const region = getUserRegion();
         if (region?.region) {
+          console.log("region detected:", region.region);
           userRegion = region.region;
         }
       } catch (err) {
@@ -107,7 +108,7 @@ export function useJoinMeeting() {
         const api = createAxiosInstance();
 
         // Call API to join meeting
-        const response = await api.post<JoinMeetingResponse>(
+        const response :any= await api.post<JoinMeetingResponse>(
           '/meetings/join',
           {
             meetingId,
@@ -122,9 +123,11 @@ export function useJoinMeeting() {
           );
         }
 
-        const joinUrl = response.data.data?.accessUrl || response.data.data?.joinUrl;
+        console.log("join url response:", response.data.data);
 
-        if (!joinUrl) {
+        const {accessUrl,recordUrl,mode} = response.data.data;
+        console.log("this is the joinurl data:- ", accessUrl);
+        if (!accessUrl) {
           throw new Error('Join URL not found in response');
         }
 
@@ -136,7 +139,7 @@ export function useJoinMeeting() {
           text2: 'Joining meeting...',
         });
 
-        return joinUrl;
+        return {accessUrl,recordUrl,mode};
       } catch (err: any) {
         const errorMsg =
           err?.response?.data?.message ||
