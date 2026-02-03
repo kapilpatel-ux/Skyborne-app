@@ -97,7 +97,7 @@ type VideoPlayerScreenProps = NativeStackScreenProps<
 export default function AppNavigator() {
   return (
     <SignupProvider>
-      <Stack.Navigator initialRouteName='Home' screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="AuthOptions" component={AuthOptionsScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
