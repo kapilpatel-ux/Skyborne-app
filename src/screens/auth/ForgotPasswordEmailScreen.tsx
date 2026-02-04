@@ -12,7 +12,7 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Mail } from 'lucide-react-native';
 import { useForgotPasswordViewModel } from '../../viewmodels/useForgotPasswordViewModel';
 import Toast from 'react-native-toast-message';
 import { Images } from '../../assets/images';
@@ -44,14 +44,14 @@ const ForgotPasswordEmailScreen = ({ navigation }: { navigation: any }) => {
 
     try {
       const result = await sendPasswordResetOTP(email);
-      
+
       if (result.success) {
         Toast.show({
           type: 'success',
           text1: 'OTP Sent',
           text2: 'Please check your email',
         });
-        
+
         // Navigate to OTP screen
         navigation.navigate('ForgotPasswordOTP', { email });
       } else {
@@ -95,10 +95,12 @@ const ForgotPasswordEmailScreen = ({ navigation }: { navigation: any }) => {
             </View>
 
             {/* Logo or Image */}
-            <Image
-              source={{ uri: Images.emailIcon }}
+           
+            <Mail
+              size={36} // adjust based on your design
+              color="#B95E82" // change to your theme color
+              strokeWidth={2}
               style={styles.logo}
-              resizeMode="contain"
             />
 
             {/* Title */}
@@ -106,7 +108,8 @@ const ForgotPasswordEmailScreen = ({ navigation }: { navigation: any }) => {
 
             {/* Description */}
             <Text style={styles.description}>
-              Enter your email address and we'll send you a verification code to reset your password
+              Enter your email address and we'll send you a verification code to
+              reset your password
             </Text>
 
             {/* Email Input */}
