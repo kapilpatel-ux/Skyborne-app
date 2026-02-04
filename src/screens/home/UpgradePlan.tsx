@@ -1,4 +1,4 @@
-// screens/onboarding/PricingScreen.tsx - Updated for nGenius
+// screens/onboarding/PricingScreen.tsx - FIXED: Correct Pricing for Each Plan
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -11,6 +11,7 @@ import {
   Modal,
   Linking,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import GradientBackground from '../../components/GradientBackground';
@@ -28,44 +29,69 @@ import { fetchUserProfile } from '../../store/homeSlice';
 import { RootState } from '../../store';
 import { SubscriptionImages } from '../../assets/images/subscriptions';
 
-const plans = [
-  {
-    id: 'gold',
+// ✅ COMPLETE PLAN CONFIGURATION WITH MONTHLY/YEARLY PRICING
+const PLAN_CONFIG = {
+  gold: {
     name: 'Gold',
-    price: '$100 / 2 Sessions',
-    amount: 100,
     badge: 'Beginner',
     badgeType: 'value',
     hasSubOptions: true,
+    monthly: { 
+      amount: 100, 
+      display: '$100/Month',
+      sessions: '2 Classes per Month'
+    },
+    yearly: { 
+      amount: 1140, 
+      display: '$1,140/Year',
+      sessions: '24 Classes per Year (2/Month)',
+      savings: '5% off'
+    },
   },
-  {
-    id: 'diamond',
+  diamond: {
     name: 'Diamond',
-    price: '$200 / 4 Sessions',
-    amount: 200,
     badge: 'Premium',
     badgeType: 'premium',
     hasSubOptions: false,
+    monthly: { 
+      amount: 200, 
+      display: '$200/Month',
+      sessions: '2 Yoga + 2 Zumba per Month'
+    },
+    yearly: { 
+      amount: 2280, 
+      display: '$2,280/Year',
+      sessions: '24 Yoga + 24 Zumba per Year',
+      savings: '5% off'
+    },
   },
-  {
-    id: 'platinum',
+  platinum: {
     name: 'Platinum',
-    price: '$300 / 5 Sessions',
-    amount: 300,
     badge: 'Best Value',
     badgeType: 'value',
     hasSubOptions: false,
+    monthly: { 
+      amount: 300, 
+      display: '$300/Month',
+      sessions: '2 Yoga + 2 Zumba + 1 Special per Month'
+    },
+    yearly: { 
+      amount: 3420, 
+      display: '$3,420/Year',
+      sessions: '24 Yoga + 24 Zumba + 12 Special per Year',
+      savings: '5% off'
+    },
   },
-];
+};
 
 const goldSubOptions = [
-  { id: 'gold-yoga', label: '2 Yoga', value: 1 },
-  { id: 'gold-mixed', label: '1 Yoga + 1 Zumba', value: 2 },
-  { id: 'gold-zumba', label: '2 Zumba', value: 3 },
+  { id: 'gold-yoga', label: '2 Yoga', displayMonthly: '2 Yoga per Month', displayYearly: '24 Yoga per Year', value: 1 },
+  { id: 'gold-mixed', label: '1 Yoga + 1 Zumba', displayMonthly: '1 Yoga + 1 Zumba per Month', displayYearly: '12 Yoga + 12 Zumba per Year', value: 2 },
+  { id: 'gold-zumba', label: '2 Zumba', displayMonthly: '2 Zumba per Month', displayYearly: '24 Zumba per Year', value: 3 },
 ];
 
 const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
-  const [selectedPlan, setSelectedPlan] = useState('diamond');
+  const [selectedPlan, setSelectedPlan] = useState('gold-yoga');
   const [showGoldModal, setShowGoldModal] = useState(false);
   const [selectedGoldOption, setSelectedGoldOption] = useState<number | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -73,6 +99,9 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
   const [paymentTimeout, setPaymentTimeout] = useState<NodeJS.Timeout | null>(null);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [pollingAttempts, setPollingAttempts] = useState(0);
+  
+  // ✅ BILLING TYPE STATE
+  const [billingType, setBillingType] = useState<'monthly' | 'yearly'>('monthly');
 
   const { setPricingPlan, pricingPlan } = useOnboardingStore();
   const dispatch = useDispatch<any>();
@@ -82,7 +111,7 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
 
   useEffect(() => {
     if (user?.id) {
-       const apiUrl = process.env.REACT_APP_API_URL ||'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
       SocketService.connect(apiUrl, user.id);
     }
 
@@ -111,7 +140,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
           const userData = meResult.payload;
 
           if (userData?.onboardingCompleted) {
-
             if (interval) clearInterval(interval);
             setPollingInterval(null);
             if (paymentTimeout) clearTimeout(paymentTimeout);
@@ -134,7 +162,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
           }
         }
 
-        // Stop after 10 attempts (10 minutes)
         if (pollingAttempts >= 10) {
           console.warn('⚠️ Polling timeout - 10 minutes elapsed');
           clearInterval(interval);
@@ -153,7 +180,7 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
       } catch (error) {
         console.error(`❌ Polling attempt failed:`, error);
       }
-    }, 60000); // Poll every 60 seconds
+    }, 60000);
 
     setPollingInterval(interval);
   };
@@ -162,8 +189,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
    * Handle payment success via Socket.io
    */
   const handlePaymentSuccess = async (paymentData: any) => {
-
-    // Clear polling if active
     if (pollingInterval) {
       clearInterval(pollingInterval);
       setPollingInterval(null);
@@ -195,7 +220,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
             text2: `Welcome to ${userData?.plan} plan!`,
           });
 
-          // Clear payment cache
           await clearPaymentCache();
 
           setTimeout(() => {
@@ -221,7 +245,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
       setIsProcessingPayment(false);
       setIsListeningForPayment(false);
 
-      // Cleanup listeners
       SocketService.socket?.off('payment-success', handlePaymentSuccess);
       SocketService.socket?.off('payment-error', handlePaymentError);
     }
@@ -256,14 +279,21 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
     SocketService.socket?.off('payment-error', handlePaymentError);
   };
 
+  /**
+   * Handle Gold Plan selection from modal
+   */
   const handleGoldSelect = () => {
     if (selectedGoldOption !== null) {
-      setPricingPlan(goldSubOptions?.[selectedGoldOption as number]?.id);
+      const selectedOption = goldSubOptions[selectedGoldOption];
+      setPricingPlan(selectedOption.id);
+      setSelectedPlan(selectedOption.id);
       setShowGoldModal(false);
-      setSelectedPlan('gold');
     }
   };
 
+  /**
+   * Handle Plan selection (opens modal for Gold)
+   */
   const handlePlanSelect = (planId: string) => {
     if (planId === 'gold') {
       setShowGoldModal(true);
@@ -274,11 +304,54 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
   };
 
   /**
-   * Initiate payment transaction (works for both nGenius and Stripe)
+   * ✅ FIXED: Get plan details - Properly handles Gold, Diamond, and Platinum
+   */
+  const getPlanDetails = (planId: string) => {
+    // Determine which plan config to use
+    let baseConfig: any;
+    
+    if (planId === 'gold-yoga' || planId === 'gold-mixed' || planId === 'gold-zumba') {
+      // Gold plan - use GOLD config
+      baseConfig = PLAN_CONFIG.gold;
+    } else if (planId === 'diamond') {
+      // Diamond plan - use DIAMOND config
+      baseConfig = PLAN_CONFIG.diamond;
+    } else if (planId === 'platinum') {
+      // Platinum plan - use PLATINUM config
+      baseConfig = PLAN_CONFIG.platinum;
+    } else {
+      // Fallback
+      baseConfig = PLAN_CONFIG.gold;
+    }
+
+    // Get pricing based on selected billing type
+    const pricing = billingType === 'monthly' ? baseConfig.monthly : baseConfig.yearly;
+
+    return {
+      id: planId.includes('gold') ? 'gold' : planId,
+      name: baseConfig.name,
+      badge: baseConfig.badge,
+      amount: pricing.amount,
+      price: pricing.display,
+      sessions: pricing.sessions,
+      savings: pricing.savings || null,
+    };
+  };
+
+  /**
+   * Get gold option display text based on billing type
+   */
+  const getGoldOptionDisplay = (optionId: string) => {
+    const option = goldSubOptions.find(opt => opt.id === optionId);
+    if (!option) return '';
+    return billingType === 'monthly' ? option.displayMonthly : option.displayYearly;
+  };
+
+  /**
+   * Initiate payment transaction
    */
   const handlePaymentTransaction = async () => {
     try {
-      // Validation
       if (!user?.id) {
         Toast.show({
           type: 'error',
@@ -297,7 +370,7 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         return;
       }
 
-      const planDetails = plans.find(p => p.id === selectedPlan);
+      const planDetails = getPlanDetails(selectedPlan);
       if (!planDetails) {
         Toast.show({
           type: 'error',
@@ -309,15 +382,16 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
 
       setIsProcessingPayment(true);
 
-      // Create payment order (backend will determine gateway)
+      // ✅ CREATE PAYMENT ORDER WITH BILLING TYPE
       const response = await createPaymentOrder({
         amount: planDetails.amount,
         currency: 'USD',
         userId: user.id,
-        plan: pricingPlan as string,
+        plan: selectedPlan,
         email: email,
         phone: phone,
         source: 'app',
+        billingType: billingType,
       });
 
       if (!response.success) {
@@ -342,7 +416,6 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         return;
       }
 
-      // ✅ SET UP SOCKET LISTENERS
       setIsListeningForPayment(true);
 
       SocketService.socket?.on('payment-success', handlePaymentSuccess);
@@ -360,22 +433,19 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
       Toast.show({
         type: 'info',
         text1: 'Opening Payment Gateway',
-        text2: `Gateway: ${response.gateway === 'ngenius' ? 'nGenius' : 'Stripe'}`,
+        text2: `${billingType === 'yearly' ? 'Yearly' : 'Monthly'} - ${response.gateway === 'ngenius' ? 'nGenius' : 'Stripe'}`,
       });
 
-      // Open payment link
       await Linking.openURL(paymentLink);
 
-      // ✅ START POLLING FALLBACK
       startPollingUserProfile();
 
-      // Set timeout to start polling if socket fails
       const timeout = setTimeout(() => {
         if (isListeningForPayment && !pollingInterval) {
           console.warn('⚠️ Socket timeout - Starting polling fallback');
           startPollingUserProfile();
         }
-      }, 60000); // 60 second timeout
+      }, 60000);
 
       setPaymentTimeout(timeout);
 
@@ -394,118 +464,207 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
     }
   };
 
-  const handleContinue = async () => {
-    await handlePaymentTransaction();
-  };
-
-  const handleClosePress = () => {
-    navigation.goBack();
-  };
-
-  const PlanCard = ({ plan, isSelected, onPress }: any) => (
-    <TouchableOpacity
-      style={[styles.planCard, isSelected && styles.selectedPlanCard]}
-      onPress={onPress}
-      disabled={isProcessingPayment}
-    >
-      <View style={styles.planLeft}>
-        <Text style={styles.planName}>{plan.name}</Text>
-      </View>
-      <View style={styles.planRight}>
-        <Text style={styles.planPrice}>{plan.price}</Text>
-        {plan?.name == 'Diamond' && (
-                  <Text style={styles.planDesc}>2 Yoga + 2 Zumba</Text>
-                )}
-                {plan?.name == 'Platinum' && (
-                  <Text style={styles.planDesc}>2 Yoga + 2 Zumba + 1 Special</Text>
-                )}
-
-      </View>
-      {plan.badge && (
-        <View
-          style={[
-            styles.badge,
-            isSelected ? styles.premiumBadge : styles.valueBadge,
-          ]}
-        >
-          <Text
+  /**
+   * ✅ FIXED PlanCard Component
+   */
+  const PlanCard = ({ plan, planKey, isSelected, onPress }: any) => {
+    // Get details using the plan key (gold, diamond, platinum)
+    const details = getPlanDetails(planKey);
+    
+    return (
+      <TouchableOpacity
+        style={[styles.planCard, isSelected && styles.selectedPlanCard]}
+        onPress={onPress}
+        disabled={isProcessingPayment}
+        activeOpacity={0.7}
+      >
+        <View style={styles.planLeft}>
+          <Text style={styles.planName}>{plan.name}</Text>
+          <Text style={styles.planSessions}>{details.sessions}</Text>
+        </View>
+        <View style={styles.planRight}>
+          <Text style={styles.planPrice}>{details.price}</Text>
+          {details.savings && (
+            <Text style={styles.savingsBadge}>✓ Save {details.savings}</Text>
+          )}
+        </View>
+        {plan.badge && (
+          <View
             style={[
-              styles.badgeText,
-              isSelected ? styles.premiumBadgeText : styles.valueBadgeText,
+              styles.badge,
+              isSelected ? styles.premiumBadge : styles.valueBadge,
             ]}
           >
-            {plan.badge}
+            <Text
+              style={[
+                styles.badgeText,
+                isSelected ? styles.premiumBadgeText : styles.valueBadgeText,
+              ]}
+            >
+              {plan.badge}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  /**
+   * GoldOptionCard Component
+   */
+  const GoldOptionCard = ({ option, isSelected, onPress }: any) => {
+    return (
+      <TouchableOpacity
+        style={[
+          styles.goldOptionCard,
+          isSelected && styles.goldOptionSelected,
+        ]}
+        onPress={onPress}
+      >
+        <View
+          style={[
+            styles.goldRadio,
+            isSelected && styles.goldRadioSelected,
+          ]}
+        >
+          {isSelected && (
+            <View style={styles.goldRadioInner} />
+          )}
+        </View>
+        <View style={styles.goldOptionTextContainer}>
+          <Text style={styles.goldOptionLabel}>{option.label}</Text>
+          <Text style={styles.goldOptionSubtext}>
+            {billingType === 'monthly' ? option.displayMonthly : option.displayYearly}
           </Text>
         </View>
-      )}
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
-                <View style={styles.header}>
-                  <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                    <Image style={styles.backIcon} source={SubscriptionImages.backwardIcon} />
-                  </TouchableOpacity>
-                </View>
-        <View style={styles.container}>
-          <View style={styles.topNav}>
-            <TouchableOpacity onPress={handleClosePress} disabled={isProcessingPayment}>
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.goBack()}
+            disabled={isProcessingPayment}
+          >
+            <Image 
+              style={styles.backIcon} 
+              source={SubscriptionImages.backwardIcon} 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.closeButtonHeader}
+            onPress={() => navigation.goBack()}
+            disabled={isProcessingPayment}
+          >
+            <Text style={styles.closeIcon}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.container}>
+            {/* Title Section */}
+            <View style={styles.headerSection}>
+              <Text style={styles.title}>Upgrade Your Plan</Text>
+              <Text style={styles.subtitle}>
+                Select the perfect wellness package for you
+              </Text>
+            </View>
+
+            {/* ✅ BILLING TYPE TOGGLE */}
+            <View style={styles.billingToggleContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.billingButton,
+                  billingType === 'monthly' && styles.billingButtonActive,
+                ]}
+                onPress={() => setBillingType('monthly')}
+                disabled={isProcessingPayment}
+              >
+                <Text
+                  style={[
+                    styles.billingButtonText,
+                    billingType === 'monthly' && styles.billingButtonTextActive,
+                  ]}
+                >
+                  Monthly
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.billingButton,
+                  billingType === 'yearly' && styles.billingButtonActive,
+                ]}
+                onPress={() => setBillingType('yearly')}
+                disabled={isProcessingPayment}
+              >
+                <Text
+                  style={[
+                    styles.billingButtonText,
+                    billingType === 'yearly' && styles.billingButtonTextActive,
+                  ]}
+                >
+                  Yearly
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Illustration Area */}
+            <View style={styles.illustrationArea}>
               <Image
-                style={styles.closeIcon}
-                source={{uri:Images.crossIcon}}
+                source={{ uri: Images.pricingIllustration1 }}
+                style={[styles.illustrationPlaceholder, { flex: 0.4 }]}
                 resizeMode="cover"
               />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.headerSection}>
-            <Text style={styles.title}>Upgrade Your Plan</Text>
-            <Text style={styles.subtitle}>
-              Select the perfect wellness package for you
-            </Text>
-          </View>
-
-          <View style={styles.illustrationArea}>
-            <Image
-              source={{uri:Images.pricingIllustration1}}
-              style={[styles.illustrationPlaceholder, { flex: 0.4 }]}
-              resizeMode="cover"
-            />
-            <Image
-              source={{uri:Images.pricingIllustration2}}
-              style={[styles.illustrationPlaceholder, { flex: 0.6 }]}
-              resizeMode="cover"
-            />
-          </View>
-
-          <View style={styles.planList}>
-            {plans.map(plan => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                isSelected={selectedPlan === plan.id}
-                onPress={() => handlePlanSelect(plan.id)}
+              <Image
+                source={{ uri: Images.pricingIllustration2 }}
+                style={[styles.illustrationPlaceholder, { flex: 0.6 }]}
+                resizeMode="cover"
               />
-            ))}
-          </View>
-          <View style={{ flex: 1 }} />
+            </View>
 
-          <View style={styles.ctaButtonContainer}>
-            <Button
-              title={isProcessingPayment ? 'Processing...' : 'Continue to Payment'}
-              onPress={handleContinue}
-              disabled={isProcessingPayment}
-            />
-            {isProcessingPayment && (
-              <ActivityIndicator
-                size="large"
-                color="#B95E82"
-                style={{ marginTop: 12 }}
-              />
-            )}
+            {/* ✅ FIXED Plans List */}
+            <View style={styles.planList}>
+              {Object.entries(PLAN_CONFIG).map(([key, plan]) => (
+                <PlanCard
+                  key={key}
+                  plan={plan}
+                  planKey={key}
+                  isSelected={selectedPlan === key || (key === 'gold' && selectedPlan.includes('gold'))}
+                  onPress={() => handlePlanSelect(key)}
+                />
+              ))}
+            </View>
+
+            {/* Info Text */}
+            <View style={styles.infoContainer}>
+              <Text style={styles.infoText}>Flexible sessions. No lock-in.</Text>
+            </View>
           </View>
+        </ScrollView>
+
+        {/* CTA Button - Fixed at Bottom */}
+        <View style={styles.ctaButtonContainer}>
+          <Button
+            title={isProcessingPayment ? 'Processing...' : 'Continue to Payment'}
+            onPress={handlePaymentTransaction}
+            disabled={isProcessingPayment || !selectedPlan}
+          />
+          {isProcessingPayment && (
+            <ActivityIndicator
+              size="large"
+              color="#B95E82"
+              style={{ marginTop: 12 }}
+            />
+          )}
         </View>
 
         {/* Gold Sub-Options Modal */}
@@ -517,89 +676,84 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
+              {/* Modal Header */}
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Choose Your Gold Plan</Text>
-                <TouchableOpacity onPress={() => setShowGoldModal(false)}>
+                <TouchableOpacity 
+                  onPress={() => setShowGoldModal(false)}
+                  disabled={isProcessingPayment}
+                >
                   <Text style={styles.closeButton}>✕</Text>
                 </TouchableOpacity>
               </View>
 
+              {/* Billing Info in Modal */}
+              <Text style={styles.modalBillingInfo}>
+                {billingType === 'monthly' ? 'Monthly Plan' : 'Yearly Plan (5% off)'}
+              </Text>
+
+              {/* Gold Options Container */}
               <View style={styles.goldOptionsContainer}>
-                {goldSubOptions.map(option => (
-                  <TouchableOpacity
+                {goldSubOptions.map((option, index) => (
+                  <GoldOptionCard
                     key={option.id}
-                    style={[
-                      styles.goldOptionCard,
-                      selectedGoldOption === option.value &&
-                        styles.goldOptionSelected,
-                    ]}
-                    onPress={() => setSelectedGoldOption(option.value)}
-                  >
-                    <View
-                      style={[
-                        styles.goldRadio,
-                        selectedGoldOption === option.value &&
-                          styles.goldRadioSelected,
-                      ]}
-                    >
-                      {selectedGoldOption === option.value && (
-                        <View style={styles.goldRadioInner} />
-                      )}
-                    </View>
-                    <Text style={styles.goldOptionLabel}>{option.label}</Text>
-                  </TouchableOpacity>
+                    option={option}
+                    isSelected={selectedGoldOption === index}
+                    onPress={() => setSelectedGoldOption(index)}
+                  />
                 ))}
               </View>
 
+              {/* Modal Button */}
               <View style={styles.modalButtonContainer}>
                 <Button
                   title="Confirm Selection"
                   onPress={handleGoldSelect}
-                  disabled={selectedGoldOption === null}
+                  disabled={selectedGoldOption === null || isProcessingPayment}
                 />
               </View>
 
-              <TouchableOpacity onPress={() => setShowGoldModal(false)}>
+              {/* Cancel */}
+              <TouchableOpacity 
+                onPress={() => setShowGoldModal(false)}
+                disabled={isProcessingPayment}
+              >
                 <Text style={styles.modalCancel}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
+
+        <Toast />
       </SafeAreaView>
-      <Toast />
     </GradientBackground>
   );
 };
 
-// Styles remain the same as original
+// ✅ COMPLETE STYLES
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  container: {
+  safeArea: { 
     flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  container: {
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 24,
   },
-  topNav: { alignItems: 'flex-end' },
-  closeIcon: {
-    fontSize: 22,
-    color: '#3A3A3A',
-    fontWeight: '600',
-    marginTop: 70,
-    marginBottom: -65,
-    marginRight: 10,
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
-     planDesc: {
-    fontSize: 16,
-    color: '#000000',
-    fontFamily: 'Satoshi-Medium',
-    fontWeight: '500',
-    marginTop: 5,
-    marginBottom: 5,
-  },
-    backButton: {
-    width: 24,
-    height: 24,
+  backButton: {
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -607,97 +761,175 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
   },
-  headerSection: { alignItems: 'center', marginTop: 50 },
+  closeButtonHeader: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeIcon: {
+    fontSize: 24,
+    color: '#3A3A3A',
+    fontWeight: '600',
+  },
+  headerSection: { 
+    alignItems: 'center', 
+    marginTop: 20,
+    marginBottom: 24,
+  },
   title: {
     fontFamily: 'Satoshi-Bold',
-    fontSize: 30,
+    fontSize: 28,
     color: '#494949',
     textAlign: 'center',
     lineHeight: 33,
-    width: 263,
-  },
-   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 35,
-    paddingBottom: 41
+    marginBottom: 8,
   },
   subtitle: {
-    marginTop: 8,
     fontFamily: 'Satoshi-Regular',
-    fontSize: 14,
-    color: '#494949',
+    fontSize: 13,
+    color: '#666666',
     textAlign: 'center',
-    lineHeight: 14,
+    lineHeight: 18,
   },
-  illustrationArea: { flexDirection: 'row', gap: 14, marginTop: 28 },
+  // ✅ BILLING TOGGLE STYLES
+  billingToggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    marginVertical: 20,
+    paddingHorizontal: 12,
+  },
+  billingButton: {
+    flex: 0.45,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#FFE8E8',
+    borderWidth: 1.5,
+    borderColor: '#FFE8E8',
+    alignItems: 'center',
+  },
+  billingButtonActive: {
+    backgroundColor: '#B95E82',
+    borderColor: '#B95E82',
+  },
+  billingButtonText: {
+    fontSize: 14,
+    fontFamily: 'Satoshi-Medium',
+    fontWeight: '500',
+    color: '#B95E82',
+  },
+  billingButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  illustrationArea: { 
+    flexDirection: 'row', 
+    gap: 14, 
+    marginBottom: 24,
+  },
   illustrationPlaceholder: {
     flex: 1,
-    height: 155,
-    borderRadius: 18,
+    height: 120,
+    borderRadius: 12,
     backgroundColor: 'white',
   },
-  planList: { marginTop: 33, gap: 12 },
+  planList: { 
+    marginBottom: 24,
+    gap: 12,
+  },
   planCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#ECECEC',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    position: 'relative',
   },
-  selectedPlanCard: { backgroundColor: '#FFE8E8', borderColor: '#B95E82', borderWidth: 1.5 },
-  planLeft: {},
+  selectedPlanCard: { 
+    backgroundColor: '#FFE8E8', 
+    borderColor: '#B95E82', 
+    borderWidth: 2,
+  },
+  planLeft: {
+    flex: 1,
+  },
   planName: {
     fontFamily: 'Satoshi-Bold',
-    fontSize: 20,
+    fontSize: 18,
     color: '#000000',
+    marginBottom: 4,
   },
-  planRight: { alignItems: 'flex-end' },
+  planSessions: {
+    fontSize: 12,
+    color: '#666666',
+    fontFamily: 'Satoshi-Regular',
+  },
+  planRight: { 
+    alignItems: 'flex-end',
+    marginRight: 12,
+  },
   planPrice: {
     fontSize: 16,
     color: '#000000',
-    fontFamily: 'Satoshi-Medium',
-    marginTop: 28,
-    marginBottom: 5,
+    fontFamily: 'Satoshi-Bold',
+    marginBottom: 4,
+  },
+  savingsBadge: {
+    fontSize: 11,
+    color: '#27AE60',
+    fontFamily: 'Satoshi-Bold',
+    fontWeight: '600',
   },
   badge: {
     position: 'absolute',
-    top: 10,
-    right: 16,
-    width: 80,
-    height: 24.5,
-    borderRadius: 9999,
+    top: -8,
+    right: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
     backgroundColor: '#B95E824D',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  valueBadge: { backgroundColor: '#B95E824D' },
+  valueBadge: { 
+    backgroundColor: '#B95E824D',
+  },
   premiumBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 16,
     backgroundColor: '#B95E82',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 9999,
-    width: 79.78,
-    height: 24.45,
   },
-  badgeText: { fontSize: 13, fontWeight: '400' },
-  valueBadgeText: { color: '#B95E82' },
+  badgeText: { 
+    fontSize: 10, 
+    fontWeight: '500',
+    fontFamily: 'Satoshi-Medium',
+  },
+  valueBadgeText: { 
+    color: '#B95E82',
+  },
   premiumBadgeText: {
-    fontFamily: 'Satoshi-Regular',
-    fontSize: 12,
     color: '#FFFFFF',
   },
-  ctaButtonContainer: { marginTop: 28 },
+  infoContainer: {
+    alignItems: 'center',
+    marginVertical: 12,
+  },
+  infoText: {
+    fontSize: 12,
+    color: '#666666',
+    fontFamily: 'Satoshi-Regular',
+  },
+  ctaButtonContainer: { 
+    paddingHorizontal: 18,
+    paddingBottom: 24,
+    paddingTop: 12,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  // ✅ MODAL STYLES
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -710,31 +942,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 24,
     paddingBottom: 32,
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 12,
   },
   modalTitle: {
     fontSize: 20,
     color: '#494949',
     fontFamily: 'Satoshi-Bold',
+    fontWeight: '700',
   },
-  closeButton: { fontSize: 24, color: '#494949', fontWeight: '600' },
-  goldOptionsContainer: { gap: 12, marginBottom: 24 },
+  closeButton: { 
+    fontSize: 24, 
+    color: '#494949', 
+    fontWeight: '600',
+  },
+  modalBillingInfo: {
+    fontSize: 12,
+    color: '#999999',
+    fontFamily: 'Satoshi-Regular',
+    marginBottom: 16,
+  },
+  goldOptionsContainer: { 
+    gap: 12, 
+    marginBottom: 24,
+  },
   goldOptionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#ECECEC',
   },
-  goldOptionSelected: { backgroundColor: '#FFE8E8', borderColor: '#B95E82' },
+  goldOptionSelected: { 
+    backgroundColor: '#FFE8E8', 
+    borderColor: '#B95E82',
+    borderWidth: 2,
+  },
   goldRadio: {
     width: 20,
     height: 20,
@@ -745,24 +996,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  goldRadioSelected: { borderColor: '#B95E82' },
+  goldRadioSelected: { 
+    borderColor: '#B95E82',
+  },
   goldRadioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: '#B95E82',
   },
+  goldOptionTextContainer: {
+    flex: 1,
+  },
   goldOptionLabel: {
     fontSize: 16,
     color: '#000000',
     fontFamily: 'Satoshi-Medium',
+    fontWeight: '600',
+    marginBottom: 4,
   },
-  modalButtonContainer: { marginBottom: 12 },
+  goldOptionSubtext: {
+    fontSize: 12,
+    color: '#999999',
+    fontFamily: 'Satoshi-Regular',
+  },
+  modalButtonContainer: { 
+    marginBottom: 12,
+  },
   modalCancel: {
     fontSize: 15,
     color: '#B95E82',
     textAlign: 'center',
     fontFamily: 'Satoshi-Medium',
+    fontWeight: '600',
+    paddingVertical: 8,
   },
 });
 
