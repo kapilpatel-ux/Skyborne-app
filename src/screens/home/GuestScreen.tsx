@@ -7,6 +7,8 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import GradientBackground from '../../components/GradientBackground';
@@ -27,47 +29,46 @@ interface UserRegion {
   region: string;
 }
 
-  const categories = [
-    {
-      id: 1,
-      title: 'Yoga',
-      source: ExploreImages.trending1,
-      page:'YogaDetails'
-    },
-    {
-      id: 2,
-      title: 'Fitness Classes',
-      source: ExploreImages.fitness,
-      page:'FitnessDetails'
-    },
-    {
-      id: 3,
-      title: 'Zumba Dance',
-      source: ExploreImages.zumba,
-      page:'ZumbaDetails'
-    },
-    {
-      id: 4,
-      title: 'Diet & Nutrition',
-      source: ExploreImages.diet,
-      comingSoon: true,
-    },
-  ];
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+const categories = [
+  {
+    id: 1,
+    title: 'Yoga',
+    source: ExploreImages.trending1,
+    page: 'YogaDetails',
+  },
+  {
+    id: 2,
+    title: 'Fitness Classes',
+    source: ExploreImages.fitness,
+    page: 'FitnessDetails',
+  },
+  {
+    id: 3,
+    title: 'Zumba Dance',
+    source: ExploreImages.zumba,
+    page: 'ZumbaDetails',
+  },
+  {
+    id: 4,
+    title: 'Diet & Nutrition',
+    source: ExploreImages.diet,
+    comingSoon: true,
+  },
+];
 
 const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
   const [isRegionLoading, setIsRegionLoading] = useState(true);
-
   const [upcomingMeetings, setUpcomingMeetings] = useState<any[]>([]);
   const [todayMeetings, setTodayMeetings] = useState<any[]>(categories);
+  const [unlockModalVisible, setUnlockModalVisible] = useState(false);
 
-
-  const handleNavigate = () =>{
+  const handleNavigate = () => {
     navigation.navigate('Login');
-  }
+  };
 
   // Initialize user region on mount - critical for timezone handling
   useEffect(() => {
@@ -83,57 +84,62 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     }
   }, []);
 
-  // Debounced search - send request to backend
-
   const handleClassPress = (classId: string) => {
-    navigation.navigate(classId as any );
+    navigation.navigate(classId as any);
   };
 
-const DynamicSessionCard = ({ meeting }: any) => {
-  const isComingSoon = meeting?.comingSoon;
+  const handleTrendingCardPress = () => {
+    setUnlockModalVisible(true);
+  };
 
-  return (
-    <TouchableOpacity
-      style={[
-        styles.sessionCard,
-        isComingSoon , // same like categories
-      ]}
-      key={meeting.id}
-      onPress={() => !isComingSoon && handleClassPress(meeting.page)}
-      activeOpacity={0.7}
-      disabled={isComingSoon}
-    >
-      <View style={styles.sessionContent}>
-        <Text style={styles.sessionTitle}>{meeting.title}</Text>
-        <Text style={styles.sessionSubtitle}>{meeting.subTitle}</Text>
-      </View>
+  const handleViewPackages = () => {
+    setUnlockModalVisible(false);
+    // Navigate to packages screen or show packages
+    navigation.navigate('Login');
+  };
 
-      <View>
-        <Image
-          source={meeting?.source}
-          style={styles.sessionImage}
-          resizeMode="cover"
-        />
+  const DynamicSessionCard = ({ meeting }: any) => {
+    const isComingSoon = meeting?.comingSoon;
 
-        {/* Overlay */}
-        {isComingSoon && <View style={styles.comingSoonOverlay} />}
+    return (
+      <TouchableOpacity
+        style={[styles.sessionCard, isComingSoon]}
+        key={meeting.id}
+        onPress={() => !isComingSoon && handleClassPress(meeting.page)}
+        activeOpacity={0.7}
+        disabled={isComingSoon}>
+        <View style={styles.sessionContent}>
+          <Text style={styles.sessionTitle}>{meeting.title}</Text>
+          <Text style={styles.sessionSubtitle}>{meeting.subTitle}</Text>
+        </View>
 
-        {/* Badge */}
-        {isComingSoon && (
-          <View style={styles.comingSoonBadge}>
-            <Text style={styles.comingSoonText}>Coming Soon</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-};
+        <View>
+          <Image
+            source={meeting?.source}
+            style={styles.sessionImage}
+            resizeMode="cover"
+          />
 
+          {/* Overlay */}
+          {isComingSoon && <View style={styles.comingSoonOverlay} />}
 
+          {/* Badge */}
+          {isComingSoon && (
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonText}>Coming Soon</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const DynamicClassCard = () => {
     return (
-      <TouchableOpacity style={styles.classCard} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.classCard}
+        activeOpacity={0.7}
+        onPress={handleTrendingCardPress}>
         <Image
           source={{
             uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/shimmer.jpg',
@@ -145,20 +151,65 @@ const DynamicSessionCard = ({ meeting }: any) => {
     );
   };
 
+  const UnlockModal = () => {
+    return (
+      <Modal
+        visible={unlockModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setUnlockModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Yoga Illustration */}
+            <View style={styles.illustrationContainer}>
+              <Image
+                source={HomeImages.getStartedImage}
+                style={styles.modalIllustration}
+                resizeMode="contain"
+              />
+            </View>
+
+            {/* Title */}
+            <Text style={styles.modalTitle}>
+              Unlock all classes &{'\n'}nutrition support
+            </Text>
+
+            {/* Subtitle */}
+            <Text style={styles.modalSubtitle}>Start your journey today</Text>
+
+            {/* View Packages Button */}
+            <TouchableOpacity
+              style={styles.viewPackagesButton}
+              activeOpacity={0.8}
+              onPress={handleViewPackages}>
+              <Text style={styles.viewPackagesButtonText}>View Packages</Text>
+            </TouchableOpacity>
+
+            {/* Close Button (X) - Optional */}
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setUnlockModalVisible(false)}
+              activeOpacity={0.7}>
+              <Text style={styles.modalCloseButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-        >
+          contentContainerStyle={styles.scrollContainer}>
           {/* Top Header with Menu and Search */}
           <View style={styles.header}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.hamburgerContainer}
               onPress={() => setSidebarVisible(true)}
-              activeOpacity={0.7}
-            >
+              activeOpacity={0.7}>
               <Image
                 source={HomeImages.hamburgerMenu}
                 style={styles.hamburgerIcon}
@@ -167,8 +218,7 @@ const DynamicSessionCard = ({ meeting }: any) => {
             <Text style={styles.headerTitle}></Text>
             <TouchableOpacity
               style={styles.searchContainer}
-                onPress={handleNavigate}
-            >
+              onPress={handleNavigate}>
               <Text style={styles.loginText}>Login</Text>
             </TouchableOpacity>
           </View>
@@ -197,9 +247,6 @@ const DynamicSessionCard = ({ meeting }: any) => {
                   <Text style={styles.scoreSubText}>
                     Some features are locked. Upgrade to access everything!
                   </Text>
-                  {/* <TouchableOpacity style={styles.primaryButton}>
-                    <Text style={styles.primaryButtonText}>Get Started</Text>
-                  </TouchableOpacity> */}
                 </View>
                 <View style={styles.imageContainer}>
                   <Image
@@ -219,15 +266,11 @@ const DynamicSessionCard = ({ meeting }: any) => {
                 style={[
                   styles.sectionTitle,
                   { marginTop: 20, marginBottom: 10 },
-                ]}
-              >
+                ]}>
                 Upcoming Classes
               </Text>
               {upcomingMeetings.map((meeting, idx) => (
-                <DynamicClassCard
-                  key={`${meeting._id}-${idx}`}
-                 
-                />
+                <DynamicClassCard key={`${meeting._id}-${idx}`} />
               ))}
             </>
           )}
@@ -245,8 +288,7 @@ const DynamicSessionCard = ({ meeting }: any) => {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.sessionsScroll}
-                style={styles.sessionsContainer}
-              >
+                style={styles.sessionsContainer}>
                 {todayMeetings.map(meeting => (
                   <DynamicSessionCard key={meeting._id} meeting={meeting} />
                 ))}
@@ -265,13 +307,17 @@ const DynamicSessionCard = ({ meeting }: any) => {
           }
         </ScrollView>
       </SafeAreaView>
-       {/* Guest Sidebar Menu */}
+
+      {/* Guest Sidebar Menu */}
       <GuestSidebar
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
         navigation={navigation}
         activeScreen="Home"
       />
+
+      {/* Unlock Modal */}
+      <UnlockModal />
     </GradientBackground>
   );
 };
@@ -309,31 +355,31 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Regular',
   },
   comingSoonOverlay: {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.4)',
-},
-comingSoonBadge: {
-  position: 'absolute',
-  top: 16,
-  right: 16,
-  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 6,
-  borderWidth: 1.5,
-  borderColor: '#B95E82',
-},
-comingSoonText: {
-  fontFamily: 'Satoshi-Medium',
-  fontSize: 12,
-  color: '#B95E82',
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
-},
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  comingSoonBadge: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#B95E82',
+  },
+  comingSoonText: {
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 12,
+    color: '#B95E82',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   clearButton: {
     fontSize: 18,
     color: '#B95E82',
@@ -484,7 +530,8 @@ comingSoonText: {
     color: '#050505',
   },
   wellnessCard: {
-    width: 380,
+    width: SCREEN_WIDTH - 32,
+    maxWidth: 380,
     height: 250,
     backgroundColor: '#B95E82',
     borderRadius: 12,
@@ -592,11 +639,10 @@ comingSoonText: {
     paddingBlock: 26,
     paddingInline: 15,
   },
-
   sessionImage: {
     width: '100%',
     height: 250,
-    borderRadius: 10, // Remove border radius as it's inside a bordered container
+    borderRadius: 10,
     objectFit: 'cover',
   },
   sessionContent: {
@@ -648,7 +694,7 @@ comingSoonText: {
   },
   classCard: {
     width: '100%',
-    height:88,
+    height: 88,
     borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
@@ -656,8 +702,7 @@ comingSoonText: {
   },
   classImage: {
     width: '100%',
-    height:88,
-
+    height: 88,
   },
   classOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -765,6 +810,87 @@ comingSoonText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#FFFFFF',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 337,
+    height: 404,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  illustrationContainer: {
+    position: 'absolute',
+    top: 32,
+    width: 123,
+    height: 123,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalIllustration: {
+    width: 123,
+    height: 123,
+  },
+  modalTitle: {
+    position: 'absolute',
+    top: 188,
+    width: 235,
+    fontFamily: 'Satoshi-Bold',
+    fontSize: 25,
+    lineHeight: 30,
+    textAlign: 'center',
+    color: '#494949',
+  },
+  modalSubtitle: {
+    position: 'absolute',
+    top: 261,
+    width: 146,
+    fontFamily: 'Satoshi-Regular',
+    fontSize: 14,
+    lineHeight: 16,
+    textAlign: 'center',
+    color: 'rgba(0, 0, 0, 0.7)',
+  },
+  viewPackagesButton: {
+    position: 'absolute',
+    bottom: 41,
+    width: 292,
+    height: 53,
+    backgroundColor: '#B95E82',
+    borderRadius: 500,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  viewPackagesButtonText: {
+    fontFamily: 'Satoshi-Bold',
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'center',
+    color: '#FFFFFF',
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseButtonText: {
+    fontSize: 24,
+    color: '#494949',
+    fontWeight: '300',
   },
 });
 
