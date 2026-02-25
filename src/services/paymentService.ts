@@ -19,7 +19,10 @@ export interface PaymentOrderPayload {
   plan: string;
   email?: string;
   phone?: string;
+  billingType?: 'monthly' | 'yearly';
   source?: 'app' | 'web';
+  successUrl?: string;
+  cancelUrl?: string;
 }
 
 export interface PaymentOrderResponse {
@@ -64,6 +67,7 @@ class PaymentService {
       baseURL: API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
+        'x-client-source': 'app',
       },
     });
 
@@ -104,9 +108,19 @@ class PaymentService {
    */
   async createPaymentOrder(payload: PaymentOrderPayload): Promise<PaymentOrderResponse> {
     try {
-      console.log('🔄 Creating payment order:', payload);
+      const appSuccessUrl =
+        'skybornedrop://payment-processing?status=success&sessionId={CHECKOUT_SESSION_ID}';
+      const appCancelUrl = 'skybornedrop://payment-processing?status=cancelled';
 
-      const response = await this.api.post('/payment/create-order', payload);
+      const requestPayload: PaymentOrderPayload = {
+        ...payload,
+        source: 'app',
+        successUrl: appSuccessUrl,
+        cancelUrl: appCancelUrl,
+      };
+      console.log('🔄 Creating payment order:', requestPayload);
+
+      const response = await this.api.post('/payment/create-order', requestPayload);
 
       console.log('✅ Payment order response:', {
         gateway: response.data?.gateway,

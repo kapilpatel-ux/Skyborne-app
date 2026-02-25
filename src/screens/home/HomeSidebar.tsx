@@ -20,7 +20,7 @@ interface HomeSidebarProps {
   visible: boolean;
   onClose: () => void;
   navigation: NavigationProp;
-  activeScreen: 'Home' | 'Schedule' | 'Explore' | 'Profile';
+  activeScreen: 'Home' | 'Schedule' | 'Explore' | 'Shop' | 'Profile';
   user?: {
     firstName?: string;
     lastName?: string;
@@ -29,15 +29,16 @@ interface HomeSidebarProps {
 }
 
 interface MenuItem {
-  id: 'Home' | 'Schedule' | 'Explore' | 'Profile';
+  id: 'Home' | 'Schedule' | 'Explore' | 'Shop' | 'Profile';
   label: string;
-  screen: keyof RootStackParamList;
+  screen: 'Home' | 'Schedule' | 'Explore' | 'Products' | 'Profile';
 }
 
 const menuItems: MenuItem[] = [
   { id: 'Home', label: 'Home', screen: 'Home' },
   { id: 'Schedule', label: 'Schedule', screen: 'Schedule' },
   { id: 'Explore', label: 'Explore', screen: 'Explore' },
+  { id: 'Shop', label: 'Shop', screen: 'Products' },
   { id: 'Profile', label: 'Profile', screen: 'Profile' },
 ];
 
@@ -64,7 +65,9 @@ const HomeSidebar: React.FC<HomeSidebarProps> = ({
     navigation.replace('Login'); 
   };
 
-  const handleNavigation = (screen: keyof RootStackParamList) => {
+  const handleNavigation = (
+    screen: 'Home' | 'Schedule' | 'Explore' | 'Products' | 'Profile'
+  ) => {
     onClose();
     navigation.navigate(screen);
   };

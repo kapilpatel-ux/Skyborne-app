@@ -3,11 +3,12 @@ import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { ShoppingBag } from 'lucide-react-native';
 
 const BottomNav = ({
   active,
 }: {
-  active: 'Home' | 'Explore' | 'Schedule' | 'Profile';
+  active: 'Home' | 'Explore' | 'Products' | 'Schedule' | 'Profile';
 }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -61,6 +62,20 @@ const BottomNav = ({
 
       <TouchableOpacity
         style={styles.navItem}
+        onPress={() => navigation.navigate('Products')}
+      >
+        <ShoppingBag
+          size={22}
+          color={active === 'Products' ? '#B95E82' : '#707070'}
+          style={active === 'Products' ? undefined : styles.iconFaded}
+        />
+        <Text style={active === 'Products' ? styles.active : styles.inactive}>
+          Shop
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.navItem}
         onPress={() => navigation.navigate('Profile')}
       >
         <Image
@@ -102,6 +117,9 @@ const styles = StyleSheet.create({
   inactive: {
     color: '#707070',
     opacity: 0.4,
+  },
+  iconFaded: {
+    opacity: 0.8,
   },
 });
 

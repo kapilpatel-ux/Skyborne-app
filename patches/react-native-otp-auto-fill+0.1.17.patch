@@ -1,0 +1,59 @@
+diff --git a/node_modules/react-native-otp-auto-fill/android/build.gradle b/node_modules/react-native-otp-auto-fill/android/build.gradle
+index fa31c78..58b911f 100644
+--- a/node_modules/react-native-otp-auto-fill/android/build.gradle
++++ b/node_modules/react-native-otp-auto-fill/android/build.gradle
+@@ -2,7 +2,7 @@ buildscript {
+     if (project == rootProject) {
+         repositories {
+             google()
+-            jcenter()
++            mavenCentral()
+         }
+ 
+         dependencies {
+@@ -20,12 +20,12 @@ def safeExtGet(prop, fallback) {
+ android {
+     compileSdkVersion safeExtGet('OtpAutoFill_compileSdkVersion', 29)
+     buildToolsVersion safeExtGet('OtpAutoFill_buildToolsVersion', '29.0.2')
++
+     defaultConfig {
+         minSdkVersion safeExtGet('OtpAutoFill_minSdkVersion', 21)
+         targetSdkVersion safeExtGet('OtpAutoFill_targetSdkVersion', 29)
+         versionCode 1
+         versionName "1.0"
+-
+     }
+ 
+     buildTypes {
+@@ -33,9 +33,11 @@ android {
+             minifyEnabled false
+         }
+     }
++
+     lintOptions {
+         disable 'GradleCompatible'
+     }
++
+     compileOptions {
+         sourceCompatibility JavaVersion.VERSION_1_8
+         targetCompatibility JavaVersion.VERSION_1_8
+@@ -45,16 +47,14 @@ android {
+ repositories {
+     mavenLocal()
+     maven {
+-        // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+         url("$rootDir/../node_modules/react-native/android")
+     }
+     google()
+-    jcenter()
++    mavenCentral()
+ }
+ 
+ dependencies {
+-    //noinspection GradleDynamicVersion
+-    implementation "com.facebook.react:react-native:+"  // From node_modules
++    implementation "com.facebook.react:react-native:+"
+     implementation 'com.google.android.gms:play-services-auth:19.2.0'
+     implementation 'com.google.android.gms:play-services-auth-api-phone:17.5.1'
+ }
+\ No newline at end of file

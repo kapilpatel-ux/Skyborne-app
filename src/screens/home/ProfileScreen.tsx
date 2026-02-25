@@ -193,6 +193,14 @@ const ProfileScreen = () => {
       iconBgColor: '#FFE8E8',
       screen: 'Support',
     },
+    {
+      id: 5,
+      title: 'My Orders',
+      subtitle: 'Track your orders',
+      icon: ProfileImages.historyIcon,
+      iconBgColor: '#FFE8E8',
+      screen: 'MyOrders',
+    },
   ];
 
   const getInitials = (firstName?: string, lastName?: string) => {

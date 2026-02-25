@@ -39,6 +39,11 @@ import ForgotPasswordEmailScreen from '../screens/auth/ForgotPasswordEmailScreen
 import ForgotPasswordOTPScreen from '../screens/auth/ForgotPasswordOTPScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import VideoPlayer from '../screens/common/VideoPlayer';
+import ProductsScreen from '../screens/shop/ProductsScreen';
+import CartScreen from '../screens/shop/CartScreen';
+import CheckoutScreen from '../screens/shop/CheckoutScreen';
+import MyOrdersScreen from '../screens/shop/MyOrdersScreen';
+import ProductDetailsScreen from '../screens/shop/ProductDetailsScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -59,6 +64,11 @@ export type RootStackParamList = {
   Explore: undefined;
   Schedule: undefined;
   ViewAll: undefined;
+  Products: undefined;
+  ProductDetails: { productId: string };
+  Cart: undefined;
+  Checkout: undefined;
+  MyOrders: undefined;
   UpgradePlan: undefined;
   Profile: undefined;
   GuestHome: undefined;
@@ -139,6 +149,11 @@ export default function AppNavigator() {
         <Stack.Screen name="GetStarted" component={GetStartedScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Explore" component={ExploreScreen} />
+        <Stack.Screen name="Products" component={ProductsScreen} />
+        <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} />
+        <Stack.Screen name="Cart" component={CartScreen} />
+        <Stack.Screen name="Checkout" component={CheckoutScreen} />
+        <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
         <Stack.Screen
           name="PaymentVerification"
           component={PaymentVerification}
