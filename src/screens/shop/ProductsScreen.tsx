@@ -31,6 +31,7 @@ type ProductsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'Products'
 >;
+type ProductListItem = ShopProduct | string;
 
 // ─── Palette ───────────────────────────────────────────────────────────────
 const C = {
@@ -41,8 +42,8 @@ const C = {
   accentLight: '#FDF0F5',
   accentMid: '#F5D6E4',
   text: '#2C2C2C',
-  sub: '#7A7A7A',
-  muted: '#ADADAD',
+  sub: '#5F5F5F',
+  muted: '#818181',
   price: '#B95E82',
 };
 
@@ -62,7 +63,12 @@ const ProductsScreen = () => {
   const [cartCount, setCartCount] = useState(0);
   const [searchFocused, setSearchFocused] = useState(false);
 
-  const numColumns = width >= 900 ? 3 : width >= 600 ? 2 : 2;
+  const numColumns = width >= 900 ? 3 : width < 390 ? 1 : 2;
+  const skeletonItems = useMemo(
+    () => Array.from({ length: numColumns * 4 }, (_, index) => `skeleton-${index}`),
+    [numColumns],
+  );
+  const listData: ProductListItem[] = loading ? skeletonItems : products;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -160,6 +166,12 @@ const ProductsScreen = () => {
   const renderProduct = ({ item, index }: { item: ShopProduct; index: number }) => {
     const isAdding = addingProductId === item._id;
     const isOdd = index % 2 !== 0;
+    const cardWidthStyle =
+      numColumns === 1
+        ? styles.cardSingle
+        : numColumns === 3
+          ? styles.cardTriple
+          : styles.cardDouble;
 
     return (
       <TouchableOpacity
@@ -167,7 +179,11 @@ const ProductsScreen = () => {
         onPress={() =>
           navigation.navigate('ProductDetails', { productId: item._id })
         }
-        style={[styles.card, isOdd && styles.cardOffset]}
+        style={[
+          styles.card,
+          cardWidthStyle,
+          numColumns > 1 && isOdd && styles.cardOffset,
+        ]}
       >
         <View style={styles.cardImageWrap}>
           <Image
@@ -201,6 +217,37 @@ const ProductsScreen = () => {
           </View>
         </View>
       </TouchableOpacity>
+    );
+  };
+
+  const renderSkeletonCard = ({ index }: { index: number }) => {
+    const isOdd = index % 2 !== 0;
+    const cardWidthStyle =
+      numColumns === 1
+        ? styles.cardSingle
+        : numColumns === 3
+          ? styles.cardTriple
+          : styles.cardDouble;
+    return (
+      <View
+        style={[
+          styles.card,
+          cardWidthStyle,
+          numColumns > 1 && isOdd && styles.cardOffset,
+        ]}
+      >
+        <View style={[styles.cardImageWrap, styles.skeletonImage]} />
+        <View style={styles.cardBody}>
+          <View style={[styles.skeletonLine, styles.skeletonTitle]} />
+          <View style={[styles.skeletonLine, styles.skeletonDesc]} />
+          <View style={[styles.skeletonLine, styles.skeletonDescShort]} />
+
+          <View style={styles.cardFooter}>
+            <View style={[styles.skeletonLine, styles.skeletonPrice]} />
+            <View style={styles.skeletonAddBtn} />
+          </View>
+        </View>
+      </View>
     );
   };
 
@@ -311,28 +358,26 @@ const ProductsScreen = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
-      {loading ? (
-        <>
-          <ListHeader />
-          <View style={styles.loaderWrap}>
-            <ActivityIndicator size="large" color={C.accent} />
-            <Text style={styles.loaderText}>Loading essentials…</Text>
-          </View>
-        </>
-      ) : (
-        <FlatList
-          data={products}
-          key={`cols-${numColumns}`}
-          numColumns={numColumns}
-          keyExtractor={item => item._id}
-          renderItem={renderProduct}
-          ListHeaderComponent={<ListHeader />}
-          contentContainerStyle={styles.listContent}
-          columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
+      <FlatList
+        data={listData}
+        key={`cols-${numColumns}`}
+        numColumns={numColumns}
+        keyExtractor={(item, index) =>
+          typeof item === 'string' ? item : `${item._id}-${index}`
+        }
+        renderItem={({ item, index }) =>
+          typeof item === 'string'
+            ? renderSkeletonCard({ index })
+            : renderProduct({ item, index })
+        }
+        ListHeaderComponent={<ListHeader />}
+        contentContainerStyle={styles.listContent}
+        columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          !loading ? (
             <View style={styles.emptyWrap}>
               <Text style={styles.emptyIcon}>🌿</Text>
               <Text style={styles.emptyTitle}>Nothing here yet</Text>
@@ -340,9 +385,9 @@ const ProductsScreen = () => {
                 Try a different filter or search term
               </Text>
             </View>
-          }
-        />
-      )}
+          ) : null
+        }
+      />
 
       <BottomNav active="Products" />
     </SafeAreaView>
@@ -445,7 +490,8 @@ const styles = StyleSheet.create({
     flex: 1,
     color: C.text,
     fontFamily: 'Satoshi-Regular',
-    fontSize: 14,
+    fontSize: 15,
+    lineHeight: 21,
     padding: 0,
   },
   searchClear: {
@@ -475,7 +521,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     color: C.sub,
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: 'Satoshi-Medium',
   },
   chipTextActive: {
@@ -493,11 +539,11 @@ const styles = StyleSheet.create({
   },
   sortLabel: {
     color: C.sub,
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Satoshi-Medium',
   },
   sortChip: {
-    paddingVertical: 5,
+    paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 999,
     backgroundColor: 'transparent',
@@ -510,7 +556,7 @@ const styles = StyleSheet.create({
   },
   sortChipText: {
     color: C.sub,
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Satoshi-Regular',
   },
   sortChipTextActive: {
@@ -524,7 +570,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 6,
     color: C.muted,
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Satoshi-Regular',
   },
 
@@ -541,7 +587,6 @@ const styles = StyleSheet.create({
 
   // ── Card ─────────────────────────────────────────────────────────────────
   card: {
-    width: '48.2%',
     backgroundColor: C.surface,
     borderRadius: 20,
     marginBottom: 14,
@@ -554,13 +599,22 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
+  cardSingle: {
+    width: '100%',
+  },
+  cardDouble: {
+    width: '48.4%',
+  },
+  cardTriple: {
+    width: '31.8%',
+  },
   // Staggered grid offset for odd cards
   cardOffset: {
     marginTop: 18,
   },
   cardImageWrap: {
     width: '100%',
-    height: 140,
+    height: 150,
     backgroundColor: '#F5F1EE',
   },
   cardImage: {
@@ -568,41 +622,42 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   cardBody: {
-    padding: 12,
+    padding: 14,
   },
   cardTitle: {
     color: C.text,
-    fontSize: 14,
+    fontSize: 16,
+    lineHeight: 21,
     fontFamily: 'Satoshi-Bold',
     letterSpacing: -0.1,
   },
   cardDesc: {
-    marginTop: 3,
+    marginTop: 5,
     color: C.sub,
-    fontSize: 11.5,
+    fontSize: 13,
     fontFamily: 'Satoshi-Regular',
-    lineHeight: 16,
-    minHeight: 32,
+    lineHeight: 19,
+    minHeight: 38,
   },
   cardFooter: {
-    marginTop: 10,
+    marginTop: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   cardPrice: {
     color: C.price,
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Satoshi-Bold',
     letterSpacing: -0.3,
   },
   addBtn: {
     borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 13,
     backgroundColor: C.accent,
-    minWidth: 60,
-    minHeight: 30,
+    minWidth: 72,
+    minHeight: 34,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -611,22 +666,42 @@ const styles = StyleSheet.create({
   },
   addBtnText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 13.5,
     fontFamily: 'Satoshi-Bold',
     letterSpacing: 0.2,
   },
 
-  // ── Loader ────────────────────────────────────────────────────────────────
-  loaderWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
+  // ── Skeleton ──────────────────────────────────────────────────────────────
+  skeletonImage: {
+    backgroundColor: '#EFEAE6',
   },
-  loaderText: {
-    color: C.muted,
-    fontSize: 14,
-    fontFamily: 'Satoshi-Regular',
+  skeletonLine: {
+    backgroundColor: '#EFEAE6',
+    borderRadius: 8,
+  },
+  skeletonTitle: {
+    width: '78%',
+    height: 13,
+  },
+  skeletonDesc: {
+    marginTop: 8,
+    width: '92%',
+    height: 10,
+  },
+  skeletonDescShort: {
+    marginTop: 6,
+    width: '65%',
+    height: 10,
+  },
+  skeletonPrice: {
+    width: 52,
+    height: 16,
+  },
+  skeletonAddBtn: {
+    width: 64,
+    height: 30,
+    borderRadius: 999,
+    backgroundColor: '#E7DDD8',
   },
 
   // ── Empty ─────────────────────────────────────────────────────────────────
