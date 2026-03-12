@@ -165,7 +165,6 @@ const ProductsScreen = () => {
   // ─── Product Card ─────────────────────────────────────────────────────────
   const renderProduct = ({ item, index }: { item: ShopProduct; index: number }) => {
     const isAdding = addingProductId === item._id;
-    const isOdd = index % 2 !== 0;
     const cardWidthStyle =
       numColumns === 1
         ? styles.cardSingle
@@ -182,7 +181,6 @@ const ProductsScreen = () => {
         style={[
           styles.card,
           cardWidthStyle,
-          numColumns > 1 && isOdd && styles.cardOffset,
         ]}
       >
         <View style={styles.cardImageWrap}>
@@ -221,7 +219,6 @@ const ProductsScreen = () => {
   };
 
   const renderSkeletonCard = ({ index }: { index: number }) => {
-    const isOdd = index % 2 !== 0;
     const cardWidthStyle =
       numColumns === 1
         ? styles.cardSingle
@@ -233,7 +230,6 @@ const ProductsScreen = () => {
         style={[
           styles.card,
           cardWidthStyle,
-          numColumns > 1 && isOdd && styles.cardOffset,
         ]}
       >
         <View style={[styles.cardImageWrap, styles.skeletonImage]} />
@@ -607,10 +603,6 @@ const styles = StyleSheet.create({
   },
   cardTriple: {
     width: '31.8%',
-  },
-  // Staggered grid offset for odd cards
-  cardOffset: {
-    marginTop: 18,
   },
   cardImageWrap: {
     width: '100%',
