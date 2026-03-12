@@ -327,7 +327,7 @@ const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
                 ) : (
                   <>
                     <Lock size={15} color="#FFFFFF" strokeWidth={2.5} />
-                    <Text style={styles.payBtnText}>Pay ${total.toFixed(2)} with Stripe</Text>
+                    <Text style={styles.payBtnText}>Pay ${total.toFixed(2)}</Text>
                   </>
                 )}
               </TouchableOpacity>

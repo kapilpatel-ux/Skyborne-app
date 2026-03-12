@@ -2,6 +2,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 import { API_BASE_URL as ENV_API_BASE_URL } from '@env';
+import {
+  fetchLoggedInUserCountryRegion,
+  fetchLoggedInUserRegion,
+} from '../utils/timezoneUtils';
 
 const FALLBACK_API_BASE_URL =
   'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
@@ -78,6 +82,24 @@ class PastSessionsService {
     );
   }
 
+  private async getRegionCode(): Promise<string | undefined> {
+    try {
+      const { regionCode } = await fetchLoggedInUserCountryRegion();
+      if (regionCode?.trim()) return regionCode.trim();
+    } catch (error) {
+      console.warn('Failed to map region code via countries:', error);
+    }
+
+    try {
+      const { code } = await fetchLoggedInUserRegion();
+      if (code?.trim()) return code.trim();
+    } catch (error) {
+      console.warn('Failed to load fallback region code from /me:', error);
+    }
+
+    return undefined;
+  }
+
   /**
    * Fetch past/completed sessions with pagination
    * @param skip - Number of items to skip (default: 0)
@@ -92,6 +114,8 @@ class PastSessionsService {
     try {
       const params: any = { skip, limit };
       if (search) params.search = search;
+      const regionCode = await this.getRegionCode();
+      if (regionCode) params.region = regionCode;
 
       const response = await this.api.get<PastSessionsResponse>(
         '/meetings/past',

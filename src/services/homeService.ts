@@ -2,6 +2,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 import { API_BASE_URL as ENV_API_BASE_URL } from '@env';
+import {
+  fetchLoggedInUserCountryRegion,
+  fetchLoggedInUserRegion,
+} from '../utils/timezoneUtils';
 
 const FALLBACK_API_BASE_URL =
   'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
@@ -110,6 +114,24 @@ class HomeService {
     );
   }
 
+  private async getRegionCode(): Promise<string | undefined> {
+    try {
+      const { regionCode } = await fetchLoggedInUserCountryRegion();
+      if (regionCode?.trim()) return regionCode.trim();
+    } catch (error) {
+      console.warn('Failed to map region code via countries:', error);
+    }
+
+    try {
+      const { code } = await fetchLoggedInUserRegion();
+      if (code?.trim()) return code.trim();
+    } catch (error) {
+      console.warn('Failed to load fallback region code from /me:', error);
+    }
+
+    return undefined;
+  }
+
   /**
    * Fetch current user profile
    */
@@ -159,7 +181,10 @@ class HomeService {
    */
   async getTodaysMeetings(search?: string): Promise<MeetingsResponse> {
     try {
-      const params = search ? { search } : {};
+      const params: Record<string, string> = {};
+      if (search) params.search = search;
+      const regionCode = await this.getRegionCode();
+      if (regionCode) params.region = regionCode;
       const response = await this.api.get<MeetingsResponse>('/meetings/today', {
         params,
       });
@@ -188,6 +213,8 @@ async getUpcomingMeetings(search?: string, skip: number = 0, limit: number = 10)
   try {
     const params: any = { skip, limit };
     if (search) params.search = search;
+    const regionCode = await this.getRegionCode();
+    if (regionCode) params.region = regionCode;
 
     const response = await this.api.get<MeetingsResponse & { totalCount: number; hasMore: boolean }>(
       '/meetings/upcoming',

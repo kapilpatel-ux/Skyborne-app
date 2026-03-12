@@ -20,6 +20,10 @@ import {
   MeetingsResponse,
 } from '../../services/WeeklyScheduleService';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
+import {
+  fetchLoggedInUserCountryRegion,
+  fetchLoggedInUserRegion,
+} from '../../utils/timezoneUtils';
 
 type WeeklyScheduleNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -81,13 +85,32 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
     setSelectedDate(currentDate.getDate());
   };
 
+  const getRegionCode = async (): Promise<string | undefined> => {
+    try {
+      const { regionCode } = await fetchLoggedInUserCountryRegion();
+      if (regionCode?.trim()) return regionCode.trim();
+    } catch (error) {
+      console.warn('Failed to get region code from country mapping:', error);
+    }
+
+    try {
+      const { code } = await fetchLoggedInUserRegion();
+      if (code?.trim()) return code.trim();
+    } catch (error) {
+      console.warn('Failed to get fallback region code from user profile:', error);
+    }
+
+    return undefined;
+  };
+
   const fetchWeeklyMeetings = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
+      const regionCode = await getRegionCode();
       const response: MeetingsResponse =
-        await weeklyScheduleService.getWeeklyMeetings();
+        await weeklyScheduleService.getWeeklyMeetings(regionCode);
 
       if (response.success) {
         setWeeklyMeetings(response.meetings || []);

@@ -63,7 +63,8 @@ const ExploreScreen = ({ navigation }: any) => {
   const scrollX = useRef(0);
   const CARD_WIDTH = 299;
 
-  const { upcomingMeetings, isLoading, error, fetchSearch } = useHomeViewModel();
+  const { upcomingMeetings, isLoading, error, fetchSearch, fetchUpcoming } =
+    useHomeViewModel();
 
   const handleClassPress = (classId: string) => {
     navigation.navigate('ClassDetails', { classId });
@@ -82,6 +83,11 @@ const ExploreScreen = ({ navigation }: any) => {
       setIsRegionLoading(false);
     }
   }, []);
+
+  // Fetch trending/upcoming meetings on mount (region applied in service)
+  useEffect(() => {
+    fetchUpcoming();
+  }, [fetchUpcoming]);
 
   // Handle search with debounce
   useEffect(() => {

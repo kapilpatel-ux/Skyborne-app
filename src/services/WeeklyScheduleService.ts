@@ -1,6 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 import { API_BASE_URL as ENV_API_BASE_URL } from '@env';
+import {
+  fetchLoggedInUserCountryRegion,
+  fetchLoggedInUserRegion,
+} from '../utils/timezoneUtils';
 
 const FALLBACK_API_BASE_URL =
   'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
@@ -77,14 +81,40 @@ class WeeklyScheduleService {
     );
   }
 
+  private async getRegionCode(): Promise<string | undefined> {
+    try {
+      const { regionCode } = await fetchLoggedInUserCountryRegion();
+      if (regionCode?.trim()) return regionCode.trim();
+    } catch (error) {
+      console.warn('Failed to get region code from country mapping:', error);
+    }
+
+    try {
+      const { code } = await fetchLoggedInUserRegion();
+      if (code?.trim()) return code.trim();
+    } catch (error) {
+      console.warn('Failed to get fallback region code from user profile:', error);
+    }
+
+    return undefined;
+  }
+
   /**
    * Fetch weekly meetings for all 7 days
    * Backend filters by user plan and region
    */
-  async getWeeklyMeetings(): Promise<MeetingsResponse> {
+  async getWeeklyMeetings(regionOverride?: string): Promise<MeetingsResponse> {
     try {
+      const regionCode =
+        typeof regionOverride === 'string' && regionOverride.trim().length > 0
+          ? regionOverride.trim()
+          : await this.getRegionCode();
+      const params: Record<string, string> = {};
+      if (regionCode) params.region = regionCode;
+      console.log('📅 Weekly meetings region param:', regionCode || '(missing)');
       const response = await this.api.get<MeetingsResponse>(
         '/meetings/weekly',
+        { params },
       );
 
       if (!response.data.success) {
@@ -106,8 +136,16 @@ class WeeklyScheduleService {
    */
   async getMeetingsByDay(dayIndex: number): Promise<MeetingsResponse> {
     try {
+      const regionCode = await this.getRegionCode();
+      const params: Record<string, string> = {};
+      if (regionCode) params.region = regionCode;
+      console.log(
+        `📅 By-day meetings region param (day ${dayIndex}):`,
+        regionCode || '(missing)'
+      );
       const response = await this.api.get<MeetingsResponse>(
         `/meetings/by-day/${dayIndex}`,
+        { params },
       );
 
       if (!response.data.success) {
@@ -129,8 +167,8 @@ class WeeklyScheduleService {
 export const weeklyScheduleService = new WeeklyScheduleService();
 
 // Export functions for Redux thunks
-export const getWeeklyMeetings = () =>
-  weeklyScheduleService.getWeeklyMeetings();
+export const getWeeklyMeetings = (regionOverride?: string) =>
+  weeklyScheduleService.getWeeklyMeetings(regionOverride);
 
 export const getMeetingsByDay = (dayIndex: number) =>
   weeklyScheduleService.getMeetingsByDay(dayIndex);
