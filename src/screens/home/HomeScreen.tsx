@@ -13,6 +13,7 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import GradientBackground from '../../components/GradientBackground';
 import { HomeImages } from '../../assets/images/home';
+import { ArrowRight } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
 import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
@@ -281,10 +282,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         >
           <Text style={styles.joinButtonText}>Join now</Text>
           <View style={styles.arrowContainer}>
-            <Image
-              source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/arrow-black.png'}}
-              style={styles.arrow}
-            />
+            <ArrowRight size={16} color="#111111" />
           </View>
         </TouchableOpacity>
       </TouchableOpacity>
@@ -977,7 +975,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     height:12,
     width:16,
-    color: '#000000',
+    tintColor: '#000000',
     fontWeight: '600',
   },
   upcomingSection: {
