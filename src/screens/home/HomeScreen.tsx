@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,10 +16,10 @@ import { HomeImages } from '../../assets/images/home';
 import { ArrowRight } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
-import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
+import { getUserRegion } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import HomeSidebar from './HomeSidebar';
-import { UserProfile } from '../../services/homeService';
+import { Meeting, UserProfile } from '../../services/homeService';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -235,6 +235,83 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const last = lastName?.charAt(0).toUpperCase() ?? '';
     return `${first}${last}`;
   };
+
+  const { resolvedTodayMeetings, resolvedUpcomingMeetings } = useMemo(() => {
+    const getDateKeyForTimezone = (value: Date | string, timezone?: string) => {
+      const date = value instanceof Date ? value : new Date(value);
+      if (isNaN(date.getTime())) return null;
+
+      const formatOptions: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        ...(timezone ? { timeZone: timezone } : {}),
+      };
+
+      try {
+        return new Intl.DateTimeFormat('en-CA', formatOptions).format(date);
+      } catch {
+        return new Intl.DateTimeFormat('en-CA', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).format(date);
+      }
+    };
+
+    const isMeetingInTodayBucket = (meeting: Meeting) => {
+      if (!meeting?.localTime) return false;
+
+      const regionInfo = meeting?.regions?.find(
+        (r: any) => r.region === userRegion?.region,
+      );
+
+      const displayRegionInfo = regionInfo || meeting?.regions?.[0];
+      const timezone =
+        displayRegionInfo?.timezone ||
+        userRegion?.timezone ||
+        Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const meetingDateKey = getDateKeyForTimezone(meeting.localTime, timezone);
+      const todayDateKey = getDateKeyForTimezone(new Date(), timezone);
+
+      return !!meetingDateKey && !!todayDateKey && meetingDateKey === todayDateKey;
+    };
+
+    const inferredTodayMeetings = upcomingMeetings.filter(meeting =>
+      isMeetingInTodayBucket(meeting),
+    );
+
+    const seenIds = new Set<string>();
+    const mergedTodayMeetings = [...todayMeetings, ...inferredTodayMeetings].filter(
+      meeting => {
+        const id = meeting?._id;
+        if (!id) return true;
+        if (seenIds.has(id)) return false;
+        seenIds.add(id);
+        return true;
+      },
+    );
+
+    const mergedTodayIds = new Set(
+      mergedTodayMeetings.map(meeting => meeting?._id).filter(Boolean),
+    );
+
+    const filteredUpcomingMeetings = upcomingMeetings.filter(meeting => {
+      const id = meeting?._id;
+
+      if (id && mergedTodayIds.has(id)) {
+        return false;
+      }
+
+      return !isMeetingInTodayBucket(meeting);
+    });
+
+    return {
+      resolvedTodayMeetings: mergedTodayMeetings,
+      resolvedUpcomingMeetings: filteredUpcomingMeetings,
+    };
+  }, [todayMeetings, upcomingMeetings, userRegion]);
 
   const DynamicSessionCard = ({ meeting }: any) => {
     const regionInfo = meeting?.regions?.find(
@@ -486,7 +563,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               <Text style={styles.searchResultsTitle}>Search Results</Text>
 
               {/* Today's Sessions Results */}
-              {todayMeetings.length > 0 && (
+              {resolvedTodayMeetings.length > 0 && (
                 <>
                   <Text style={styles.sectionTitle}>Today's Session</Text>
                   <ScrollView
@@ -495,7 +572,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     contentContainerStyle={styles.sessionsScroll}
                     style={styles.sessionsContainer}
                   >
-                    {todayMeetings.map(meeting => (
+                    {resolvedTodayMeetings.map(meeting => (
                       <DynamicSessionCard key={meeting._id} meeting={meeting} />
                     ))}
                   </ScrollView>
@@ -503,7 +580,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               )}
 
               {/* Upcoming Sessions Results */}
-              {upcomingMeetings.length > 0 && (
+              {resolvedUpcomingMeetings.length > 0 && (
                 <>
                   <Text
                     style={[
@@ -513,7 +590,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   >
                     Upcoming Classes
                   </Text>
-                  {upcomingMeetings.map((meeting, idx) => (
+                  {resolvedUpcomingMeetings.map((meeting, idx) => (
                     <DynamicClassCard
                       key={`${meeting._id}-${idx}`}
                       meeting={meeting}
@@ -523,7 +600,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               )}
 
               {/* No Results */}
-              {todayMeetings.length === 0 && upcomingMeetings.length === 0 && (
+              {resolvedTodayMeetings.length === 0 && resolvedUpcomingMeetings.length === 0 && (
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyMessage}>
                     No classes found matching "{localSearchQuery}"
@@ -534,7 +611,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           )}
 
           {/* Normal View - Today's Sessions */}
-          {!showSearchBar && !isLoading && todayMeetings.length > 0 && (
+          {!showSearchBar && !isLoading && resolvedTodayMeetings.length > 0 && (
             <>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Today's Sessions</Text>
@@ -551,14 +628,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 contentContainerStyle={styles.sessionsScroll}
                 style={styles.sessionsContainer}
               >
-                {todayMeetings.map(meeting => (
+                {resolvedTodayMeetings.map(meeting => (
                   <DynamicSessionCard key={meeting._id} meeting={meeting} />
                 ))}
               </ScrollView>
             </>
           )}
 
-          {!showSearchBar && !isLoading && todayMeetings.length === 0 && (
+          {!showSearchBar && !isLoading && resolvedTodayMeetings.length === 0 && (
             <>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>
@@ -577,14 +654,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           )}
 
           {/* Upcoming Classes Section */}
-          {!showSearchBar && !isLoading && upcomingMeetings.length > 0 && (
+          {!showSearchBar && !isLoading && resolvedUpcomingMeetings.length > 0 && (
             <View style={styles.upcomingSection}>
               <Text style={styles.upcomingTitle}>Upcoming Classes</Text>
-              <DynamicClassCard meeting={upcomingMeetings[0]} />
+              <DynamicClassCard meeting={resolvedUpcomingMeetings[0]} />
             </View>
           )}
 
-          {!showSearchBar && !isLoading && upcomingMeetings.length === 0 && (
+          {!showSearchBar && !isLoading && resolvedUpcomingMeetings.length === 0 && (
             <View style={styles.upcomingSection}>
               <Text style={styles.upcomingTitle}>Upcoming Classes</Text>
               <View style={styles.emptyContainer}>
