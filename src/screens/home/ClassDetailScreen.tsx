@@ -497,28 +497,26 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
                       ?.toLowerCase()
                       .replace(/\b\w/g, (c: string) => c.toUpperCase())}
                   </Text>
-
-                  <View
+                </View>
+                <View
+                  style={[
+                    styles.sessionBadgeInline,
+                    isLive ? styles.liveBadge : styles.recordBadge,
+                  ]}
+                >
+                  {isLive ? (
+                    <Video size={14} color={isLive ? '#FFFFFF' : '#000000'} style={{ marginRight: 6 }} />
+                  ) : (
+                    <VideoOff size={14} color={isLive ? '#FFFFFF' : '#000000'} style={{ marginRight: 6 }} />
+                  )}
+                  <Text
                     style={[
-                      styles.sessionBadgeInline,
-                      isLive ? styles.liveBadge : styles.recordBadge,
+                      styles.badgeText,
+                      { color: isLive ? '#FFFFFF' : '#000000' },
                     ]}
                   >
-                    {isLive ? (
-                      <Video size={14} color={isLive ? '#FFFFFF' : '#000000'} style={{ marginRight: 6 }} />
-                    ) : (
-                      <VideoOff size={14} color={isLive ? '#FFFFFF' : '#000000'} style={{ marginRight: 6 }} />
-                    )}
-                    <Text
-                      style={[
-                        styles.badgeText,
-                        { color: isLive ? '#FFFFFF' : '#000000' },
-                      ]}
-                    >
-                      {isLive ? 'LIVE SESSION' : 'RECORDING'}
-                    </Text>
-                  </View>
-
+                    {isLive ? 'LIVE SESSION' : 'RECORDING'}
+                  </Text>
                 </View>
                 <Text style={styles.trainerText}>
                   Trainer: {classDetails.trainer?.name}{' '}
@@ -789,12 +787,10 @@ const styles = StyleSheet.create({
 
   liveBadge: {
     backgroundColor: '#354FE5',
-    marginLeft: 8,
   },
 
   recordBadge: {
     backgroundColor: '#F3E37C', 
-    marginLeft: 8,
   },
 
   badgeIcon: {
@@ -825,13 +821,12 @@ const styles = StyleSheet.create({
   titleLeft: {
     flex: 1,
     marginRight: 12,
+    alignItems: 'flex-start',
   },
 
   titleInline: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
   },
 
   sessionBadgeInline: {
@@ -840,7 +835,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 18,
-    alignSelf: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    marginBottom: 6,
+    marginLeft: 0,
   },
 
   className: {
