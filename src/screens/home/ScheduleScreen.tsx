@@ -103,19 +103,21 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
     setSelectedDate(currentDate.getDate());
   };
 
-  const getRegionCode = async (): Promise<string | undefined> => {
+  const getRegionParam = async (): Promise<string | undefined> => {
     try {
-      const { regionCode } = await fetchLoggedInUserCountryRegion();
+      const { regionName, regionCode } = await fetchLoggedInUserCountryRegion();
+      if (regionName?.trim()) return regionName.trim();
       if (regionCode?.trim()) return regionCode.trim();
     } catch (error) {
-      console.warn('Failed to get region code from country mapping:', error);
+      console.warn('Failed to get region from country mapping:', error);
     }
 
     try {
-      const { code } = await fetchLoggedInUserRegion();
+      const { region, code } = await fetchLoggedInUserRegion();
+      if (region?.trim()) return region.trim();
       if (code?.trim()) return code.trim();
     } catch (error) {
-      console.warn('Failed to get fallback region code from user profile:', error);
+      console.warn('Failed to get fallback region from user profile:', error);
     }
 
     return undefined;
@@ -126,9 +128,9 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
       setIsLoading(true);
       setError(null);
 
-      const regionCode = await getRegionCode();
+      const regionParam = await getRegionParam();
       const response: MeetingsResponse =
-        await weeklyScheduleService.getWeeklyMeetings(regionCode);
+        await weeklyScheduleService.getWeeklyMeetings(regionParam);
 
       if (response.success) {
         setWeeklyMeetings(response.meetings || []);

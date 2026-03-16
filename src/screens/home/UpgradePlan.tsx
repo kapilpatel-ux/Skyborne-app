@@ -21,8 +21,8 @@ import { setOnboardingCompleted } from '../../store/authSlice';
 import { Images } from '../../assets/images';
 import { useOnboardingStore } from '../../store/onboardingSlice';
 import { 
-  createPaymentOrder,
   clearPaymentCache,
+  upgradePlanOrder,
 } from '../../services/paymentService';
 import SocketService from '../../services/socketService';
 import { fetchUserProfile } from '../../store/homeSlice';
@@ -382,8 +382,7 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
 
       setIsProcessingPayment(true);
 
-      // ✅ CREATE PAYMENT ORDER WITH BILLING TYPE
-      const response = await createPaymentOrder({
+      const orderPayload = {
         amount: planDetails.amount,
         currency: 'USD',
         userId: user.id,
@@ -392,7 +391,9 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         phone: phone,
         source: 'app',
         billingType: billingType,
-      });
+      };
+
+      const response = await upgradePlanOrder(orderPayload);
 
       if (!response.success) {
         Toast.show({
@@ -404,15 +405,10 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         return;
       }
 
-      const { paymentLink } = response;
+      const paymentLink = response.paymentLink || response.checkoutUrl;
 
       if (!paymentLink) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Payment link not received',
-        });
-        setIsProcessingPayment(false);
+        await handlePaymentSuccess(response);
         return;
       }
 

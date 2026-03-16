@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,10 @@ import { HomeImages } from '../../assets/images/home';
 import { ArrowRight } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
-import { getUserRegion } from '../../utils/timezoneUtils';
+import {
+  fetchLoggedInUserCountryRegion,
+  getUserRegion,
+} from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import HomeSidebar from './HomeSidebar';
 import { Meeting, UserProfile } from '../../services/homeService';
@@ -134,6 +137,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     null,
   );
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
+  const [userRegionCode, setUserRegionCode] = useState<string | null>(null);
+  const [userRegionName, setUserRegionName] = useState<string | null>(null);
   const [isRegionLoading, setIsRegionLoading] = useState(true);
 
   const percentage = Math.round((currentWater / MAX_WATER) * 100);
@@ -157,18 +162,47 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
 
 
-  // Initialize user region on mount - critical for timezone handling
+  // Initialize user timezone + backend region code on mount
   useEffect(() => {
-    try {
-      const region = getUserRegion();
-      setUserRegion(region);
-    } catch (err) {
-      console.error('❌ Failed to get user region:', err);
-      // Fallback to UTC if region detection fails
-      setUserRegion({ timezone: 'UTC', region: 'APAC' });
-    } finally {
-      setIsRegionLoading(false);
-    }
+    let isMounted = true;
+
+    const initializeRegion = async () => {
+      try {
+        const region = getUserRegion();
+        if (isMounted) {
+          setUserRegion(region);
+        }
+      } catch (err) {
+        console.error('❌ Failed to get user region:', err);
+        if (isMounted) {
+          setUserRegion({ timezone: 'UTC', region: 'APAC' });
+        }
+      }
+
+      try {
+        const { regionCode, regionName } = await fetchLoggedInUserCountryRegion();
+        if (isMounted) {
+          setUserRegionCode(regionCode?.trim() || null);
+          setUserRegionName(regionName?.trim() || null);
+        }
+      } catch (err) {
+        console.error('❌ Failed to fetch user region:', err);
+        if (isMounted) {
+          setUserRegionCode(null);
+          setUserRegionName(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsRegionLoading(false);
+        }
+      }
+    };
+
+    initializeRegion();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -230,6 +264,69 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     (user?.classCredits?.zumba ?? 0) +
     (user?.classCredits?.specialty ?? 0);
 
+  const normalizedUserRegionCode = String(userRegionCode || '')
+    .trim()
+    .toLowerCase();
+  const normalizedUserRegionName = String(
+    userRegionName || userRegion?.region || '',
+  )
+    .trim()
+    .toLowerCase();
+
+  const getMeetingRegionInfo = useCallback(
+    (meeting: Meeting) => {
+      const regions = Array.isArray(meeting?.regions) ? meeting.regions : [];
+
+      const matchedByName = regions.find(
+        (r: any) =>
+          String(r?.region || '')
+            .trim()
+            .toLowerCase() === normalizedUserRegionName,
+      );
+
+      if (matchedByName) return matchedByName;
+
+      const matchedByCode = regions.find(
+        (r: any) =>
+          String(r?.region || '')
+            .trim()
+            .toLowerCase() === normalizedUserRegionCode,
+      );
+
+      if (matchedByCode) return matchedByCode;
+
+      return regions[0];
+    },
+    [normalizedUserRegionCode, normalizedUserRegionName],
+  );
+
+  const isMeetingForUserRegion = useCallback(
+    (meeting: Meeting) => {
+      if (!normalizedUserRegionCode && !normalizedUserRegionName) return true;
+
+      const meetingLiveRegion = String(meeting?.liveRegion || '')
+        .trim()
+        .toLowerCase();
+
+      if (
+        normalizedUserRegionName &&
+        meetingLiveRegion === normalizedUserRegionName
+      ) {
+        return true;
+      }
+
+      if (
+        normalizedUserRegionCode &&
+        meetingLiveRegion === normalizedUserRegionCode
+      ) {
+        return true;
+      }
+
+      return false;
+    },
+    [normalizedUserRegionCode, normalizedUserRegionName],
+  );
+
   const getInitials = (firstName?: string, lastName?: string) => {
     const first = firstName?.charAt(0).toUpperCase() ?? '';
     const last = lastName?.charAt(0).toUpperCase() ?? '';
@@ -237,6 +334,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const { resolvedTodayMeetings, resolvedUpcomingMeetings } = useMemo(() => {
+    const regionFilteredTodayMeetings = todayMeetings.filter(isMeetingForUserRegion);
+    const regionFilteredUpcomingMeetings = upcomingMeetings.filter(
+      isMeetingForUserRegion,
+    );
+
     const getDateKeyForTimezone = (value: Date | string, timezone?: string) => {
       const date = value instanceof Date ? value : new Date(value);
       if (isNaN(date.getTime())) return null;
@@ -262,11 +364,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const isMeetingInTodayBucket = (meeting: Meeting) => {
       if (!meeting?.localTime) return false;
 
-      const regionInfo = meeting?.regions?.find(
-        (r: any) => r.region === userRegion?.region,
-      );
-
-      const displayRegionInfo = regionInfo || meeting?.regions?.[0];
+      const displayRegionInfo = getMeetingRegionInfo(meeting);
       const timezone =
         displayRegionInfo?.timezone ||
         userRegion?.timezone ||
@@ -278,26 +376,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       return !!meetingDateKey && !!todayDateKey && meetingDateKey === todayDateKey;
     };
 
-    const inferredTodayMeetings = upcomingMeetings.filter(meeting =>
+    const inferredTodayMeetings = regionFilteredUpcomingMeetings.filter(meeting =>
       isMeetingInTodayBucket(meeting),
     );
 
     const seenIds = new Set<string>();
-    const mergedTodayMeetings = [...todayMeetings, ...inferredTodayMeetings].filter(
-      meeting => {
-        const id = meeting?._id;
-        if (!id) return true;
-        if (seenIds.has(id)) return false;
-        seenIds.add(id);
-        return true;
-      },
-    );
+    const mergedTodayMeetings = [
+      ...regionFilteredTodayMeetings,
+      ...inferredTodayMeetings,
+    ].filter(meeting => {
+      const id = meeting?._id;
+      if (!id) return true;
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    });
 
     const mergedTodayIds = new Set(
       mergedTodayMeetings.map(meeting => meeting?._id).filter(Boolean),
     );
 
-    const filteredUpcomingMeetings = upcomingMeetings.filter(meeting => {
+    const filteredUpcomingMeetings = regionFilteredUpcomingMeetings.filter(
+      meeting => {
       const id = meeting?._id;
 
       if (id && mergedTodayIds.has(id)) {
@@ -305,20 +405,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       }
 
       return !isMeetingInTodayBucket(meeting);
-    });
+      },
+    );
 
     return {
       resolvedTodayMeetings: mergedTodayMeetings,
       resolvedUpcomingMeetings: filteredUpcomingMeetings,
     };
-  }, [todayMeetings, upcomingMeetings, userRegion]);
+  }, [
+    todayMeetings,
+    upcomingMeetings,
+    userRegion,
+    getMeetingRegionInfo,
+    isMeetingForUserRegion,
+  ]);
 
   const DynamicSessionCard = ({ meeting }: any) => {
-    const regionInfo = meeting?.regions?.find(
-      (r: any) => r.region === userRegion?.region,
-    );
-
-    const displayRegionInfo = regionInfo || meeting?.regions?.[0];
+    const displayRegionInfo = getMeetingRegionInfo(meeting);
 
     // Extract the pre-formatted localTime from the API response
     const formattedTime = displayRegionInfo?.localTime || 'N/A';
@@ -329,7 +432,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const formattedDate = formatDateWithTimezone(
       meeting.localTime,
       timezone,
-      regionInfo?.localTime,
+      displayRegionInfo?.localTime,
       mode,
     );
 
@@ -367,13 +470,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const DynamicClassCard = ({ meeting }: any) => {
-    // Find region-specific info from meeting regions array
-    const regionInfo = meeting?.regions?.find(
-      (r: any) => r.region === userRegion?.region,
-    );
-
-    // Fallback to first region if user region not found
-    const displayRegionInfo = regionInfo || meeting?.regions?.[0];
+    const displayRegionInfo = getMeetingRegionInfo(meeting);
 
     // Extract the pre-formatted localTime from the API response
     const formattedTime = displayRegionInfo?.localTime || 'N/A';
@@ -384,7 +481,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const formattedDate = formatDateWithTimezone(
       meeting.localTime,
       timezone,
-      regionInfo?.localTime,
+      displayRegionInfo?.localTime,
       mode,
     );
 

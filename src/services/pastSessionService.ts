@@ -82,19 +82,21 @@ class PastSessionsService {
     );
   }
 
-  private async getRegionCode(): Promise<string | undefined> {
+  private async getRegionParam(): Promise<string | undefined> {
     try {
-      const { regionCode } = await fetchLoggedInUserCountryRegion();
+      const { regionName, regionCode } = await fetchLoggedInUserCountryRegion();
+      if (regionName?.trim()) return regionName.trim();
       if (regionCode?.trim()) return regionCode.trim();
     } catch (error) {
-      console.warn('Failed to map region code via countries:', error);
+      console.warn('Failed to map region via countries:', error);
     }
 
     try {
-      const { code } = await fetchLoggedInUserRegion();
+      const { region, code } = await fetchLoggedInUserRegion();
+      if (region?.trim()) return region.trim();
       if (code?.trim()) return code.trim();
     } catch (error) {
-      console.warn('Failed to load fallback region code from /me:', error);
+      console.warn('Failed to load fallback region from /me:', error);
     }
 
     return undefined;
@@ -114,8 +116,8 @@ class PastSessionsService {
     try {
       const params: any = { skip, limit };
       if (search) params.search = search;
-      const regionCode = await this.getRegionCode();
-      if (regionCode) params.region = regionCode;
+      const regionParam = await this.getRegionParam();
+      if (regionParam) params.region = regionParam;
 
       const response = await this.api.get<PastSessionsResponse>(
         '/meetings/past',

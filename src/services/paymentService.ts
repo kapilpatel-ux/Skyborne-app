@@ -31,12 +31,34 @@ export interface PaymentOrderResponse {
   orderId?: string;
   orderRef: string;
   paymentLink: string;
+  checkoutUrl?: string;
   sessionId?: string;        // ✅ Stripe only
   reference?: string;        // ✅ nGenius only
   amount: number;
   currency: string;
   status: string;
   gateway?: string;          // 'stripe' or 'ngenius'
+}
+
+export interface UpgradePlanOrderResponse {
+  success: boolean;
+  message: string;
+  gateway?: string;
+  orderRef?: string;
+  paymentLink?: string;
+  checkoutUrl?: string;
+  sessionId?: string;
+  reference?: string;
+  data?: {
+    subscriptionId?: string;
+    plan?: string;
+    amount?: number;
+    currency?: string;
+    localAmount?: number;
+    localCurrency?: string;
+    billingType?: 'monthly' | 'yearly';
+    subscriptionEndDate?: string | Date | null;
+  };
 }
 
 export interface PaymentVerificationPayload {
@@ -162,6 +184,68 @@ class PaymentService {
         error.message ||
         'Payment order creation failed';
       console.error('❌ Payment order creation error:', errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Upgrade an existing plan (Stripe) or fallback to create-order if needed
+   */
+  async upgradePlanOrder(
+    payload: PaymentOrderPayload,
+  ): Promise<UpgradePlanOrderResponse> {
+    try {
+      const appSuccessUrl =
+        'skybornedrop://payment-processing?status=success&sessionId={CHECKOUT_SESSION_ID}';
+      const appCancelUrl = 'skybornedrop://payment-processing?status=cancelled';
+
+      const requestPayload: PaymentOrderPayload = {
+        ...payload,
+        source: 'app',
+        successUrl: appSuccessUrl,
+        cancelUrl: appCancelUrl,
+      };
+
+      console.log('🔄 Creating upgrade order:', requestPayload);
+
+      const response = await this.api.post(
+        '/payment/upgrade-order',
+        requestPayload,
+      );
+
+      if (response.data?.success && response.data?.orderRef) {
+        await AsyncStorage.setItem('paymentOrderRef', response.data.orderRef);
+        await AsyncStorage.setItem(
+          'paymentGateway',
+          response.data.gateway || 'unknown',
+        );
+
+        if (response.data.gateway === 'ngenius') {
+          if (response.data.reference) {
+            await AsyncStorage.setItem(
+              'paymentReference',
+              response.data.reference,
+            );
+            console.log('📦 Stored nGenius reference:', response.data.reference);
+          }
+        } else if (response.data.gateway === 'stripe') {
+          if (response.data.sessionId) {
+            await AsyncStorage.setItem(
+              'paymentSessionId',
+              response.data.sessionId,
+            );
+            console.log('📦 Stored Stripe sessionId:', response.data.sessionId);
+          }
+        }
+      }
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Upgrade plan request failed';
+      console.error('❌ Upgrade plan error:', errorMessage);
       throw new Error(errorMessage);
     }
   }
@@ -366,6 +450,9 @@ export const paymentService = new PaymentService();
 // Export individual functions for convenience
 export const createPaymentOrder = (payload: PaymentOrderPayload) =>
   paymentService.createPaymentOrder(payload);
+
+export const upgradePlanOrder = (payload: PaymentOrderPayload) =>
+  paymentService.upgradePlanOrder(payload);
 
 export const verifyMobilePayment = (payload?: PaymentVerificationPayload) =>
   paymentService.verifyMobilePayment(payload);

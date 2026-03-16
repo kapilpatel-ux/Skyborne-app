@@ -81,19 +81,21 @@ class WeeklyScheduleService {
     );
   }
 
-  private async getRegionCode(): Promise<string | undefined> {
+  private async getRegionParam(): Promise<string | undefined> {
     try {
-      const { regionCode } = await fetchLoggedInUserCountryRegion();
+      const { regionName, regionCode } = await fetchLoggedInUserCountryRegion();
+      if (regionName?.trim()) return regionName.trim();
       if (regionCode?.trim()) return regionCode.trim();
     } catch (error) {
-      console.warn('Failed to get region code from country mapping:', error);
+      console.warn('Failed to get region from country mapping:', error);
     }
 
     try {
-      const { code } = await fetchLoggedInUserRegion();
+      const { region, code } = await fetchLoggedInUserRegion();
+      if (region?.trim()) return region.trim();
       if (code?.trim()) return code.trim();
     } catch (error) {
-      console.warn('Failed to get fallback region code from user profile:', error);
+      console.warn('Failed to get fallback region from user profile:', error);
     }
 
     return undefined;
@@ -105,13 +107,16 @@ class WeeklyScheduleService {
    */
   async getWeeklyMeetings(regionOverride?: string): Promise<MeetingsResponse> {
     try {
-      const regionCode =
+      const regionParam =
         typeof regionOverride === 'string' && regionOverride.trim().length > 0
           ? regionOverride.trim()
-          : await this.getRegionCode();
+          : await this.getRegionParam();
       const params: Record<string, string> = {};
-      if (regionCode) params.region = regionCode;
-      console.log('📅 Weekly meetings region param:', regionCode || '(missing)');
+      if (regionParam) params.region = regionParam;
+      console.log(
+        '📅 Weekly meetings region param:',
+        regionParam || '(missing)',
+      );
       const response = await this.api.get<MeetingsResponse>(
         '/meetings/weekly',
         { params },
@@ -136,12 +141,12 @@ class WeeklyScheduleService {
    */
   async getMeetingsByDay(dayIndex: number): Promise<MeetingsResponse> {
     try {
-      const regionCode = await this.getRegionCode();
+      const regionParam = await this.getRegionParam();
       const params: Record<string, string> = {};
-      if (regionCode) params.region = regionCode;
+      if (regionParam) params.region = regionParam;
       console.log(
         `📅 By-day meetings region param (day ${dayIndex}):`,
-        regionCode || '(missing)'
+        regionParam || '(missing)',
       );
       const response = await this.api.get<MeetingsResponse>(
         `/meetings/by-day/${dayIndex}`,

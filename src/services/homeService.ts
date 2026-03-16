@@ -114,19 +114,21 @@ class HomeService {
     );
   }
 
-  private async getRegionCode(): Promise<string | undefined> {
+  private async getRegionParam(): Promise<string | undefined> {
     try {
-      const { regionCode } = await fetchLoggedInUserCountryRegion();
+      const { regionName, regionCode } = await fetchLoggedInUserCountryRegion();
+      if (regionName?.trim()) return regionName.trim();
       if (regionCode?.trim()) return regionCode.trim();
     } catch (error) {
-      console.warn('Failed to map region code via countries:', error);
+      console.warn('Failed to map region via countries:', error);
     }
 
     try {
-      const { code } = await fetchLoggedInUserRegion();
+      const { region, code } = await fetchLoggedInUserRegion();
+      if (region?.trim()) return region.trim();
       if (code?.trim()) return code.trim();
     } catch (error) {
-      console.warn('Failed to load fallback region code from /me:', error);
+      console.warn('Failed to load fallback region from /me:', error);
     }
 
     return undefined;
@@ -183,8 +185,8 @@ class HomeService {
     try {
       const params: Record<string, string> = {};
       if (search) params.search = search;
-      const regionCode = await this.getRegionCode();
-      if (regionCode) params.region = regionCode;
+      const regionParam = await this.getRegionParam();
+      if (regionParam) params.region = regionParam;
       const response = await this.api.get<MeetingsResponse>('/meetings/today', {
         params,
       });
@@ -213,8 +215,8 @@ async getUpcomingMeetings(search?: string, skip: number = 0, limit: number = 10)
   try {
     const params: any = { skip, limit };
     if (search) params.search = search;
-    const regionCode = await this.getRegionCode();
-    if (regionCode) params.region = regionCode;
+    const regionParam = await this.getRegionParam();
+    if (regionParam) params.region = regionParam;
 
     const response = await this.api.get<MeetingsResponse & { totalCount: number; hasMore: boolean }>(
       '/meetings/upcoming',
