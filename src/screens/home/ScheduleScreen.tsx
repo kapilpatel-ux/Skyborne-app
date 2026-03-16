@@ -19,6 +19,7 @@ import {
   Meeting,
   MeetingsResponse,
 } from '../../services/WeeklyScheduleService';
+import { profileService } from '../../services/profileService';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import {
   fetchLoggedInUserCountryRegion,
@@ -50,6 +51,7 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [weeklyMeetings, setWeeklyMeetings] = useState<Meeting[]>([]);
   const [userPlan, setUserPlan] = useState<string>('');
+  const [plans, setPlans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +63,22 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
   // Fetch weekly meetings
   useEffect(() => {
     fetchWeeklyMeetings();
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await profileService.getPlans();
+        const data = Array.isArray(res.data?.data) ? res.data.data : [];
+        if (isMounted) setPlans(data);
+      } catch {
+        if (isMounted) setPlans([]);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const initializeWeek = () => {
@@ -182,6 +200,44 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
 
   const selectedDay = weekDays.find(d => d.date === selectedDate);
 
+  const isLikelyId = (value: string) =>
+    /^[a-f0-9]{24}$/i.test(value.trim()) ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value.trim(),
+    );
+
+  const getDisplayPlan = () => {
+    const rawPlan = String(userPlan || '').trim();
+    if (!rawPlan) return 'Plan';
+
+    const normalizedRaw = rawPlan.toLowerCase();
+    const fixedPlanMap: Record<string, string> = {
+      'gold-yoga': 'Gold Yoga',
+      'gold-zumba': 'Gold Zumba',
+      'gold-mixed': 'Gold Mixed',
+      diamond: 'Diamond',
+      platinum: 'Platinum',
+    };
+    if (fixedPlanMap[normalizedRaw]) return fixedPlanMap[normalizedRaw];
+
+    if (!isLikelyId(rawPlan)) return rawPlan;
+
+    const match = plans.find((plan: any) => {
+      const keys = [
+        String(plan?.uuid || '').toLowerCase(),
+        String(plan?.planId || '').toLowerCase(),
+        String(plan?._id || '').toLowerCase(),
+        String(plan?.name || '').toLowerCase().trim(),
+      ].filter(Boolean);
+      return keys.includes(normalizedRaw);
+    });
+
+    if (match?.name) return String(match.name);
+    return 'Plan';
+  };
+
+  const displayPlan = getDisplayPlan();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -221,7 +277,7 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
                 >
                   <View style={styles.bannerContent}>
                     <Text style={styles.bannerTitle}>
-                      Your {userPlan || 'Plan'} Package
+                      Your {displayPlan} Package
                     </Text>
                     <Text style={styles.bannerDescription}>
                       See your Yoga, Fitness, Zumba, and Nutrition sessions in

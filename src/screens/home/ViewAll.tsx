@@ -89,7 +89,10 @@ const ViewAll = ({ navigation }: { navigation: any }) => {
       <Text style={styles.emptyStateDescription}>
         Your completed classes will appear here
       </Text>
-      <TouchableOpacity style={styles.exploreButton}>
+      <TouchableOpacity
+        style={styles.exploreButton}
+        onPress={() => navigation.navigate('Explore')}
+      >
         <Text style={styles.exploreButtonText}>Explore Classes</Text>
       </TouchableOpacity>
     </View>

@@ -1,35 +1,40 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import GradientBackground from '../../components/GradientBackground';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { authService } from '../../services/authService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
 
 export default function SplashScreen({ navigation }: Props) {
-  useEffect(() => {
-    const t = setTimeout(() => {
-      // Decide where to go based on persisted state
-      // try {
-      //   // Dynamic import to avoid requiring store in tests too early
-      //   const { store } = require('../../store');
-      //   const state = store.getState();
-      //   const loggedIn = state.auth?.loggedIn;
-      //   const onboardingCompleted = state.auth?.onboardingCompleted;
+  const { loggedIn, onboardingCompleted } = useSelector(
+    (state: RootState) => state.auth,
+  );
+  const hasNavigated = useRef(false);
 
-      //   if (loggedIn) {
-      //     if (onboardingCompleted) navigation.replace('Home');
-      //     else navigation.replace('OnboardingInspiration');
-      //   } else {
-      //     navigation.replace('WelcomeScreen');
-      //   }
-      // } catch (e) {
-      //   navigation.replace('AuthOptions');
-      // }
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await new Promise(resolve => setTimeout(resolve, 1400));
+      if (cancelled || hasNavigated.current) return;
+      hasNavigated.current = true;
+
+      const token = await authService.getAuthToken();
+      if (token) {
+        navigation.replace('Home');
+        return;
+      }
+
       navigation.replace('WelcomeScreen');
-    }, 1400);
-    return () => clearTimeout(t);
-  }, [navigation]);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigation, loggedIn, onboardingCompleted]);
 
   return (
     <GradientBackground>

@@ -93,7 +93,7 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
       </Text>
       <TouchableOpacity
         style={styles.exploreButton}
-        onPress={() => navigation.navigate('Home')}
+        onPress={() => navigation.navigate('Explore')}
       >
         <Text style={styles.exploreButtonText}>Explore Classes</Text>
       </TouchableOpacity>

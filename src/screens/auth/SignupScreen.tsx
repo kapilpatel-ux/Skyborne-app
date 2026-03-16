@@ -49,7 +49,7 @@ const validationSchema = Yup.object().shape({
     ),
   agreeTerms: Yup.boolean().oneOf(
     [true],
-    'You must agree to terms before continuing',
+    'You must agree to the Terms & Data Policy to continue',
   ),
 });
 
@@ -242,7 +242,7 @@ export default function SignupScreen({ navigation }: Props) {
                     </Text>
                   </TouchableOpacity>
                   {touched.agreeTerms && errors.agreeTerms && (
-                    <Text style={styles.errorText}>{errors.agreeTerms}</Text>
+                    <Text style={styles.termsErrorText}>{errors.agreeTerms}</Text>
                   )}
 
                   {/* CTA */}
@@ -372,6 +372,14 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontSize: 12,
     marginTop: 4,
+    marginLeft: 6,
+  },
+  termsErrorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 6,
+    textAlign: 'center',
   },
   loginContainer: {
     flexDirection: 'row',

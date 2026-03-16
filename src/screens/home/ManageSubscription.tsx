@@ -421,9 +421,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    lineHeight: 22,
+    lineHeight: 24,
     color: '#494949',
     textAlign: 'center',
+    paddingBottom: 2,
   },
   headerSpacer: {
     width: 24,

@@ -224,7 +224,7 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
             {/* Comment Section */}
             <View style={styles.commentSection}>
               <Text style={styles.commentLabel}>
-                Share your experience <Text style={styles.optional}>(Optional)</Text>
+                Share your experience <Text style={styles.optional}></Text>
               </Text>
               <View style={styles.commentInputContainer}>
                 <TextInput

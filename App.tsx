@@ -10,10 +10,11 @@ import { Linking, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
 import Toast from 'react-native-toast-message';
 import AppNavigator from './src/navigation/AppNavigator';
 import { RootStackParamList } from './src/navigation/AppNavigator';
-import { store } from './src/store';
+import { store, persistor } from './src/store';
 
 const APP_CHECKOUT_CALLBACK_PREFIXES = [
   'skybornedrop://shop-checkout-result',
@@ -94,22 +95,24 @@ export default function App() {
 
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <StatusBar barStyle={'dark-content'} />
-        <NavigationContainer
-          ref={navigationRef}
-          onReady={() => {
-            if (pendingCallbackUrlRef.current) {
-              handleCheckoutCallback(pendingCallbackUrlRef.current);
-            }
-          }}
-        >
-          <View style={styles.container}>
-            <AppNavigator />
-          </View>
-        </NavigationContainer>
-        <Toast />
-      </SafeAreaProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <SafeAreaProvider>
+          <StatusBar barStyle={'dark-content'} />
+          <NavigationContainer
+            ref={navigationRef}
+            onReady={() => {
+              if (pendingCallbackUrlRef.current) {
+                handleCheckoutCallback(pendingCallbackUrlRef.current);
+              }
+            }}
+          >
+            <View style={styles.container}>
+              <AppNavigator />
+            </View>
+          </NavigationContainer>
+          <Toast />
+        </SafeAreaProvider>
+      </PersistGate>
     </Provider>
   );
 }

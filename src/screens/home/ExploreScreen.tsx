@@ -706,8 +706,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    lineHeight: 22,
+    lineHeight: 24,
     color: '#494949',
+    paddingBottom: 2,
   },
   navArrowLeft: {
     width: 28,
@@ -776,8 +777,9 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontFamily: 'Satoshi-Bold',
     fontSize: 20,
-    lineHeight: 22,
+    lineHeight: 24,
     color: '#FFFFFF',
+    paddingBottom: 2,
     marginBottom: 7,
   },
 
