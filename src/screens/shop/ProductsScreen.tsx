@@ -5,7 +5,6 @@ import {
   Image,
   Platform,
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -21,6 +20,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import {
   ProductSort,
+  CartData,
   ShopCategory,
   ShopProduct,
   shopService,
@@ -32,6 +32,141 @@ type ProductsNavigationProp = NativeStackNavigationProp<
   'Products'
 >;
 type ProductListItem = ShopProduct | string;
+
+type ProductsHeaderProps = {
+  navigation: ProductsNavigationProp;
+  cartCount: number;
+  searchInput: string;
+  setSearchInput: (value: string) => void;
+  searchFocused: boolean;
+  setSearchFocused: (value: boolean) => void;
+  category: string;
+  setCategory: (value: string) => void;
+  categories: ShopCategory[];
+  sortOptions: Array<{ label: string; value: ProductSort }>;
+  sortBy: ProductSort;
+  setSortBy: (value: ProductSort) => void;
+  loading: boolean;
+  productsCount: number;
+};
+
+const ProductsHeader: React.FC<ProductsHeaderProps> = React.memo(
+  ({
+    navigation,
+    cartCount,
+    searchInput,
+    setSearchInput,
+    searchFocused,
+    setSearchFocused,
+    category,
+    setCategory,
+    categories,
+    sortOptions,
+    sortBy,
+    setSortBy,
+    loading,
+    productsCount,
+  }) => (
+    <>
+      {/* Hero */}
+      <View style={styles.heroSection}>
+        <View style={styles.heroTextWrap}>
+          {/* <Text style={styles.heroEyebrow}>✦  Skyborne Shop</Text> */}
+          <Text style={styles.heroTitle}>Curated Wellness</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Cart')}
+          style={styles.cartButton}
+        >
+          <ShoppingCart color={C.text} size={20} strokeWidth={1.8} />
+          {cartCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>
+                {cartCount > 9 ? '9+' : cartCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Search */}
+      <View style={[styles.searchWrap, searchFocused && styles.searchWrapFocused]}>
+        <Search color={searchFocused ? C.accent : C.muted} size={16} strokeWidth={2} />
+        <TextInput
+          placeholder="Search products..."
+          placeholderTextColor={C.muted}
+          value={searchInput}
+          onChangeText={setSearchInput}
+          style={styles.searchInput}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+        />
+        {searchInput.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setSearchInput('')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.searchClear}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Categories */}
+      <View style={styles.chipsWrap}>
+        <TouchableOpacity
+          style={[styles.chip, !category && styles.chipActive]}
+          onPress={() => setCategory('')}
+        >
+          <Text style={[styles.chipText, !category && styles.chipTextActive]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        {categories.map(item => {
+          const label = item.title || item.name || 'Category';
+          const isActive = category === item._id;
+          return (
+            <TouchableOpacity
+              key={item._id}
+              style={[styles.chip, isActive && styles.chipActive]}
+              onPress={() => setCategory(item._id)}
+            >
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Sort */}
+      <View style={styles.sortRow}>
+        <SlidersHorizontal color={C.sub} size={13} strokeWidth={2} />
+        <Text style={styles.sortLabel}>Sort:</Text>
+        {sortOptions.map(opt => {
+          const isActive = sortBy === opt.value;
+          return (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.sortChip, isActive && styles.sortChipActive]}
+              onPress={() => setSortBy(opt.value)}
+            >
+              <Text style={[styles.sortChipText, isActive && styles.sortChipTextActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Count */}
+      {!loading && (
+        <Text style={styles.countText}>
+          {productsCount} {productsCount === 1 ? 'product' : 'products'}
+        </Text>
+      )}
+    </>
+  ),
+);
 
 // ─── Palette ───────────────────────────────────────────────────────────────
 const C = {
@@ -52,6 +187,9 @@ const ProductsScreen = () => {
   const { width } = useWindowDimensions();
 
   const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [categories, setCategories] = useState<ShopCategory[]>([]);
   const [category, setCategory] = useState('');
   const [sortBy, setSortBy] = useState<ProductSort>('newest');
@@ -61,6 +199,9 @@ const ProductsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [addingProductId, setAddingProductId] = useState<string | null>(null);
   const [cartCount, setCartCount] = useState(0);
+  const [cartQuantities, setCartQuantities] = useState<Record<string, number>>(
+    {},
+  );
   const [searchFocused, setSearchFocused] = useState(false);
 
   const numColumns = width >= 900 ? 3 : width < 390 ? 1 : 2;
@@ -68,7 +209,9 @@ const ProductsScreen = () => {
     () => Array.from({ length: numColumns * 4 }, (_, index) => `skeleton-${index}`),
     [numColumns],
   );
-  const listData: ProductListItem[] = loading ? skeletonItems : products;
+  const isInitialLoading = loading && page === 1;
+  const listData: ProductListItem[] = isInitialLoading ? skeletonItems : products;
+  const pageLimit = 20;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -77,14 +220,30 @@ const ProductsScreen = () => {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
+  const syncCartState = useCallback((cart?: CartData | null) => {
+    if (!cart?.items?.length) {
+      setCartCount(0);
+      setCartQuantities({});
+      return;
+    }
+
+    setCartCount(cart.items.length);
+    const quantityMap = cart.items.reduce((acc, item) => {
+      acc[item.product] = item.quantity;
+      return acc;
+    }, {} as Record<string, number>);
+    setCartQuantities(quantityMap);
+  }, []);
+
   const loadCartCount = useCallback(async () => {
     try {
       const cart = await shopService.getMyCart();
-      setCartCount(cart?.items?.length ?? 0);
+      syncCartState(cart);
     } catch {
       setCartCount(0);
+      setCartQuantities({});
     }
-  }, []);
+  }, [syncCartState]);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -95,34 +254,56 @@ const ProductsScreen = () => {
     }
   }, []);
 
-  const loadProducts = useCallback(async () => {
-    try {
-      const data = await shopService.getPublishedProducts({
-        search: debouncedSearch || undefined,
-        categoryId: category || undefined,
-        sortBy,
-      });
-      setProducts(data);
-    } catch (error: any) {
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to load products',
-        text2: error?.response?.data?.message ?? error?.message,
-      });
-      setProducts([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [debouncedSearch, category, sortBy]);
+  const loadProducts = useCallback(
+    async ({ nextPage = 1, append = false }: { nextPage?: number; append?: boolean } = {}) => {
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      try {
+        const response = await shopService.getPublishedProducts({
+          search: debouncedSearch || undefined,
+          categoryId: category || undefined,
+          sortBy,
+          page: nextPage,
+          limit: pageLimit,
+        });
+        const data = response.products;
+        const pagination = response.pagination;
+        setProducts(prev => (append ? [...prev, ...data] : data));
+        if (pagination) {
+          setHasNextPage(Boolean(pagination.hasNextPage));
+        } else {
+          setHasNextPage(data.length === pageLimit);
+        }
+        setPage(nextPage);
+      } catch (error: any) {
+        Toast.show({
+          type: 'error',
+          text1: 'Failed to load products',
+          text2: error?.response?.data?.message ?? error?.message,
+        });
+        if (!append) {
+          setProducts([]);
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+        setLoadingMore(false);
+      }
+    },
+    [debouncedSearch, category, sortBy],
+  );
 
   useEffect(() => {
     loadCategories();
   }, [loadCategories]);
 
   useEffect(() => {
-    setLoading(true);
-    loadProducts();
+    setHasNextPage(true);
+    setPage(1);
+    loadProducts({ nextPage: 1, append: false });
   }, [loadProducts]);
 
   useFocusEffect(
@@ -133,16 +314,89 @@ const ProductsScreen = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadProducts(), loadCartCount()]);
+    await Promise.all([loadProducts({ nextPage: 1, append: false }), loadCartCount()]);
+  };
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore || !hasNextPage) {
+      return;
+    }
+    loadProducts({ nextPage: page + 1, append: true });
+  };
+
+  const updateQuantityLocal = (productId: string, quantity: number) => {
+    setCartQuantities(prev => ({
+      ...prev,
+      [productId]: quantity,
+    }));
+  };
+
+  const removeQuantityLocal = (productId: string) => {
+    setCartQuantities(prev => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
   };
 
   const handleAddToCart = async (productId: string) => {
+    const previousQty = cartQuantities[productId] ?? 0;
     try {
       setAddingProductId(productId);
-      await shopService.addToCart({ productId, quantity: 1 });
-      await loadCartCount();
+      updateQuantityLocal(productId, 1);
+      const cart = await shopService.addToCart({ productId, quantity: 1 });
+      syncCartState(cart);
       Toast.show({ type: 'success', text1: '✓ Added to cart' });
     } catch (error: any) {
+      if (previousQty > 0) {
+        updateQuantityLocal(productId, previousQty);
+      } else {
+        removeQuantityLocal(productId);
+      }
+      Toast.show({
+        type: 'error',
+        text1: 'Oops! Try again',
+        text2: error?.response?.data?.message ?? error?.message,
+      });
+    } finally {
+      setAddingProductId(null);
+    }
+  };
+
+  const handleIncrement = async (productId: string, currentQty: number) => {
+    const nextQty = currentQty + 1;
+    try {
+      setAddingProductId(productId);
+      updateQuantityLocal(productId, nextQty);
+      const cart = await shopService.updateCartItem(productId, nextQty);
+      syncCartState(cart);
+    } catch (error: any) {
+      updateQuantityLocal(productId, currentQty);
+      Toast.show({
+        type: 'error',
+        text1: 'Oops! Try again',
+        text2: error?.response?.data?.message ?? error?.message,
+      });
+    } finally {
+      setAddingProductId(null);
+    }
+  };
+
+  const handleDecrement = async (productId: string, currentQty: number) => {
+    const nextQty = currentQty - 1;
+    try {
+      setAddingProductId(productId);
+      if (nextQty <= 0) {
+        removeQuantityLocal(productId);
+        const cart = await shopService.removeCartItem(productId);
+        syncCartState(cart);
+      } else {
+        updateQuantityLocal(productId, nextQty);
+        const cart = await shopService.updateCartItem(productId, nextQty);
+        syncCartState(cart);
+      }
+    } catch (error: any) {
+      updateQuantityLocal(productId, currentQty);
       Toast.show({
         type: 'error',
         text1: 'Oops! Try again',
@@ -165,6 +419,7 @@ const ProductsScreen = () => {
   // ─── Product Card ─────────────────────────────────────────────────────────
   const renderProduct = ({ item, index }: { item: ShopProduct; index: number }) => {
     const isAdding = addingProductId === item._id;
+    const quantity = cartQuantities[item._id] ?? 0;
     const cardWidthStyle =
       numColumns === 1
         ? styles.cardSingle
@@ -201,17 +456,37 @@ const ProductsScreen = () => {
 
           <View style={styles.cardFooter}>
             <Text style={styles.cardPrice}>${item.price}</Text>
-            <TouchableOpacity
-              style={[styles.addBtn, isAdding && styles.addBtnLoading]}
-              disabled={isAdding}
-              onPress={() => handleAddToCart(item._id)}
-            >
-              {isAdding ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.addBtnText}>+ Cart</Text>
-              )}
-            </TouchableOpacity>
+            {quantity === 0 ? (
+              <TouchableOpacity
+                style={[styles.addBtn, isAdding && styles.addBtnLoading]}
+                disabled={isAdding}
+                onPress={() => handleAddToCart(item._id)}
+              >
+                {isAdding ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.addBtnText}>+ Cart</Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.qtyWrap}>
+                <TouchableOpacity
+                  style={[styles.qtyBtn, isAdding && styles.qtyBtnDisabled]}
+                  disabled={isAdding}
+                  onPress={() => handleDecrement(item._id, quantity)}
+                >
+                  <Text style={styles.qtyBtnText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.qtyValue}>{quantity}</Text>
+                <TouchableOpacity
+                  style={[styles.qtyBtn, isAdding && styles.qtyBtnDisabled]}
+                  disabled={isAdding}
+                  onPress={() => handleIncrement(item._id, quantity)}
+                >
+                  <Text style={styles.qtyBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -247,109 +522,6 @@ const ProductsScreen = () => {
     );
   };
 
-  // ─── List Header ──────────────────────────────────────────────────────────
-  const ListHeader = () => (
-    <>
-      {/* Hero */}
-      <View style={styles.heroSection}>
-        <View style={styles.heroTextWrap}>
-          {/* <Text style={styles.heroEyebrow}>✦  Skyborne Shop</Text> */}
-          <Text style={styles.heroTitle}>Curated Wellness</Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Cart')}
-          style={styles.cartButton}
-        >
-          <ShoppingCart color={C.text} size={20} strokeWidth={1.8} />
-          {cartCount > 0 && (
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>
-                {cartCount > 9 ? '9+' : cartCount}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* Search */}
-      <View style={[styles.searchWrap, searchFocused && styles.searchWrapFocused]}>
-        <Search color={searchFocused ? C.accent : C.muted} size={16} strokeWidth={2} />
-        <TextInput
-          placeholder="Search products..."
-          placeholderTextColor={C.muted}
-          value={searchInput}
-          onChangeText={setSearchInput}
-          style={styles.searchInput}
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-        />
-        {searchInput.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchInput('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.searchClear}>✕</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Categories */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsWrap}
-      >
-        <TouchableOpacity
-          style={[styles.chip, !category && styles.chipActive]}
-          onPress={() => setCategory('')}
-        >
-          <Text style={[styles.chipText, !category && styles.chipTextActive]}>
-            All
-          </Text>
-        </TouchableOpacity>
-        {categories.map(item => {
-          const label = item.title || item.name || 'Category';
-          const isActive = category === item._id;
-          return (
-            <TouchableOpacity
-              key={item._id}
-              style={[styles.chip, isActive && styles.chipActive]}
-              onPress={() => setCategory(item._id)}
-            >
-              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      {/* Sort */}
-      <View style={styles.sortRow}>
-        <SlidersHorizontal color={C.sub} size={13} strokeWidth={2} />
-        <Text style={styles.sortLabel}>Sort:</Text>
-        {sortOptions.map(opt => {
-          const isActive = sortBy === opt.value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              style={[styles.sortChip, isActive && styles.sortChipActive]}
-              onPress={() => setSortBy(opt.value)}
-            >
-              <Text style={[styles.sortChipText, isActive && styles.sortChipTextActive]}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* Count */}
-      {!loading && (
-        <Text style={styles.countText}>
-          {products.length} {products.length === 1 ? 'product' : 'products'}
-        </Text>
-      )}
-    </>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
@@ -366,20 +538,48 @@ const ProductsScreen = () => {
             ? renderSkeletonCard({ index })
             : renderProduct({ item, index })
         }
-        ListHeaderComponent={<ListHeader />}
+        ListHeaderComponent={
+          <ProductsHeader
+            navigation={navigation}
+            cartCount={cartCount}
+            searchInput={searchInput}
+            setSearchInput={setSearchInput}
+            searchFocused={searchFocused}
+            setSearchFocused={setSearchFocused}
+            category={category}
+            setCategory={setCategory}
+            categories={categories}
+            sortOptions={sortOptions}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            loading={loading}
+            productsCount={products.length}
+          />
+        }
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
         refreshing={refreshing}
         onRefresh={onRefresh}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
         ListEmptyComponent={
-          !loading ? (
+          !loading && products.length === 0 ? (
             <View style={styles.emptyWrap}>
               <Text style={styles.emptyIcon}>🌿</Text>
               <Text style={styles.emptyTitle}>Nothing here yet</Text>
               <Text style={styles.emptyText}>
                 Try a different filter or search term
               </Text>
+            </View>
+          ) : null
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={styles.footerLoader}>
+              <ActivityIndicator size="small" color={C.accent} />
             </View>
           ) : null
         }
@@ -501,7 +701,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 14,
     paddingBottom: 4,
-    gap: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignContent: 'center',
+    rowGap: 8,
+    columnGap: 8,
   },
   chip: {
     paddingVertical: 7,
@@ -662,6 +867,41 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Bold',
     letterSpacing: 0.2,
   },
+  qtyWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.surface,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    borderRadius: 999,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    gap: 8,
+  },
+  qtyBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: C.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyBtnDisabled: {
+    backgroundColor: C.accentMid,
+  },
+  qtyBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'Satoshi-Bold',
+    lineHeight: 16,
+  },
+  qtyValue: {
+    color: C.text,
+    fontSize: 14,
+    fontFamily: 'Satoshi-Bold',
+    minWidth: 18,
+    textAlign: 'center',
+  },
 
   // ── Skeleton ──────────────────────────────────────────────────────────────
   skeletonImage: {
@@ -719,6 +959,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Satoshi-Regular',
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  footerLoader: {
+    paddingVertical: 16,
+    alignItems: 'center',
   },
 });
 

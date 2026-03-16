@@ -79,17 +79,74 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const clearAll = async () => {
-    try {
-      setClearing(true);
-      try {
-        await shopService.clearCart();
-      } catch (clearError: any) {
-        const fallbackItems = cart?.items ?? [];
-        if (!fallbackItems.length) throw clearError;
-        await Promise.all(fallbackItems.map(item => shopService.removeCartItem(item.product)));
-      }
+    if (!cart?.items?.length) {
       setCart(prev => (prev ? { ...prev, items: [], total: 0 } : null));
       Toast.show({ type: 'success', text1: 'Cart cleared' });
+      return;
+    }
+
+    try {
+      setClearing(true);
+      // Try backend clear endpoint first
+      try {
+        await shopService.clearCart();
+      } catch {
+        // ignore and verify via refresh below
+      }
+
+      // Verify if cart is empty
+      try {
+        const refreshed = await shopService.getMyCart();
+        if (!refreshed?.items?.length) {
+          setCart(refreshed);
+          Toast.show({ type: 'success', text1: 'Cart cleared' });
+          return;
+        }
+        // If still has items, continue with fallback removal using fresh list
+        for (const item of refreshed.items) {
+          try {
+            await shopService.removeCartItem(item.product);
+          } catch {
+            // ignore and continue
+          }
+        }
+        const afterFallback = await shopService.getMyCart();
+        setCart(afterFallback);
+        if (!afterFallback?.items?.length) {
+          Toast.show({ type: 'success', text1: 'Cart cleared' });
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Failed to clear cart',
+            text2: 'Some items could not be removed',
+          });
+        }
+        return;
+      } catch {
+        // fall back to item-by-item removal
+      }
+
+      // Fallback: remove items one-by-one (sequential to avoid rate limits)
+      const fallbackItems = cart?.items ?? [];
+      for (const item of fallbackItems) {
+        try {
+          await shopService.removeCartItem(item.product);
+        } catch {
+          // ignore and continue
+        }
+      }
+
+      const refreshed = await shopService.getMyCart();
+      setCart(refreshed);
+      if (!refreshed?.items?.length) {
+        Toast.show({ type: 'success', text1: 'Cart cleared' });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Failed to clear cart',
+          text2: 'Some items could not be removed',
+        });
+      }
     } catch (error: any) {
       Toast.show({ type: 'error', text1: 'Failed to clear cart', text2: error?.response?.data?.message ?? error?.message });
     } finally {

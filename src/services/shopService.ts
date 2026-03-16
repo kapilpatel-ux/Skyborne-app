@@ -29,6 +29,15 @@ export interface ShopProduct {
   createdAt?: string;
 }
 
+export interface PaginationMeta {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 export interface CartItem {
   product: string;
   name: string;
@@ -110,9 +119,13 @@ class ShopService {
     search?: string;
     categoryId?: string;
     sortBy?: ProductSort;
-  }): Promise<ShopProduct[]> {
+    page?: number;
+    limit?: number;
+  }): Promise<{ products: ShopProduct[]; pagination?: PaginationMeta }> {
     const response = await this.api.get('/products/published', { params });
-    return Array.isArray(response.data?.data) ? response.data.data : [];
+    const products = Array.isArray(response.data?.data) ? response.data.data : [];
+    const pagination = response.data?.pagination;
+    return { products, pagination };
   }
 
   async getProductById(productId: string): Promise<ShopProduct> {

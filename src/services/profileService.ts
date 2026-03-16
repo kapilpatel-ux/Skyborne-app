@@ -82,6 +82,10 @@ class ProfileService {
     return this.api.get('/dashboardStats');
   }
 
+  getPlans() {
+    return this.api.get('/plans');
+  }
+
   cancelSubscription(userId: string) {
     return this.api.post(`/subscription/${userId}/cancel`);
   }

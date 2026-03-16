@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import LogoutModal from './../../components/LogoutModal';
@@ -13,6 +13,9 @@ import {
   TouchableOpacity,
   Image,
   ImageSourcePropType,
+  Modal,
+  Pressable,
+  Dimensions,
 } from 'react-native';
 import { MessageCircleMore } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -21,6 +24,7 @@ import BottomNav from '../../components/BottomNav';
 import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 import { useState, useEffect } from 'react';
 import { removeAuthToken } from '../../services/authService';
+import { profileService } from '../../services/profileService';
 
 interface StatCard {
   id: number;
@@ -58,10 +62,42 @@ const ProfileScreen = () => {
 
   const { user, dashboardStats, loadProfile }: any = useProfileViewModel();
   const [showLogout, setShowLogout] = useState(false);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [showNameTooltip, setShowNameTooltip] = useState(false);
+  const [tooltipAnchor, setTooltipAnchor] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [tooltipSize, setTooltipSize] = useState({ width: 0, height: 0 });
+  const nameRef = React.useRef<View>(null);
 
 
   useEffect(() => {
     loadProfile();
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProfile();
+    }, [loadProfile]),
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await profileService.getPlans();
+        const data = Array.isArray(res.data?.data) ? res.data.data : [];
+        if (isMounted) setPlans(data);
+      } catch {
+        if (isMounted) setPlans([]);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Calculate progress items dynamically from classCredits
@@ -129,6 +165,127 @@ const ProfileScreen = () => {
 
   const progressItems = getProgressItems();
 
+  const isNonEmptyString = (value: unknown): value is string =>
+    typeof value === 'string' && value.trim().length > 0;
+
+  const isNumericOnly = (value: string) => /^\d+$/.test(value.trim());
+  const isLikelyId = (value: string) =>
+    /^[a-f0-9]{24}$/i.test(value.trim()) ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value.trim(),
+    );
+  const isLikelyBadName = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return true;
+    if (isNumericOnly(trimmed) || isLikelyId(trimmed)) return true;
+    const digits = (trimmed.match(/\d/g) || []).length;
+    if (trimmed.length >= 12 && digits / trimmed.length > 0.5) return true;
+    if (/^[a-f0-9-]+$/i.test(trimmed) && trimmed.length >= 16) return true;
+    return false;
+  };
+
+  const getDisplayName = (profile: any) => {
+    const first = isNonEmptyString(profile?.firstName) ? profile.firstName.trim() : '';
+    const last = isNonEmptyString(profile?.lastName) ? profile.lastName.trim() : '';
+    const fullName = [first, last].filter(Boolean).join(' ');
+    if (fullName && !isLikelyBadName(fullName)) {
+      return fullName;
+    }
+
+    const name = isNonEmptyString(profile?.name) ? profile.name.trim() : '';
+    if (name && !isLikelyBadName(name)) {
+      return name;
+    }
+
+    const fullNameAlt = isNonEmptyString(profile?.fullName)
+      ? profile.fullName.trim()
+      : '';
+    if (fullNameAlt && !isLikelyBadName(fullNameAlt)) {
+      return fullNameAlt;
+    }
+
+    const fallbackFirst = first && !isLikelyBadName(first) ? first : '';
+    const fallbackLast = last && !isLikelyBadName(last) ? last : '';
+    const safeName = [fallbackFirst, fallbackLast].filter(Boolean).join(' ');
+    if (safeName) {
+      return safeName;
+    }
+
+    const username = isNonEmptyString(profile?.username) ? profile.username.trim() : '';
+    if (username && !isLikelyBadName(username)) {
+      return username;
+    }
+
+    const email = isNonEmptyString(profile?.email) ? profile.email.trim() : '';
+    if (email) {
+      return email.split('@')[0] || 'User';
+    }
+
+    return 'User';
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return '';
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '';
+    const first = parts[0]?.charAt(0) ?? '';
+    const last = parts.length > 1 ? parts[parts.length - 1]?.charAt(0) ?? '' : '';
+    return `${first}${last}`.toUpperCase();
+  };
+
+  const displayName = getDisplayName(user);
+
+  const getDisplayPlan = () => {
+    const dashboardPlan = dashboardStats?.data?.currentPlan;
+    const fromDashboard =
+      typeof dashboardPlan?.displayName === 'string' && dashboardPlan.displayName.trim().length > 0
+        ? dashboardPlan.displayName.trim()
+        : typeof dashboardPlan?.plan === 'string' && dashboardPlan.plan.trim().length > 0
+          ? dashboardPlan.plan.trim()
+          : '';
+
+    if (fromDashboard && !isLikelyBadName(fromDashboard) && fromDashboard.toLowerCase() !== 'no plan') {
+      return fromDashboard;
+    }
+
+    const rawPlan = typeof user?.plan === 'string' ? user.plan.trim() : '';
+    if (rawPlan) {
+      const normalizedRaw = rawPlan.toLowerCase();
+      const fixedPlanMap: Record<string, string> = {
+        'gold-yoga': 'Gold Yoga',
+        'gold-zumba': 'Gold Zumba',
+        'gold-mixed': 'Gold Mixed',
+        diamond: 'Diamond',
+        platinum: 'Platinum',
+      };
+      if (fixedPlanMap[normalizedRaw]) {
+        return fixedPlanMap[normalizedRaw];
+      }
+
+      const match = plans.find((plan: any) => {
+        const keys = [
+          String(plan?.uuid || '').toLowerCase(),
+          String(plan?.planId || '').toLowerCase(),
+          String(plan?._id || '').toLowerCase(),
+          String(plan?.name || '').toLowerCase().trim(),
+        ].filter(Boolean);
+        return keys.includes(normalizedRaw);
+      });
+
+      if (match?.name) {
+        return String(match.name);
+      }
+
+      if (!isLikelyBadName(rawPlan)) {
+        return rawPlan;
+      }
+    }
+
+    return 'Plan';
+  };
+
+  const displayPlan = getDisplayPlan();
+
   const statCards: StatCard[] = [
     {
       id: 1,
@@ -154,7 +311,7 @@ const ProfileScreen = () => {
     },
     {
       id: 4,
-      value: dashboardStats?.data?.currentPlan?.displayName ?? '--',
+      value: displayPlan,
       label: 'Current Plan',
       backgroundColor: '#FFF7DD',
       icon: { uri: `${COMMON_URL}/badge.png` },
@@ -165,7 +322,7 @@ const ProfileScreen = () => {
     {
       id: 1,
       title: 'Subscription',
-      subtitle: dashboardStats?.data?.currentPlan?.displayName ?? '--',
+      subtitle: displayPlan,
       icon: ProfileImages.subscriptionIcon,
       iconBgColor: '#FFE8E8',
       screen: 'ManageSubscription',
@@ -202,12 +359,6 @@ const ProfileScreen = () => {
       screen: 'MyOrders',
     },
   ];
-
-  const getInitials = (firstName?: string, lastName?: string) => {
-    const first = firstName?.charAt(0).toUpperCase() ?? '';
-    const last = lastName?.charAt(0).toUpperCase() ?? '';
-    return `${first}${last}`;
-  };
 
   const handleLogout = () => {
     setShowLogout(true);
@@ -246,21 +397,47 @@ const ProfileScreen = () => {
           ) : (
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {getInitials(user?.firstName, user?.lastName)}
+                {getInitials(displayName)}
               </Text>
             </View>
           )}
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>
-              {`${user?.firstName} ${user?.lastName}`}{' '}
-            </Text>
-            <Text style={styles.profileSince}>
-              since{' '}
-              {user?.createdAt ? new Date(user.createdAt).getFullYear() : '--'}
-            </Text>
-          </View>
-          <View style={styles.premiumBadge}>
-            <Text style={styles.premiumText}>{user?.plan}</Text>
+            <Pressable
+              ref={nameRef}
+              onPress={() => {
+                if (displayName.length > 20) {
+                  nameRef.current?.measureInWindow((x, y, width, height) => {
+                    setTooltipAnchor({ x, y, width, height });
+                    setShowNameTooltip(true);
+                  });
+                }
+              }}
+              onLongPress={() => {
+                if (displayName.length > 20) {
+                  nameRef.current?.measureInWindow((x, y, width, height) => {
+                    setTooltipAnchor({ x, y, width, height });
+                    setShowNameTooltip(true);
+                  });
+                }
+              }}
+            >
+              <Text
+                style={styles.profileName}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {displayName}
+              </Text>
+            </Pressable>
+            <View style={styles.profileMetaRow}>
+              <View style={styles.premiumBadgeInline}>
+                <Text style={styles.premiumText}>{displayPlan}</Text>
+              </View>
+              <Text style={styles.profileSince}>
+                since{' '}
+                {user?.createdAt ? new Date(user.createdAt).getFullYear() : '--'}
+              </Text>
+            </View>
           </View>
           <TouchableOpacity
             style={styles.editButton}
@@ -388,6 +565,47 @@ const ProfileScreen = () => {
           }}
         />
       )}
+      <Modal
+        visible={showNameTooltip}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNameTooltip(false)}
+      >
+        <Pressable
+          style={styles.tooltipBackdrop}
+          onPress={() => setShowNameTooltip(false)}
+        >
+          {tooltipAnchor && (
+            <View
+              style={[
+                styles.tooltipCard,
+                {
+                  position: 'absolute',
+                  left: Math.max(
+                    12,
+                    Math.min(
+                      tooltipAnchor.x + tooltipAnchor.width / 2 - tooltipSize.width / 2,
+                      Dimensions.get('window').width - tooltipSize.width - 12,
+                    ),
+                  ),
+                  top: Math.max(12, tooltipAnchor.y - tooltipSize.height - 8),
+                },
+              ]}
+              onLayout={event => {
+                const { width, height } = event.nativeEvent.layout;
+                if (
+                  width !== tooltipSize.width ||
+                  height !== tooltipSize.height
+                ) {
+                  setTooltipSize({ width, height });
+                }
+              }}
+            >
+              <Text style={styles.tooltipText}>{displayName}</Text>
+            </View>
+          )}
+        </Pressable>
+      </Modal>
       <BottomNav active="Profile" />
     </SafeAreaView>
   );
@@ -461,12 +679,40 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 14,
   },
+  profileMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   profileName: {
     fontFamily: 'Satoshi-Bold',
-    fontSize: 20,
-    lineHeight: 22,
+    fontSize: 18,
+    lineHeight: 21,
     color: '#494949',
     marginBottom: 3,
+  },
+  tooltipBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  tooltipCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    maxWidth: '90%',
+    borderWidth: 1,
+    borderColor: '#ECECEC',
+  },
+  tooltipText: {
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#494949',
+    textAlign: 'center',
   },
   profileSince: {
     fontFamily: 'Satoshi-Regular',
@@ -479,15 +725,13 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
   },
-  premiumBadge: {
+  premiumBadgeInline: {
     height: 24.45,
     paddingHorizontal: 16,
     backgroundColor: 'rgba(185, 94, 130, 0.3)',
     borderRadius: 39.12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 50,
-    marginBottom: 18,
   },
   premiumText: {
     fontFamily: 'Satoshi-Regular',
@@ -521,7 +765,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 19,
-    marginBottom: 26,
+    marginBottom: 15,
   },
   statCardLeft: {
     marginRight: '4%',
