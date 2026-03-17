@@ -87,7 +87,9 @@ class ProfileService {
   }
 
   cancelSubscription(userId: string) {
-    return this.api.post(`/subscription/${userId}/cancel`);
+    return this.api.post(`/subscription/${userId}/cancel`, {
+      adminDescription: 'Cancelled by user (app)',
+    });
   }
 
   async getPaymentHistory(userId: string): Promise<PaymentHistoryResponse> {

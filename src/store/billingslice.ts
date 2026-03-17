@@ -6,6 +6,7 @@ import {
   PaymentHistoryItem,
   SubscriptionStatus,
 } from '../services/billingService';
+import { cancelSubscription as cancelSubscriptionAction } from './profileSlice';
 
 export interface BillingState {
   history: PaymentHistoryItem[];
@@ -82,6 +83,17 @@ const billingSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload as string;
       });
+    builder.addCase(cancelSubscriptionAction.fulfilled, (state, action) => {
+      const sub = action.payload?.subscription;
+      if (sub) {
+        state.subscription = {
+          ...(state.subscription ?? {}),
+          status: sub.status ?? (state.subscription as any)?.status,
+          cancelledAt: sub.cancelledAt ?? (state.subscription as any)?.cancelledAt,
+          plan: sub.plan ?? (state.subscription as any)?.plan,
+        } as SubscriptionStatus;
+      }
+    });
   },
 });
 

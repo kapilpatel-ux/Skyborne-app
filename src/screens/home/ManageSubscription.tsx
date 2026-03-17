@@ -139,6 +139,16 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
     platinum: 300,
   };
 
+  const subscriptionStatus = String(user?.subscription?.status || '').toLowerCase();
+  const isPlanActive =
+    subscriptionStatus !== 'cancelled' &&
+    subscriptionStatus !== 'inactive' &&
+    subscriptionStatus !== 'expired' &&
+    subscriptionStatus !== 'suspended';
+  const displayPlan = isPlanActive
+    ? user?.plan?.toUpperCase() ?? '--'
+    : 'NO PLAN';
+
   const handleCancelSubscription = async () => {
     Alert.alert(
       'Cancel Subscription?',
@@ -162,7 +172,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
                 text1: 'Cancel Successful! 🎉',
                 text2: 'Subscription cancelled successfully',
               });
-              await loadProfile();
+              await Promise.all([loadProfile(), fetchSubscription(), fetchHistory()]);
             } catch (error) {
               console.error('Cancel error:', error);
               Toast.show({
@@ -280,13 +290,15 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
             <Text style={styles.planLabel}>Current plan</Text>
             <View style={styles.diamondBadge}>
               <Text style={styles.diamondText}>
-                {user?.plan?.toUpperCase() ?? '--'}
+                {displayPlan}
               </Text>
             </View>
           </View>
 
           <Text style={styles.planPrice}>
-            ${planPrices[user?.plan?.toLowerCase() ?? '']}/month
+            {isPlanActive
+              ? `$${planPrices[user?.plan?.toLowerCase() ?? '']}/month`
+              : '—'}
           </Text>
 
           <View style={styles.planFeatures}>
@@ -296,7 +308,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
                 style={styles.featureIcon}
               />
               <Text style={styles.featureText}>
-                {user?.totalClassCredits ?? 0} live sessions
+                {isPlanActive ? `${user?.totalClassCredits ?? 0} live sessions` : 'No active plan'}
               </Text>
             </View>
             <View style={styles.featureItem}>

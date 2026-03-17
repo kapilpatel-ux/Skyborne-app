@@ -236,6 +236,16 @@ const ProfileScreen = () => {
   const displayName = getDisplayName(user);
 
   const getDisplayPlan = () => {
+    const subStatus = String(user?.subscription?.status || '').toLowerCase();
+    if (
+      subStatus === 'cancelled' ||
+      subStatus === 'inactive' ||
+      subStatus === 'expired' ||
+      subStatus === 'suspended'
+    ) {
+      return 'No Plan';
+    }
+
     const dashboardPlan = dashboardStats?.data?.currentPlan;
     const fromDashboard =
       typeof dashboardPlan?.displayName === 'string' && dashboardPlan.displayName.trim().length > 0
@@ -281,7 +291,7 @@ const ProfileScreen = () => {
       }
     }
 
-    return 'Plan';
+    return 'No Plan';
   };
 
   const displayPlan = getDisplayPlan();

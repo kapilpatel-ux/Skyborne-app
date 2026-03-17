@@ -1,6 +1,16 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { profileService } from '../services/profileService';
 
+interface ProfileState {
+  user: any | null;
+  dashboardStats: any | null;
+  paymentHistory: any[];
+  paymentStats: any | null;
+  status: 'idle' | 'loading' | 'failed';
+  error: any | null;
+  cancelSubscriptionStatus: 'idle' | 'loading' | 'error';
+}
+
 export const fetchProfile = createAsyncThunk(
   'profile/fetchProfile',
   async (_, { rejectWithValue }) => {
@@ -73,17 +83,19 @@ export const cancelSubscription = createAsyncThunk(
   }
 );
 
+const initialState: ProfileState = {
+  user: null,
+  dashboardStats: null,
+  paymentHistory: [],
+  paymentStats: null,
+  status: 'idle',
+  error: null,
+  cancelSubscriptionStatus: 'idle',
+};
+
 const profileSlice = createSlice({
   name: 'profile',
-  initialState: {
-    user: null,
-    dashboardStats: null,
-    paymentHistory: [],
-    paymentStats: null,
-    status: 'idle',
-    error: null,
-    cancelSubscriptionStatus: 'idle',
-  },
+  initialState,
   reducers: {},
   extraReducers: builder => {
     builder
@@ -109,7 +121,17 @@ const profileSlice = createSlice({
       })
       .addCase(cancelSubscription.fulfilled, (s, a) => {
         s.cancelSubscriptionStatus = 'idle';
-        s.user = { ...(s.user ?? {}), ...(a.payload?.subscription ?? {}) };
+        const sub = a.payload?.subscription ?? {};
+        s.user = {
+          ...(s.user ?? {}),
+          plan: sub.plan ?? (s.user as any)?.plan,
+          subscription: {
+            ...((s.user as any)?.subscription ?? {}),
+            status: sub.status ?? (s.user as any)?.subscription?.status,
+            cancelledAt:
+              sub.cancelledAt ?? (s.user as any)?.subscription?.cancelledAt,
+          },
+        };
       })
       .addCase(cancelSubscription.rejected, (s, a) => {
         s.cancelSubscriptionStatus = 'error';
