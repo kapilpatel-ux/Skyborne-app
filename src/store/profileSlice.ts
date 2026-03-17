@@ -64,7 +64,7 @@ export const updateProfile = createAsyncThunk(
   async (payload: any, { rejectWithValue }) => {
     try {
       const res = await profileService.updateProfile(payload);
-      return res.data.user;
+      return res.data?.data ?? res.data?.user;
     } catch (e: any) {
       return rejectWithValue(e.response?.data || e.message);
     }

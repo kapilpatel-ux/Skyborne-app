@@ -10,6 +10,7 @@
     UserProfile,
     WeeklyActivityResponse,
   } from '../services/homeService';
+  import { updateProfile } from './profileSlice';
 
   export interface HomeState {
     user: UserProfile | null;
@@ -216,6 +217,14 @@
         .addCase(fetchWeeklyActivity.rejected, (state, action) => {
           state.status = 'failed';
           state.error = action.payload as string;
+        })
+
+        // ============ SYNC PROFILE UPDATES ============
+        .addCase(updateProfile.fulfilled, (state, action) => {
+          state.user = {
+            ...(state.user ?? {}),
+            ...(action.payload ?? {}),
+          };
         })
 
         // ============ FETCH TODAY'S MEETINGS ============
