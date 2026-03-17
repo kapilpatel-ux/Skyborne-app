@@ -8,17 +8,20 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { Star, Dumbbell, ArrowLeft } from 'lucide-react-native';
+import { Star, Dumbbell, ArrowLeft, Video } from 'lucide-react-native';
 import { Images } from '../../assets/images';
 import { usePastSessionsViewModel } from '../../viewmodels/usePastSessionsViewModel';
+import { useJoinMeeting } from '../../viewmodels/useJoinMeeting';
+import VideoPlayer from '../common/VideoPlayer';
 
 const ITEMS_PER_PAGE = 10;
-
 const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
   // Use usePastSessionsViewModel
   const { isLoading: isInitialLoading, fetchSessions } =
     usePastSessionsViewModel();
+  const { joinMeeting, isJoining } = useJoinMeeting();
 
   const [allSessions, setAllSessions] = useState<any[]>([]);
   const [displayedItems, setDisplayedItems] = useState<any[]>([]);
@@ -26,6 +29,11 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreItems, setHasMoreItems] = useState(true);
   const [isLoadingAll, setIsLoadingAll] = useState(false);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string>('');
+  const [loadingRecordingId, setLoadingRecordingId] = useState<string | null>(
+    null,
+  );
 
   const attendedSessions = useMemo(() => {
     return allSessions.filter(session => {
@@ -132,6 +140,61 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
     navigation.navigate('SessionDetails', { sessionId });
   };
 
+  const handleWatchRecording = async (session: any) => {
+    if (!session?._id) {
+      Alert.alert('Error', 'Session ID is missing');
+      return;
+    }
+
+    setLoadingRecordingId(session._id);
+    let playbackUrl: string | null = null;
+
+    const candidates: string[] = [];
+    const recordingUrl = session?.recordingUrl;
+    const hasAccessToken =
+      typeof recordingUrl === 'string' && recordingUrl.includes('access_token=');
+    if (hasAccessToken) candidates.push(recordingUrl);
+
+    // Match web app behavior: call joinMeeting and use recordUrl
+    const result: any = await joinMeeting(session._id);
+    if (result?.recordUrl) candidates.push(result.recordUrl);
+
+    const isPlayable = async (url: string) => {
+      try {
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: { Range: 'bytes=0-1' },
+        });
+        return res.status === 206 || res.status === 200;
+      } catch {
+        return false;
+      }
+    };
+
+    for (const url of candidates) {
+      if (!url) continue;
+      // eslint-disable-next-line no-await-in-loop
+      const ok = await isPlayable(url);
+      if (ok) {
+        playbackUrl = url;
+        break;
+      }
+    }
+
+    if (!playbackUrl) {
+      Alert.alert(
+        'Recording Unavailable',
+        'Recording not found for this session.',
+      );
+      setLoadingRecordingId(null);
+      return;
+    }
+
+    setVideoUrl(playbackUrl);
+    setShowVideoPlayer(true);
+    setLoadingRecordingId(null);
+  };
+
   const renderEmptyState = () => (
     <View style={styles.emptyStateContainer}>
       <View style={styles.emptyStateIconWrapper}>
@@ -196,6 +259,19 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
                 </Text>
               </View>
             </View>
+
+            <TouchableOpacity
+              style={styles.recordingButton}
+              onPress={() => handleWatchRecording(session)}
+              disabled={isJoining && loadingRecordingId === session._id}
+            >
+              <Video size={16} color="#B95E82" />
+              <Text style={styles.recordingButtonText}>
+                {isJoining && loadingRecordingId === session._id
+                  ? 'Loading...'
+                  : 'Watch Recording'}
+              </Text>
+            </TouchableOpacity>
 
             {/* Divider */}
             {/* <View style={styles.sessionDivider} /> */}
@@ -264,6 +340,14 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
             renderSessionList()
           )}
         </ScrollView>
+
+        {videoUrl ? (
+          <VideoPlayer
+            url={videoUrl}
+            isVisible={showVideoPlayer}
+            onClose={() => setShowVideoPlayer(false)}
+          />
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -448,6 +532,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     color: '#494949',
+  },
+  recordingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F0D6DE',
+    backgroundColor: '#FFF5F8',
+  },
+  recordingButtonText: {
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#B95E82',
   },
   initialLoadingContainer: {
     flex: 1,
