@@ -279,7 +279,15 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   );
 
   const displayRegionInfo = regionInfo || classDetails?.regions?.[0];
-  const isLive = displayRegionInfo?.mode === 'live';
+  const meetingStart = classDetails?.localTime
+    ? new Date(classDetails.localTime).getTime()
+    : null;
+  const meetingDurationMs = (classDetails?.duration || 0) * 60000;
+  const meetingEnd =
+    meetingStart !== null ? meetingStart + meetingDurationMs : null;
+  const isPastMeeting = meetingEnd !== null ? Date.now() > meetingEnd : false;
+  const isLive = displayRegionInfo?.mode === 'live' && !isPastMeeting;
+  const showRecordingCta = isPastMeeting;
 
   // ✅ FIXED: Helper function to format date with timezone awareness
   // This correctly handles dates near midnight boundaries
@@ -624,17 +632,22 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
           <TouchableOpacity
             style={[
               styles.joinButton,
-              (isJoining || isJoinButtonDisabled) && styles.joinButtonDisabled,
+              (isJoining || (!showRecordingCta && isJoinButtonDisabled)) &&
+                styles.joinButtonDisabled,
             ]}
             onPress={handleJoinClass}
-            disabled={isJoining || isJoinButtonDisabled}
+            disabled={isJoining || (!showRecordingCta && isJoinButtonDisabled)}
           >
             {isJoining ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : isJoinButtonDisabled ? (
-              <Text style={styles.joinButtonText}>Join soon</Text>
             ) : (
-              <Text style={styles.joinButtonText}>Join class</Text>
+              <Text style={styles.joinButtonText}>
+                {showRecordingCta
+                  ? 'Watch Recording'
+                  : isJoinButtonDisabled
+                    ? 'Join soon'
+                    : 'Join class'}
+              </Text>
             )}
           </TouchableOpacity>
         </View>
