@@ -21,7 +21,6 @@ import { useJoinMeeting } from '../../viewmodels/useJoinMeeting';
 import { getRegionDateFromISO, getUserRegion } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import VideoPlayer from '../common/VideoPlayer';
-import { set } from 'react-hook-form';
 
 type ClassDetailsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -172,21 +171,28 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
     try {
       clearJoinError();
-      const {accessUrl:joinUrl,recordUrl,mode} :any= await joinMeeting(classId);
+      const { accessUrl: joinUrl, recordUrl }: any = await joinMeeting(classId);
 
-      console.log("Join URL:", joinUrl);
-      console.log("Record URL:", recordUrl);
-      console.log("Mode:", mode);
+      console.log('Join URL:', joinUrl);
+      console.log('Record URL:', recordUrl);
+
+      if (showRecordingCta) {
+        const playbackUrl = recordUrl || classDetails?.recordingUrl;
+        if (!playbackUrl) {
+          Alert.alert(
+            'Recording Unavailable',
+            'Recording not found for this session.',
+          );
+          return;
+        }
+        setVideoUrl(playbackUrl);
+        setShowVideoPlayer(true);
+        return;
+      }
 
       if (joinUrl) {
         try {
           const canOpen = await Linking.canOpenURL(joinUrl);
-
-          if(mode=='record') {
-            setVideoUrl(recordUrl);
-            setShowVideoPlayer(true);
-            return;
-          }
           if (canOpen) {
             await Linking.openURL(joinUrl);
           } else {
