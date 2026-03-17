@@ -410,8 +410,8 @@ const ProductsScreen = () => {
   const sortOptions: Array<{ label: string; value: ProductSort }> = useMemo(
     () => [
       { label: 'Newest', value: 'newest' },
-      { label: 'Price ↑', value: 'price-low' },
-      { label: 'Price ↓', value: 'price-high' },
+      { label: 'Price ↓', value: 'price-low' },
+      { label: 'Price ↑', value: 'price-high' },
     ],
     [],
   );
