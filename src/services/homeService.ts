@@ -5,6 +5,7 @@ import { API_BASE_URL as ENV_API_BASE_URL } from '@env';
 import {
   fetchLoggedInUserCountryRegion,
   fetchLoggedInUserRegion,
+  getUserRegion,
 } from '../utils/timezoneUtils';
 
 const FALLBACK_API_BASE_URL =
@@ -115,20 +116,38 @@ class HomeService {
   }
 
   private async getRegionParam(): Promise<string | undefined> {
+    const normalizeRegion = (value: string): string => {
+      const v = value.trim().toLowerCase();
+      if (v.includes('gulf')) return 'Gulf';
+      if (v.includes('uk') || v.includes('europe')) return 'UK / Europe';
+      if (v.includes('canada') || v.includes('usa') || v.includes('us'))
+        return 'Canada / USA';
+      if (v.includes('apac') || v.includes('asia') || v.includes('pacific'))
+        return 'APAC';
+      return value.trim();
+    };
+
     try {
       const { regionName, regionCode } = await fetchLoggedInUserCountryRegion();
-      if (regionName?.trim()) return regionName.trim();
-      if (regionCode?.trim()) return regionCode.trim();
+      if (regionName?.trim()) return normalizeRegion(regionName);
+      if (regionCode?.trim()) return normalizeRegion(regionCode);
     } catch (error) {
       console.warn('Failed to map region via countries:', error);
     }
 
     try {
       const { region, code } = await fetchLoggedInUserRegion();
-      if (region?.trim()) return region.trim();
-      if (code?.trim()) return code.trim();
+      if (region?.trim()) return normalizeRegion(region);
+      if (code?.trim()) return normalizeRegion(code);
     } catch (error) {
       console.warn('Failed to load fallback region from /me:', error);
+    }
+
+    try {
+      const fallback = getUserRegion();
+      if (fallback?.region) return normalizeRegion(fallback.region);
+    } catch {
+      // ignore
     }
 
     return undefined;
