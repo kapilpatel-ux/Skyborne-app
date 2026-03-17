@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,31 +17,81 @@ const ITEMS_PER_PAGE = 10;
 
 const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
   // Use usePastSessionsViewModel
-  const {
-    pastSessions,
-    isLoading: isInitialLoading,
-    fetchSessions,
-  } = usePastSessionsViewModel();
+  const { isLoading: isInitialLoading, fetchSessions } =
+    usePastSessionsViewModel();
 
+  const [allSessions, setAllSessions] = useState<any[]>([]);
   const [displayedItems, setDisplayedItems] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreItems, setHasMoreItems] = useState(true);
+  const [isLoadingAll, setIsLoadingAll] = useState(false);
 
-  // Fetch initial data on mount
+  const attendedSessions = useMemo(() => {
+    return allSessions.filter(session => {
+      const totalDuration = session?.attendance?.totalDuration ?? 0;
+      if (totalDuration > 0) return true;
+
+      const status = (session?.attendance?.status || '').toLowerCase();
+      if (status === 'joined' || status === 'completed') return true;
+
+      return false;
+    });
+  }, [allSessions]);
+
+  // Fetch all pages on mount so attended sessions are not missed
   useEffect(() => {
-    fetchSessions(0, ITEMS_PER_PAGE);
+    let isMounted = true;
+
+    const loadAllSessions = async () => {
+      setIsLoadingAll(true);
+      const collected: any[] = [];
+      let skip = 0;
+      const limit = ITEMS_PER_PAGE;
+
+      while (true) {
+        const result = await fetchSessions(skip, limit);
+        if (!result?.success || !result?.data) break;
+
+        const meetings = result.data.meetings || [];
+        if (meetings.length === 0) break;
+
+        for (const meeting of meetings) {
+          if (!collected.find(item => item?._id === meeting?._id)) {
+            collected.push(meeting);
+          }
+        }
+
+        if (!result.data.hasMore || meetings.length < limit) break;
+        skip += limit;
+      }
+
+      if (isMounted) {
+        setAllSessions(collected);
+        setIsLoadingAll(false);
+      }
+    };
+
+    loadAllSessions();
+
+    return () => {
+      isMounted = false;
+    };
   }, [fetchSessions]);
 
-  // Initialize displayed items when pastSessions updates
+  // Initialize displayed items when attended sessions update
   useEffect(() => {
-    if (pastSessions.length > 0) {
-      const initialItems = pastSessions.slice(0, ITEMS_PER_PAGE);
+    if (attendedSessions.length > 0) {
+      const initialItems = attendedSessions.slice(0, ITEMS_PER_PAGE);
       setDisplayedItems(initialItems);
       setCurrentPage(1);
-      setHasMoreItems(pastSessions.length > ITEMS_PER_PAGE);
+      setHasMoreItems(attendedSessions.length > ITEMS_PER_PAGE);
+    } else {
+      setDisplayedItems([]);
+      setCurrentPage(0);
+      setHasMoreItems(false);
     }
-  }, [pastSessions]);
+  }, [attendedSessions]);
 
   // Load more items on scroll
   const loadMoreItems = useCallback(() => {
@@ -52,19 +102,19 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
     setTimeout(() => {
       const startIndex = currentPage * ITEMS_PER_PAGE;
       const endIndex = startIndex + ITEMS_PER_PAGE;
-      const newItems = pastSessions.slice(startIndex, endIndex);
+      const newItems = attendedSessions.slice(startIndex, endIndex);
 
       if (newItems.length > 0) {
         setDisplayedItems(prev => [...prev, ...newItems]);
         setCurrentPage(prev => prev + 1);
-        setHasMoreItems(endIndex < pastSessions.length);
+        setHasMoreItems(endIndex < attendedSessions.length);
       } else {
         setHasMoreItems(false);
       }
 
       setIsLoadingMore(false);
     }, 300);
-  }, [currentPage, isLoadingMore, hasMoreItems, pastSessions]);
+  }, [currentPage, isLoadingMore, hasMoreItems, attendedSessions]);
 
   const handleScroll = (event: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
@@ -203,7 +253,7 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
           onScroll={handleScroll}
           scrollEventThrottle={16}
         >
-          {isInitialLoading && displayedItems.length === 0 ? (
+          {((isInitialLoading || isLoadingAll) && displayedItems.length === 0) ? (
             <View style={styles.initialLoadingContainer}>
               <ActivityIndicator size="large" color="#B95E82" />
               <Text style={styles.loadingText}>Loading sessions...</Text>
