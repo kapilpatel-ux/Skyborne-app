@@ -118,17 +118,40 @@ class PastSessionsService {
       if (search) params.search = search;
       const regionParam = await this.getRegionParam();
       if (regionParam) params.region = regionParam;
+      try {
+        const response = await this.api.get<PastSessionsResponse>(
+          '/meetings/session-history',
+          { params },
+        );
 
-      const response = await this.api.get<PastSessionsResponse>(
-        '/meetings/past',
-        { params },
-      );
+        if (!response.data.success) {
+          throw new Error('Failed to fetch past sessions');
+        }
 
-      if (!response.data.success) {
-        throw new Error('Failed to fetch past sessions');
+        return response.data;
+      } catch (err: any) {
+        const status = err?.response?.status;
+        const message = err?.response?.data?.message || err?.message || '';
+        const shouldFallback =
+          status === 404 ||
+          status === 400 ||
+          String(message).toLowerCase().includes('invalid meeting id');
+
+        if (!shouldFallback) {
+          throw err;
+        }
+
+        const fallbackResponse = await this.api.get<PastSessionsResponse>(
+          '/meetings/past',
+          { params },
+        );
+
+        if (!fallbackResponse.data.success) {
+          throw new Error('Failed to fetch past sessions');
+        }
+
+        return fallbackResponse.data;
       }
-
-      return response.data;
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||

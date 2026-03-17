@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Image,
   ActivityIndicator,
@@ -23,118 +23,70 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
     usePastSessionsViewModel();
   const { joinMeeting, isJoining } = useJoinMeeting();
 
-  const [allSessions, setAllSessions] = useState<any[]>([]);
   const [displayedItems, setDisplayedItems] = useState<any[]>([]);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [nextSkip, setNextSkip] = useState(0);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreItems, setHasMoreItems] = useState(true);
-  const [isLoadingAll, setIsLoadingAll] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [loadingRecordingId, setLoadingRecordingId] = useState<string | null>(
     null,
   );
 
-  const attendedSessions = useMemo(() => {
-    return allSessions.filter(session => {
-      const totalDuration = session?.attendance?.totalDuration ?? 0;
-      if (totalDuration > 0) return true;
-
-      const status = (session?.attendance?.status || '').toLowerCase();
-      if (status === 'joined' || status === 'completed') return true;
-
-      return false;
-    });
-  }, [allSessions]);
-
-  // Fetch all pages on mount so attended sessions are not missed
+  // Fetch first page on mount (server already returns attended sessions only)
   useEffect(() => {
     let isMounted = true;
 
-    const loadAllSessions = async () => {
-      setIsLoadingAll(true);
-      const collected: any[] = [];
-      let skip = 0;
-      const limit = ITEMS_PER_PAGE;
-
-      while (true) {
-        const result = await fetchSessions(skip, limit);
-        if (!result?.success || !result?.data) break;
-
-        const meetings = result.data.meetings || [];
-        if (meetings.length === 0) break;
-
-        for (const meeting of meetings) {
-          if (!collected.find(item => item?._id === meeting?._id)) {
-            collected.push(meeting);
-          }
-        }
-
-        if (!result.data.hasMore || meetings.length < limit) break;
-        skip += limit;
-      }
-
+    const loadInitialSessions = async () => {
+      setIsLoadingInitial(true);
+      const result = await fetchSessions(0, ITEMS_PER_PAGE);
       if (isMounted) {
-        setAllSessions(collected);
-        setIsLoadingAll(false);
+        if (result?.success && result?.data) {
+          const meetings = result.data.meetings || [];
+          setDisplayedItems(meetings);
+          setNextSkip(meetings.length);
+          setHasMoreItems(!!result.data.hasMore && meetings.length >= ITEMS_PER_PAGE);
+        } else {
+          setDisplayedItems([]);
+          setHasMoreItems(false);
+        }
+        setIsLoadingInitial(false);
       }
     };
 
-    loadAllSessions();
+    loadInitialSessions();
 
     return () => {
       isMounted = false;
     };
   }, [fetchSessions]);
 
-  // Initialize displayed items when attended sessions update
-  useEffect(() => {
-    if (attendedSessions.length > 0) {
-      const initialItems = attendedSessions.slice(0, ITEMS_PER_PAGE);
-      setDisplayedItems(initialItems);
-      setCurrentPage(1);
-      setHasMoreItems(attendedSessions.length > ITEMS_PER_PAGE);
-    } else {
-      setDisplayedItems([]);
-      setCurrentPage(0);
-      setHasMoreItems(false);
-    }
-  }, [attendedSessions]);
-
   // Load more items on scroll
-  const loadMoreItems = useCallback(() => {
+  const loadMoreItems = useCallback(async () => {
     if (isLoadingMore || !hasMoreItems) return;
 
     setIsLoadingMore(true);
 
-    setTimeout(() => {
-      const startIndex = currentPage * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE;
-      const newItems = attendedSessions.slice(startIndex, endIndex);
-
-      if (newItems.length > 0) {
-        setDisplayedItems(prev => [...prev, ...newItems]);
-        setCurrentPage(prev => prev + 1);
-        setHasMoreItems(endIndex < attendedSessions.length);
-      } else {
-        setHasMoreItems(false);
-      }
-
+    const result = await fetchSessions(nextSkip, ITEMS_PER_PAGE);
+    if (!result?.success || !result?.data) {
       setIsLoadingMore(false);
-    }, 300);
-  }, [currentPage, isLoadingMore, hasMoreItems, attendedSessions]);
-
-  const handleScroll = (event: any) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const paddingToBottom = 20;
-
-    if (
-      layoutMeasurement.height + contentOffset.y >=
-      contentSize.height - paddingToBottom
-    ) {
-      loadMoreItems();
+      return;
     }
-  };
+
+    const meetings = result.data.meetings || [];
+    if (meetings.length === 0) {
+      setHasMoreItems(false);
+      setIsLoadingMore(false);
+      return;
+    }
+
+    setDisplayedItems(prev => [...prev, ...meetings]);
+
+    setNextSkip(prev => prev + meetings.length);
+    setHasMoreItems(!!result.data.hasMore && meetings.length >= ITEMS_PER_PAGE);
+    setIsLoadingMore(false);
+  }, [fetchSessions, hasMoreItems, isLoadingMore, nextSkip]);
 
   const handleSessionPress = (sessionId: string) => {
     navigation.navigate('SessionDetails', { sessionId });
@@ -213,99 +165,65 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
     </View>
   );
 
-  const renderSessionList = () => (
-    <View style={styles.sessionListContainer}>
-      {displayedItems.map(session => (
-        <TouchableOpacity
-          key={session._id}
-          style={styles.sessionCard}
-          onPress={() => handleSessionPress(session._id)}
-        >
-          {/* Session Image */}
-          <View style={styles.sessionImageContainer}>
-            <Image
-              source={{
-                uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/session-image.png',
-              }}
-              style={styles.sessionImage}
-              resizeMode="cover"
-            />
+  const renderSessionItem = ({ item: session }: { item: any }) => (
+    <TouchableOpacity
+      key={session._id}
+      style={styles.sessionCard}
+      onPress={() => handleSessionPress(session._id)}
+    >
+      {/* Session Image */}
+      <View style={styles.sessionImageContainer}>
+        <Image
+          source={{
+            uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/session-image.png',
+          }}
+          style={styles.sessionImage}
+          resizeMode="cover"
+        />
+      </View>
+
+      {/* Session Content */}
+      <View style={styles.sessionContent}>
+        {/* Title and Instructor */}
+        <Text style={styles.sessionTitle}>{session.title}</Text>
+        <Text style={styles.sessionInstructor}>
+          {session.trainer?.name || 'Unknown Trainer'}
+        </Text>
+
+        {/* Session Details */}
+        <View style={styles.sessionDetails}>
+          <View style={styles.detailItem}>
+            <Image source={{ uri: Images.sandWatch }} />
+            <Text style={styles.detailText}>{session.duration} min</Text>
           </View>
 
-          {/* Session Content */}
-          <View style={styles.sessionContent}>
-            {/* Title and Instructor */}
-            <Text style={styles.sessionTitle}>{session.title}</Text>
-            <Text style={styles.sessionInstructor}>
-              {session.trainer?.name || 'Unknown Trainer'}
+          <View style={styles.detailItem}>
+            <Image source={{ uri: Images.flower }} />
+            <Text style={styles.detailText}>{session.service?.title}</Text>
+          </View>
+
+          <View style={styles.detailItem}>
+            <Image source={{ uri: Images.calendarIcon }} />
+            <Text style={styles.detailText}>
+              {new Date(session.localTime).toLocaleDateString()}
             </Text>
-
-            {/* Session Details */}
-            <View style={styles.sessionDetails}>
-              <View style={styles.detailItem}>
-                <Image source={{ uri: Images.sandWatch }} />
-                <Text style={styles.detailText}>{session.duration} min</Text>
-              </View>
-
-              <View style={styles.detailItem}>
-                <Image source={{ uri: Images.flower }} />
-                <Text style={styles.detailText}>{session.service?.title}</Text>
-              </View>
-
-              <View style={styles.detailItem}>
-                <Image source={{ uri: Images.calendarIcon }} />
-                <Text style={styles.detailText}>
-                  {new Date(session.localTime).toLocaleDateString()}
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.recordingButton}
-              onPress={() => handleWatchRecording(session)}
-              disabled={isJoining && loadingRecordingId === session._id}
-            >
-              <Video size={16} color="#B95E82" />
-              <Text style={styles.recordingButtonText}>
-                {isJoining && loadingRecordingId === session._id
-                  ? 'Loading...'
-                  : 'Watch Recording'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Divider */}
-            {/* <View style={styles.sessionDivider} /> */}
-
-            {/* <View style={styles.sessionFooter}>
-              <Text style={styles.feelingText}>
-                Attended: <Text style={styles.feelingValue}>
-                  {session?.attendance?.totalDuration || 0} min
-                </Text>
-              </Text>
-              <View style={styles.ratingContainer}>
-                <Star size={17} color="#F59E0B" fill="#F59E0B" strokeWidth={2} />
-                <Text style={styles.ratingText}>{session.rating || '—'}</Text>
-              </View>
-            </View> */}
           </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.recordingButton}
+          onPress={() => handleWatchRecording(session)}
+          disabled={isJoining && loadingRecordingId === session._id}
+        >
+          <Video size={16} color="#B95E82" />
+          <Text style={styles.recordingButtonText}>
+            {isJoining && loadingRecordingId === session._id
+              ? 'Loading...'
+              : 'Watch Recording'}
+          </Text>
         </TouchableOpacity>
-      ))}
-
-      {/* Loading More Indicator */}
-      {isLoadingMore && (
-        <View style={styles.loadingMoreContainer}>
-          <ActivityIndicator size="small" color="#B95E82" />
-          <Text style={styles.loadingMoreText}>Loading more sessions...</Text>
-        </View>
-      )}
-
-      {/* End of List Message */}
-      {!hasMoreItems && displayedItems.length > 0 && (
-        <View style={styles.endOfListContainer}>
-          <Text style={styles.endOfListText}>No more sessions to load</Text>
-        </View>
-      )}
-    </View>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -323,23 +241,40 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
           <View style={styles.headerSpacer} />
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-          {((isInitialLoading || isLoadingAll) && displayedItems.length === 0) ? (
-            <View style={styles.initialLoadingContainer}>
-              <ActivityIndicator size="large" color="#B95E82" />
-              <Text style={styles.loadingText}>Loading sessions...</Text>
-            </View>
-          ) : displayedItems.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            renderSessionList()
-          )}
-        </ScrollView>
+        {((isInitialLoading || isLoadingInitial) && displayedItems.length === 0) ? (
+          <View style={styles.initialLoadingContainer}>
+            <ActivityIndicator size="large" color="#B95E82" />
+            <Text style={styles.loadingText}>Loading sessions...</Text>
+          </View>
+        ) : displayedItems.length === 0 ? (
+          renderEmptyState()
+        ) : (
+          <FlatList
+            contentContainerStyle={styles.sessionListContainer}
+            data={displayedItems}
+            keyExtractor={item => item._id}
+            renderItem={renderSessionItem}
+            showsVerticalScrollIndicator={false}
+            onEndReached={loadMoreItems}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              isLoadingMore ? (
+                <View style={styles.loadingMoreContainer}>
+                  <ActivityIndicator size="small" color="#B95E82" />
+                  <Text style={styles.loadingMoreText}>
+                    Loading more sessions...
+                  </Text>
+                </View>
+              ) : !hasMoreItems && displayedItems.length > 0 ? (
+                <View style={styles.endOfListContainer}>
+                  <Text style={styles.endOfListText}>
+                    No more sessions to load
+                  </Text>
+                </View>
+              ) : null
+            }
+          />
+        )}
 
         {videoUrl ? (
           <VideoPlayer
@@ -385,9 +320,6 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 24,
-  },
-  scrollView: {
-    flex: 1,
   },
   // Empty State
   emptyStateContainer: {
