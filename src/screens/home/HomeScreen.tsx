@@ -1147,9 +1147,9 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 24,
     marginBottom: 0,
-    height:12,
-    width:16,
-    tintColor: '#000000',
+    height: 12,
+    width: 16,
+    tintColor: '#FFFFFF',
     fontWeight: '600',
   },
   upcomingSection: {
