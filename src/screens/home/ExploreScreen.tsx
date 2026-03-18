@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   ScrollView,
   TextInput,
-  TouchableOpacity,
   Pressable,
   ImageBackground,
   ActivityIndicator,
@@ -14,9 +13,9 @@ import {
 import { ExploreImages } from '../../assets/images/explore';
 import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
-import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
+import { getUserRegion } from '../../utils/timezoneUtils';
 import { ArrowRight, ArrowLeft } from 'lucide-react-native';
-import { useRef } from 'react';
+import Video from 'react-native-video';
 
 interface UserRegion {
   timezone: string;
@@ -24,12 +23,17 @@ interface UserRegion {
 }
 
 const ExploreScreen = ({ navigation }: any) => {
+  const TRAINING_VIDEO_URL =
+    'https://skyborne-images.s3.ap-south-1.amazonaws.com/skyborne+drop.mp4';
+
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
   const [isRegionLoading, setIsRegionLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [isVideoInView, setIsVideoInView] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
 
   const categories = [
     {
@@ -62,9 +66,12 @@ const ExploreScreen = ({ navigation }: any) => {
   const SCROLL_OFFSET = 300;
   const scrollX = useRef(0);
   const CARD_WIDTH = 299;
+  const isVideoInViewRef = useRef(false);
+  const scrollYRef = useRef(0);
+  const viewportHeightRef = useRef(0);
+  const videoLayoutRef = useRef({ y: 0, height: 0 });
 
-  const { upcomingMeetings, isLoading, error, fetchSearch, fetchUpcoming } =
-    useHomeViewModel();
+  const { isLoading, error, fetchSearch } = useHomeViewModel();
 
   const handleClassPress = (classId: string) => {
     navigation.navigate('ClassDetails', { classId });
@@ -83,11 +90,6 @@ const ExploreScreen = ({ navigation }: any) => {
       setIsRegionLoading(false);
     }
   }, []);
-
-  // Fetch trending/upcoming meetings on mount (region applied in service)
-  useEffect(() => {
-    fetchUpcoming();
-  }, [fetchUpcoming]);
 
   // Handle search with debounce
   useEffect(() => {
@@ -144,9 +146,24 @@ const ExploreScreen = ({ navigation }: any) => {
     navigation.navigate(screenName);
   };
 
-  // Determine which classes to display
-  const displayedClasses = hasSearched ? searchResults : upcomingMeetings;
+  // Determine which classes to display (search results only)
+  const displayedClasses = hasSearched ? searchResults : [];
   const upcomingClasses = displayedClasses.slice(0, 5);
+
+  const updateVideoVisibility = (scrollY: number, viewportHeight: number) => {
+    const { y, height } = videoLayoutRef.current;
+    if (height === 0 || viewportHeight === 0) return;
+
+    const threshold = 40;
+    const isVisible =
+      y + height > scrollY + threshold &&
+      y < scrollY + viewportHeight - threshold;
+
+    if (isVisible !== isVideoInViewRef.current) {
+      isVideoInViewRef.current = isVisible;
+      setIsVideoInView(isVisible);
+    }
+  };
 
   // ✅ Helper function to format date with timezone awareness
   // If region is not 'live' and region time has passed, shows next day date for recording
@@ -303,6 +320,17 @@ const ExploreScreen = ({ navigation }: any) => {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        onScroll={(e) => {
+          const { contentOffset, layoutMeasurement } = e.nativeEvent;
+          scrollYRef.current = contentOffset.y;
+          viewportHeightRef.current = layoutMeasurement.height;
+          updateVideoVisibility(contentOffset.y, layoutMeasurement.height);
+        }}
+        onLayout={(e) => {
+          viewportHeightRef.current = e.nativeEvent.layout.height;
+          updateVideoVisibility(scrollYRef.current, viewportHeightRef.current);
+        }}
+        scrollEventThrottle={16}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -452,77 +480,89 @@ const ExploreScreen = ({ navigation }: any) => {
           </>
         )}
 
-        {/* Trending/Search Results Header */}
-        <View style={styles.sectionHeaderWithAction}>
-          <Text style={styles.sectionTitle}>
-            {hasSearched ? `Search Results for "${searchInput}"` : 'Trending for You'}
-          </Text>
-          {!hasSearched && (
-            <Pressable>
-              <TouchableOpacity onPress={() => navigation.navigate('ViewAll')}>
-                <Text style={styles.viewAllText}>View all</Text>
-              </TouchableOpacity>
-            </Pressable>
-          )}
-        </View>
-
-        {/* Loading State */}
-        {((isLoading && !hasSearched) ||
-          (isSearchLoading && hasSearched) ||
-          isRegionLoading) && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#B95E82" />
-            <Text style={styles.loadingText}>
-              {isRegionLoading
-                ? 'Detecting your location...'
-                : isSearchLoading
-                ? 'Searching...'
-                : 'Loading upcoming classes...'}
-            </Text>
-          </View>
-        )}
-
-        {/* Error State */}
-        {error && !isLoading && !hasSearched && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-        {/* Dynamic Upcoming Classes - Max 5 */}
-        {!isLoading && !isRegionLoading && !isSearchLoading && upcomingClasses.length > 0 && (
-          <View style={styles.sessionsList}>
-            {upcomingClasses.map((meeting) => (
-              <DynamicSessionCard key={meeting._id} meeting={meeting} />
-            ))}
-          </View>
-        )}
-
-        {/* No results for search */}
-        {hasSearched && !isSearchLoading && upcomingClasses.length === 0 && (
-          <View style={styles.noRecordsContainer}>
-            <Text style={styles.noRecordsText}>
-              No classes found for "{searchInput}"
-            </Text>
-            <Pressable
-              style={styles.tryAgainButton}
-              onPress={handleClearSearch}
-            >
-              <Text style={styles.tryAgainButtonText}>Clear Search</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* Fallback when no upcoming classes and not searching */}
-        {!hasSearched &&
-          !isLoading &&
-          !isRegionLoading &&
-          upcomingClasses.length === 0 &&
-          !error && (
-            <View style={styles.noRecordsContainer}>
-              <Text style={styles.noRecordsText}>No records found</Text>
+        {hasSearched ? (
+          <>
+            {/* Search Results Header */}
+            <View style={styles.sectionHeaderWithAction}>
+              <Text style={styles.sectionTitle}>
+                {`Search Results for "${searchInput}"`}
+              </Text>
             </View>
-          )}
+
+            {/* Loading State (Search) */}
+            {(isSearchLoading || isRegionLoading || isLoading) && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#B95E82" />
+                <Text style={styles.loadingText}>
+                  {isRegionLoading ? 'Detecting your location...' : 'Searching...'}
+                </Text>
+              </View>
+            )}
+
+            {/* Error State */}
+            {error && !isSearchLoading && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            {/* Search Results - Max 5 */}
+            {!isSearchLoading && !isRegionLoading && upcomingClasses.length > 0 && (
+              <View style={styles.sessionsList}>
+                {upcomingClasses.map((meeting) => (
+                  <DynamicSessionCard key={meeting._id} meeting={meeting} />
+                ))}
+              </View>
+            )}
+
+            {/* No results for search */}
+            {!isSearchLoading && upcomingClasses.length === 0 && (
+              <View style={styles.noRecordsContainer}>
+                <Text style={styles.noRecordsText}>
+                  No classes found for "{searchInput}"
+                </Text>
+                <Pressable
+                  style={styles.tryAgainButton}
+                  onPress={handleClearSearch}
+                >
+                  <Text style={styles.tryAgainButtonText}>Clear Search</Text>
+                </Pressable>
+              </View>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Training Section */}
+            <View
+              style={styles.trainingCard}
+              onLayout={(e) => {
+                videoLayoutRef.current = {
+                  y: e.nativeEvent.layout.y,
+                  height: e.nativeEvent.layout.height,
+                };
+                updateVideoVisibility(
+                  scrollYRef.current,
+                  viewportHeightRef.current,
+                );
+              }}
+            >
+              <Video
+                source={{ uri: TRAINING_VIDEO_URL }}
+                style={styles.trainingVideo}
+                controls
+                paused={!isVideoInView}
+                resizeMode="cover"
+                onLoadStart={() => setIsVideoLoading(true)}
+                onLoad={() => setIsVideoLoading(false)}
+              />
+              {isVideoLoading && (
+                <View style={styles.videoLoading}>
+                  <ActivityIndicator size="large" color="#FFFFFF" />
+                </View>
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
       <BottomNav active="Explore" />
     </SafeAreaView>
@@ -740,6 +780,30 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: 'center',
     color: '#B95E82',
+  },
+
+  trainingCard: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 32,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#000000',
+    height: 210,
+  },
+  trainingVideo: {
+    width: '100%',
+    height: '100%',
+  },
+  videoLoading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
   },
 
   categoriesScroll: {
