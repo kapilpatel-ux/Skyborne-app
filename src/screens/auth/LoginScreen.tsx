@@ -19,6 +19,7 @@ import { useDispatch } from 'react-redux';
 import { IconImages } from '../../assets/icons';
 import { clearError, setUser } from '../../store/authSlice';
 import { socialLoginService } from '../../services/authService';
+import { normalizeErrorMessage } from '../../utils/errorUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -139,7 +140,10 @@ export default function LoginScreen({ navigation }: Props) {
         });
 
       } else {
-        const errorMsg = response.message || 'Social login failed';
+        const errorMsg = normalizeErrorMessage(
+          response.message,
+          'Social login failed'
+        );
         setLoginError(errorMsg);
         Toast.show({
           type: 'error',
@@ -172,7 +176,10 @@ export default function LoginScreen({ navigation }: Props) {
           text2: 'Please check Web Client ID and SHA-1 fingerprint',
         });
       } else {
-        const errorMsg = error.message || 'Unknown error occurred';
+        const errorMsg = normalizeErrorMessage(
+          error?.message,
+          'Unknown error occurred'
+        );
         setLoginError(errorMsg);
         Toast.show({
           type: 'error',
@@ -217,7 +224,10 @@ const onSubmit = async (
           navigation.navigate('Pricing');
         }
       } else {
-        const msg = result.message || 'Login failed. Please try again.';
+        const msg = normalizeErrorMessage(
+          result.message,
+          'Login failed. Please try again.'
+        );
         setLoginError(msg);
 
         Toast.show({
@@ -232,7 +242,10 @@ const onSubmit = async (
         setSubmitting(false);
       }
     } catch (error: any) {
-      const msg = error.message || 'An unexpected error occurred';
+      const msg = normalizeErrorMessage(
+        error?.message,
+        'An unexpected error occurred'
+      );
       setLoginError(msg);
 
       Toast.show({

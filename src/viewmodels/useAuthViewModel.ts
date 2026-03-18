@@ -8,6 +8,7 @@ import {
 } from '../store/authSlice';
 
 import { RootState } from '../store';
+import { normalizeErrorMessage } from '../utils/errorUtils';
 
 export interface SignupPayload {
   tempUserId: string;
@@ -57,14 +58,17 @@ export function useAuthViewModel() {
         } else {
           return {
             success: false,
-            message: result.payload?.message || result.payload || 'Signup failed',
+            message: normalizeErrorMessage(result.payload, 'Signup failed'),
           };
         }
       } catch (error: any) {
         console.error('Signup error:', error);
         return {
           success: false,
-          message: error?.message || 'An error occurred during signup',
+          message: normalizeErrorMessage(
+            error?.message,
+            'An error occurred during signup'
+          ),
         };
       }
     },
@@ -96,14 +100,17 @@ export function useAuthViewModel() {
         } else {
           return {
             success: false,
-            message: result.payload?.message || result.payload || 'Login failed',
+            message: normalizeErrorMessage(result.payload, 'Login failed'),
           };
         }
       } catch (error: any) {
         console.error('Login error:', error);
         return {
           success: false,
-          message: error?.message || 'An error occurred during login',
+          message: normalizeErrorMessage(
+            error?.message,
+            'An error occurred during login'
+          ),
         };
       }
     },
@@ -135,14 +142,17 @@ export function useAuthViewModel() {
         } else {
           return {
             success: false,
-            message: result.payload?.message || result.payload || 'Failed to send OTP',
+            message: normalizeErrorMessage(
+              result.payload,
+              'Failed to send OTP'
+            ),
           };
         }
       } catch (error: any) {
         console.error('SendOtp error:', error);
         return {
           success: false,
-          message: error?.message || 'Failed to send OTP',
+          message: normalizeErrorMessage(error?.message, 'Failed to send OTP'),
         };
       }
     },
@@ -193,14 +203,17 @@ export function useAuthViewModel() {
           return {
             success: false,
             message:
-              result.payload?.message || result.payload || 'OTP verification failed',
+              normalizeErrorMessage(result.payload, 'OTP verification failed'),
           };
         }
       } catch (error: any) {
         console.error('VerifyOtp error:', error);
         return {
           success: false,
-          message: error?.message || 'OTP verification failed',
+          message: normalizeErrorMessage(
+            error?.message,
+            'OTP verification failed'
+          ),
         };
       }
     },

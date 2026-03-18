@@ -7,6 +7,7 @@ import {
   setAuthToken,
   removeAuthToken 
 } from '../services/authService';
+import { normalizeErrorMessage } from '../utils/errorUtils';
 
 export interface SignupPayload {
   tempUserId: string;
@@ -71,7 +72,9 @@ export const signup = createAsyncThunk(
       const res = await signupService(payload);
 
       if (!res.success) {
-        return rejectWithValue(res.message || 'Signup failed');
+        return rejectWithValue(
+          normalizeErrorMessage(res.message, 'Signup failed')
+        );
       }
 
       const { user, accessToken, refreshToken } = res.data;
@@ -92,7 +95,9 @@ export const signup = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('Signup error:', error);
-      return rejectWithValue(error.message || 'Signup failed');
+      return rejectWithValue(
+        normalizeErrorMessage(error?.message, 'Signup failed')
+      );
     }
   }
 );
@@ -110,7 +115,9 @@ export const sendOtp = createAsyncThunk(
       const res = await sendOtpService(payload);
 
       if (!res.success) {
-        return rejectWithValue(res.message || 'Failed to send OTP');
+        return rejectWithValue(
+          normalizeErrorMessage(res.message, 'Failed to send OTP')
+        );
       }
 
       return {
@@ -120,7 +127,9 @@ export const sendOtp = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('SendOtp error:', error);
-      return rejectWithValue(error.message || 'Failed to send OTP');
+      return rejectWithValue(
+        normalizeErrorMessage(error?.message, 'Failed to send OTP')
+      );
     }
   }
 );
@@ -138,7 +147,9 @@ export const verifyOtp = createAsyncThunk(
       const res = await verifyOtpService({ phone, email, otp });
 
       if (!res.success) {
-        return rejectWithValue(res.message || 'OTP verification failed');
+        return rejectWithValue(
+          normalizeErrorMessage(res.message, 'OTP verification failed')
+        );
       }
 
       const { tempUserId, token, refreshToken } = res.data;
@@ -160,7 +171,9 @@ export const verifyOtp = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('VerifyOtp error:', error);
-      return rejectWithValue(error.message || 'OTP verification failed');
+      return rejectWithValue(
+        normalizeErrorMessage(error?.message, 'OTP verification failed')
+      );
     }
   }
 );
@@ -183,7 +196,9 @@ export const login = createAsyncThunk(
       clearTimeout(timeoutId);
 
       if (!res.success) {
-        return rejectWithValue(res.message || 'Login failed');
+        return rejectWithValue(
+          normalizeErrorMessage(res.message, 'Login failed')
+        );
       }
 
       const { user, accessToken, refreshToken } = res.data;
@@ -204,10 +219,12 @@ export const login = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('Login error:', error);
-      const errorMessage = error.message === 'Aborted' 
+      const rawMessage = error?.message === 'Aborted'
         ? 'Login request timed out. Please try again.'
-        : error.message || 'Login failed';
-      return rejectWithValue(errorMessage);
+        : error?.message;
+      return rejectWithValue(
+        normalizeErrorMessage(rawMessage, 'Login failed')
+      );
     }
   }
 );

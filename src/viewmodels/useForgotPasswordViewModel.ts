@@ -6,6 +6,7 @@ import {
   resetPassword as resetPasswordThunk 
 } from '../store/forgotPasswordSlice';
 import { RootState } from '../store';
+import { normalizeErrorMessage } from '../utils/errorUtils';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -42,14 +43,17 @@ export function useForgotPasswordViewModel() {
         } else {
           return {
             success: false,
-            message: result.payload?.message || result.payload || 'Failed to send OTP',
+            message: normalizeErrorMessage(
+              result.payload,
+              'Failed to send OTP'
+            ),
           };
         }
       } catch (error: any) {
         console.error('Send password reset OTP error:', error);
         return {
           success: false,
-          message: error?.message || 'Failed to send OTP',
+          message: normalizeErrorMessage(error?.message, 'Failed to send OTP'),
         };
       }
     },
@@ -81,14 +85,20 @@ export function useForgotPasswordViewModel() {
         } else {
           return {
             success: false,
-            message: result.payload?.message || result.payload || 'OTP verification failed',
+            message: normalizeErrorMessage(
+              result.payload,
+              'OTP verification failed'
+            ),
           };
         }
       } catch (error: any) {
         console.error('Verify password reset OTP error:', error);
         return {
           success: false,
-          message: error?.message || 'OTP verification failed',
+          message: normalizeErrorMessage(
+            error?.message,
+            'OTP verification failed'
+          ),
         };
       }
     },
@@ -127,14 +137,20 @@ export function useForgotPasswordViewModel() {
         } else {
           return {
             success: false,
-            message: result.payload?.message || result.payload || 'Password reset failed',
+            message: normalizeErrorMessage(
+              result.payload,
+              'Password reset failed'
+            ),
           };
         }
       } catch (error: any) {
         console.error('Reset password error:', error);
         return {
           success: false,
-          message: error?.message || 'Password reset failed',
+          message: normalizeErrorMessage(
+            error?.message,
+            'Password reset failed'
+          ),
         };
       }
     },

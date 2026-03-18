@@ -16,6 +16,7 @@ import { ArrowLeft, Mail } from 'lucide-react-native';
 import { useForgotPasswordViewModel } from '../../viewmodels/useForgotPasswordViewModel';
 import Toast from 'react-native-toast-message';
 import { Images } from '../../assets/images';
+import { normalizeErrorMessage } from '../../utils/errorUtils';
 
 const ForgotPasswordEmailScreen = ({ navigation }: { navigation: any }) => {
   const [email, setEmail] = useState('');
@@ -58,14 +59,14 @@ const ForgotPasswordEmailScreen = ({ navigation }: { navigation: any }) => {
         Toast.show({
           type: 'error',
           text1: 'Failed',
-          text2: result.message || 'Failed to send OTP',
+          text2: normalizeErrorMessage(result.message, 'Failed to send OTP'),
         });
       }
     } catch (error: any) {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: error.message || 'Something went wrong',
+        text2: normalizeErrorMessage(error?.message, 'Something went wrong'),
       });
     }
   };

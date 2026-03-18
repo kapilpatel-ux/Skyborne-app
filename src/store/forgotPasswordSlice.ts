@@ -4,6 +4,7 @@ import {
   verifyPasswordResetOTPService,
   resetPasswordService 
 } from '../services/forgotPasswordService';
+import { normalizeErrorMessage } from '../utils/errorUtils';
 
 export type ForgotPasswordState = { 
   status: 'idle' | 'loading' | 'failed' | 'success';
@@ -29,7 +30,9 @@ export const passwordResetRequest = createAsyncThunk(
       const res = await passwordResetRequestService(payload);
 
       if (!res.success) {
-        return rejectWithValue(res.message || 'Failed to send OTP');
+        return rejectWithValue(
+          normalizeErrorMessage(res.message, 'Failed to send OTP')
+        );
       }
 
       return {
@@ -39,7 +42,9 @@ export const passwordResetRequest = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('Password reset request error:', error);
-      return rejectWithValue(error.message || 'Failed to send OTP');
+      return rejectWithValue(
+        normalizeErrorMessage(error?.message, 'Failed to send OTP')
+      );
     }
   }
 );
@@ -57,7 +62,9 @@ export const verifyPasswordResetOTP = createAsyncThunk(
       const res = await verifyPasswordResetOTPService(payload);
 
       if (!res.success) {
-        return rejectWithValue(res.message || 'OTP verification failed');
+        return rejectWithValue(
+          normalizeErrorMessage(res.message, 'OTP verification failed')
+        );
       }
 
       return {
@@ -67,7 +74,9 @@ export const verifyPasswordResetOTP = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('Verify OTP error:', error);
-      return rejectWithValue(error.message || 'OTP verification failed');
+      return rejectWithValue(
+        normalizeErrorMessage(error?.message, 'OTP verification failed')
+      );
     }
   }
 );
@@ -85,7 +94,9 @@ export const resetPassword = createAsyncThunk(
       const res = await resetPasswordService(payload);
 
       if (!res.success) {
-        return rejectWithValue(res.message || 'Password reset failed');
+        return rejectWithValue(
+          normalizeErrorMessage(res.message, 'Password reset failed')
+        );
       }
 
       return {
@@ -95,7 +106,9 @@ export const resetPassword = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('Reset password error:', error);
-      return rejectWithValue(error.message || 'Password reset failed');
+      return rejectWithValue(
+        normalizeErrorMessage(error?.message, 'Password reset failed')
+      );
     }
   }
 );

@@ -16,6 +16,7 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useForgotPasswordViewModel } from '../../viewmodels/useForgotPasswordViewModel';
 import Toast from 'react-native-toast-message';
 import { Images } from '../../assets/images';
+import { normalizeErrorMessage } from '../../utils/errorUtils';
 
 const ResetPasswordScreen = ({ navigation, route }: { navigation: any; route: any }) => {
   const { email } = route.params;
@@ -73,14 +74,20 @@ const ResetPasswordScreen = ({ navigation, route }: { navigation: any; route: an
         Toast.show({
           type: 'error',
           text1: 'Reset Failed',
-          text2: result.message || 'Failed to reset password',
+          text2: normalizeErrorMessage(
+            result.message,
+            'Failed to reset password'
+          ),
         });
       }
     } catch (error: any) {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: error.message || 'Failed to reset password',
+        text2: normalizeErrorMessage(
+          error?.message,
+          'Failed to reset password'
+        ),
       });
     }
   };

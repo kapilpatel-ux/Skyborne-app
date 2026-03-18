@@ -21,6 +21,7 @@ import {
 import Toast from 'react-native-toast-message';
 import { useSignup } from '../../store/SignupContext';
 import { IconImages, UserIcon } from '../../assets/icons';
+import { normalizeErrorMessage } from '../../utils/errorUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AuthOptions'>;
 type AuthProviderProps = 'email' | 'google' | 'apple';
@@ -149,7 +150,7 @@ export default function AuthOptionsScreen({ navigation }: Props) {
         Toast.show({
           type: 'error',
           text1: 'Sign-in Failed',
-          text2: error.message || 'Unknown error occurred',
+          text2: normalizeErrorMessage(error?.message, 'Unknown error occurred'),
         });
       }
     }

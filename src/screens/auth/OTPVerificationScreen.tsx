@@ -17,6 +17,7 @@ import { useAuthViewModel } from '../../viewmodels/useAuthViewModel';
 import Toast from 'react-native-toast-message';
 import RNOtpVerify from 'react-native-otp-auto-fill';
 import { Platform } from 'react-native';
+import { normalizeErrorMessage } from '../../utils/errorUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OTP'>;
 
@@ -120,11 +121,17 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
         setCanResend(false);
         setTimer(30);
       } else {
-        showToast(res?.message || 'Failed to send OTP', 'error');
+        showToast(
+          normalizeErrorMessage(res?.message, 'Failed to send OTP'),
+          'error'
+        );
       }
     } catch (err: any) {
       console.error('Send OTP Error:', err);
-      showToast(err?.message || 'Failed to send OTP', 'error');
+      showToast(
+        normalizeErrorMessage(err?.message, 'Failed to send OTP'),
+        'error'
+      );
     } finally {
       setIsSendingOtp(false);
     }
@@ -178,12 +185,15 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
           navigation.replace('OnboardingInspiration');
         }, 1000);
       } else {
-        showToast(res?.message || 'Invalid OTP', 'error');
+        showToast(normalizeErrorMessage(res?.message, 'Invalid OTP'), 'error');
         setOtp(['', '', '', '', '', '']);
         inputs.current[0]?.focus();
       }
     } catch (err: any) {
-      showToast(err?.message || 'OTP verification failed', 'error');
+      showToast(
+        normalizeErrorMessage(err?.message, 'OTP verification failed'),
+        'error'
+      );
       setOtp(['', '', '', '', '', '']);
       inputs.current[0]?.focus();
     } finally {

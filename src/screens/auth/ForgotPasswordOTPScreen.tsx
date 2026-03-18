@@ -16,6 +16,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useForgotPasswordViewModel } from '../../viewmodels/useForgotPasswordViewModel';
 import Toast from 'react-native-toast-message';
 import { Images } from '../../assets/images';
+import { normalizeErrorMessage } from '../../utils/errorUtils';
 
 const ForgotPasswordOTPScreen = ({ navigation, route }: { navigation: any; route: any }) => {
   const { email } = route.params;
@@ -108,14 +109,14 @@ const ForgotPasswordOTPScreen = ({ navigation, route }: { navigation: any; route
         Toast.show({
           type: 'error',
           text1: 'Verification Failed',
-          text2: result.message || 'Invalid OTP',
+          text2: normalizeErrorMessage(result.message, 'Invalid OTP'),
         });
       }
     } catch (error: any) {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: error.message || 'Verification failed',
+        text2: normalizeErrorMessage(error?.message, 'Verification failed'),
       });
     }
   };
@@ -137,14 +138,20 @@ const ForgotPasswordOTPScreen = ({ navigation, route }: { navigation: any; route
         Toast.show({
           type: 'error',
           text1: 'Failed',
-          text2: result.message || 'Failed to resend OTP',
+          text2: normalizeErrorMessage(
+            result.message,
+            'Failed to resend OTP'
+          ),
         });
       }
     } catch (error: any) {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: error.message || 'Failed to resend OTP',
+        text2: normalizeErrorMessage(
+          error?.message,
+          'Failed to resend OTP'
+        ),
       });
     }
   };
