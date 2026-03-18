@@ -12,6 +12,7 @@
 // };
 
 const BASE_URL = 'https://skyborne-images.s3.ap-south-1.amazonaws.com/profile';
+const SVG_URL = 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons';
 const COMMON_URL = 'https://skyborne-images.s3.ap-south-1.amazonaws.com';
 
 export const ProfileImages = {
@@ -21,15 +22,15 @@ export const ProfileImages = {
   ProfileImg: { uri: `${BASE_URL}/profileImage.png` },
   pencilIcon: { uri: `${BASE_URL}/PencilIcon.png` },
   sandWAtch: { uri: `${BASE_URL}/SandWatch.png` }, // ⚠️ ensure file exists in S3
-  subscriptionIcon: { uri: `${BASE_URL}/SubscriptionIcon.png` },
-  historyIcon: { uri: `${BASE_URL}/HistoryIcon.png` },
+  subscriptionIconSvg: `${SVG_URL}/Subscription.svg`,
+  historyIconSvg: `${SVG_URL}/History.svg`,
   timezonIcon: { uri: `${BASE_URL}/TimezoneIcon.png` },
-  supportIcon: { uri: `${BASE_URL}/Support.png` },
+  supportIconSvg: `${SVG_URL}/Support.svg`,
 };
 
 export const AllItems = {
-  badge: { uri: `${COMMON_URL}/badge.png` },
-  laptop: { uri: `${COMMON_URL}/laptop.png` },
-  sand: { uri: `${COMMON_URL}/sand.png` },
-  fire: { uri: `${COMMON_URL}/fire.png` },
+  badgeSvg: `${SVG_URL}/Achievements-profile.svg`,
+  laptopSvg: `${SVG_URL}/Total Sessions-Profile.svg`,
+  sandSvg: `${SVG_URL}/Total Hours-profil.svg`,
+  fireSvg: `${SVG_URL}/Day Streak.svg`,
 };

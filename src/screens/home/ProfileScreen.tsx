@@ -18,6 +18,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { MessageCircleMore } from 'lucide-react-native';
+import { SvgUri } from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
 import { AllItems, ProfileImages } from '../../assets/images/profile';
 import BottomNav from '../../components/BottomNav';
@@ -32,6 +33,7 @@ interface StatCard {
   label: string;
   backgroundColor: string;
   icon: ImageSourcePropType;
+  iconSvgUri?: string;
 }
 
 interface ProgressItem {
@@ -48,6 +50,7 @@ interface SettingItem {
   title: string;
   subtitle: string;
   icon?: ImageSourcePropType;
+  iconSvgUri?: string;
   iconBgColor: string;
   screen?: keyof RootStackParamList;
 }
@@ -303,6 +306,7 @@ const ProfileScreen = () => {
       label: 'Upcoming Session',
       backgroundColor: '#FFF7DD',
       icon: { uri: `${COMMON_URL}/laptop.png` },
+      iconSvgUri: AllItems.laptopSvg,
     },
 
     {
@@ -311,6 +315,7 @@ const ProfileScreen = () => {
       label: 'Credits',
       backgroundColor: '#FFE8E8',
       icon: { uri: `${COMMON_URL}/sand.png` },
+      iconSvgUri: AllItems.sandSvg,
     },
     {
       id: 3,
@@ -318,6 +323,7 @@ const ProfileScreen = () => {
       label: 'Class Attended',
       backgroundColor: '#FFE8E8',
       icon: { uri: `${COMMON_URL}/fire.png` },
+      iconSvgUri: AllItems.fireSvg,
     },
     {
       id: 4,
@@ -325,6 +331,7 @@ const ProfileScreen = () => {
       label: 'Current Plan',
       backgroundColor: '#FFF7DD',
       icon: { uri: `${COMMON_URL}/badge.png` },
+      iconSvgUri: AllItems.badgeSvg,
     },
   ];
 
@@ -333,7 +340,7 @@ const ProfileScreen = () => {
       id: 1,
       title: 'Subscription',
       subtitle: displayPlan,
-      icon: ProfileImages.subscriptionIcon,
+      iconSvgUri: ProfileImages.subscriptionIconSvg,
       iconBgColor: '#FFE8E8',
       screen: 'ManageSubscription',
     },
@@ -341,7 +348,7 @@ const ProfileScreen = () => {
       id: 2,
       title: 'History',
       subtitle: 'View past Sessions',
-      icon: ProfileImages.historyIcon,
+      iconSvgUri: ProfileImages.historyIconSvg,
       iconBgColor: '#FFE8E8',
       screen: 'SessionHistory',
     },
@@ -356,7 +363,7 @@ const ProfileScreen = () => {
       id: 4,
       title: 'Support',
       subtitle: 'Get help',
-      icon: ProfileImages.supportIcon,
+      iconSvgUri: ProfileImages.supportIconSvg,
       iconBgColor: '#FFE8E8',
       screen: 'Support',
     },
@@ -364,7 +371,7 @@ const ProfileScreen = () => {
       id: 5,
       title: 'My Orders',
       subtitle: 'Track your orders',
-      icon: ProfileImages.historyIcon,
+      iconSvgUri: ProfileImages.historyIconSvg,
       iconBgColor: '#FFE8E8',
       screen: 'MyOrders',
     },
@@ -468,7 +475,11 @@ const ProfileScreen = () => {
                 index % 2 === 0 ? styles.statCardLeft : styles.statCardRight,
               ]}
             >
-              <Image source={stat?.icon} style={styles.statIcon} />
+              {stat.iconSvgUri ? (
+                <SvgUri width={30} height={30} uri={stat.iconSvgUri} />
+              ) : (
+                <Image source={stat?.icon} style={styles.statIcon} />
+              )}
               <Text
                 style={[
                   styles.statValue,
@@ -542,6 +553,8 @@ const ProfileScreen = () => {
                 >
                   {item.id === 3 ? (
                     <MessageCircleMore size={22} color="#B95E82" />
+                  ) : item.iconSvgUri ? (
+                    <SvgUri width={24} height={24} uri={item.iconSvgUri} />
                   ) : (
                     <Image source={item.icon} style={styles.settingIcon} />
                   )}
