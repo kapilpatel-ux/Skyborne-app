@@ -39,6 +39,7 @@ interface WeekDay {
   day: string;
   date: number;
   dayIndex: number;
+  dateKey: string;
 }
 
 const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
@@ -54,6 +55,27 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
   const [plans, setPlans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const getLocalDateKey = (value: Date | string) => {
+    const date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) return null;
+
+    const formatOptions: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    };
+
+    try {
+      return new Intl.DateTimeFormat('en-CA', formatOptions).format(date);
+    } catch {
+      return new Intl.DateTimeFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(date);
+    }
+  };
 
   // Initialize week data
   useEffect(() => {
@@ -91,11 +113,13 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
     const newWeekData: WeekDay[] = days.map((day, index) => {
       const date = new Date(firstDayOfWeek);
       date.setDate(firstDayOfWeek.getDate() + index);
+      const dateKey = getLocalDateKey(date) || '';
 
       return {
         day,
         date: date.getDate(),
         dayIndex: index,
+        dateKey,
       };
     });
 
@@ -159,9 +183,12 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
   };
 
   // Filter meetings for selected date
+  const selectedDay = weekDays.find(d => d.date === selectedDate);
+  const selectedDateKey = selectedDay?.dateKey;
+
   const selectedDayMeetings = weeklyMeetings.filter(meeting => {
-    const meetingDate = new Date(meeting.localTime);
-    return meetingDate.getDate() === selectedDate;
+    if (!selectedDateKey || !meeting?.localTime) return false;
+    return getLocalDateKey(meeting.localTime) === selectedDateKey;
   });
 
   // Filter by search query
@@ -179,13 +206,23 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
   const getFormattedTime = (
     meeting: Meeting,
   ): { time: string; period: string } => {
-    const regionInfo = meeting?.regions?.[0];
-    const formattedTime = regionInfo?.localTime || 'N/A';
-    const parts = formattedTime.split(' ');
-    return {
-      time: parts[0] || 'N/A',
-      period: parts[1] || 'AM',
-    };
+    if (!meeting?.localTime) {
+      return { time: 'N/A', period: '' };
+    }
+
+    const date = new Date(meeting.localTime);
+    if (isNaN(date.getTime())) {
+      return { time: 'Invalid', period: '' };
+    }
+
+    const formatted = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    const [time, period] = formatted.split(' ');
+    return { time: time || 'N/A', period: period || '' };
   };
 
   const getSessionColor = (
@@ -197,10 +234,12 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
   };
 
   const getDayWithMeetings = (date: number): boolean => {
-    return weeklyMeetings.some(m => new Date(m.localTime).getDate() === date);
+    const day = weekDays.find(d => d.date === date);
+    if (!day?.dateKey) return false;
+    return weeklyMeetings.some(
+      m => m?.localTime && getLocalDateKey(m.localTime) === day.dateKey,
+    );
   };
-
-  const selectedDay = weekDays.find(d => d.date === selectedDate);
 
   const isLikelyId = (value: string) =>
     /^[a-f0-9]{24}$/i.test(value.trim()) ||

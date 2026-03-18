@@ -344,12 +344,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const { resolvedTodayMeetings, resolvedUpcomingMeetings } = useMemo(() => {
-    const regionFilteredTodayMeetings = todayMeetings.filter(isMeetingForUserRegion);
-    const regionFilteredUpcomingMeetings = upcomingMeetings.filter(
-      isMeetingForUserRegion,
-    );
-
-    const getDateKeyForTimezone = (value: Date | string, timezone?: string) => {
+    const getLocalDateKey = (value: Date | string) => {
       const date = value instanceof Date ? value : new Date(value);
       if (isNaN(date.getTime())) return null;
 
@@ -357,7 +352,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
-        ...(timezone ? { timeZone: timezone } : {}),
       };
 
       try {
@@ -371,62 +365,39 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       }
     };
 
-    const isMeetingInTodayBucket = (meeting: Meeting) => {
-      if (!meeting?.localTime) return false;
-
-      const displayRegionInfo = getMeetingRegionInfo(meeting);
-      const timezone =
-        displayRegionInfo?.timezone ||
-        userRegion?.timezone ||
-        Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      const meetingDateKey = getDateKeyForTimezone(meeting.localTime, timezone);
-      const todayDateKey = getDateKeyForTimezone(new Date(), timezone);
-
-      return !!meetingDateKey && !!todayDateKey && meetingDateKey === todayDateKey;
-    };
-
-    const inferredTodayMeetings = regionFilteredUpcomingMeetings.filter(meeting =>
-      isMeetingInTodayBucket(meeting),
+    const combinedMeetings = [...todayMeetings, ...upcomingMeetings].filter(
+      isMeetingForUserRegion,
     );
 
-    const seenIds = new Set<string>();
-    const mergedTodayMeetings = [
-      ...regionFilteredTodayMeetings,
-      ...inferredTodayMeetings,
-    ].filter(meeting => {
+    const seenCombinedIds = new Set<string>();
+    const uniqueMeetings = combinedMeetings.filter(meeting => {
       const id = meeting?._id;
       if (!id) return true;
-      if (seenIds.has(id)) return false;
-      seenIds.add(id);
+      if (seenCombinedIds.has(id)) return false;
+      seenCombinedIds.add(id);
       return true;
     });
 
-    const mergedTodayIds = new Set(
-      mergedTodayMeetings.map(meeting => meeting?._id).filter(Boolean),
-    );
+    const todayDateKey = getLocalDateKey(new Date());
 
-    const filteredUpcomingMeetings = regionFilteredUpcomingMeetings.filter(
-      meeting => {
-      const id = meeting?._id;
+    const todayBucketMeetings = uniqueMeetings.filter(meeting => {
+      if (!todayDateKey || !meeting?.localTime) return false;
+      return getLocalDateKey(meeting.localTime) === todayDateKey;
+    });
 
-      if (id && mergedTodayIds.has(id)) {
-        return false;
-      }
-
-      return !isMeetingInTodayBucket(meeting);
-      },
-    );
+    const upcomingBucketMeetings = uniqueMeetings.filter(meeting => {
+      if (!todayDateKey || !meeting?.localTime) return false;
+      const meetingDateKey = getLocalDateKey(meeting.localTime);
+      return !!meetingDateKey && meetingDateKey > todayDateKey;
+    });
 
     return {
-      resolvedTodayMeetings: mergedTodayMeetings,
-      resolvedUpcomingMeetings: filteredUpcomingMeetings,
+      resolvedTodayMeetings: todayBucketMeetings,
+      resolvedUpcomingMeetings: upcomingBucketMeetings,
     };
   }, [
     todayMeetings,
     upcomingMeetings,
-    userRegion,
-    getMeetingRegionInfo,
     isMeetingForUserRegion,
   ]);
 

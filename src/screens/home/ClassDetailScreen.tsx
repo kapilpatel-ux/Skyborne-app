@@ -18,7 +18,6 @@ import { ArrowLeft, Video, VideoOff } from 'lucide-react-native';
 import GradientBackground from '../../components/GradientBackground';
 import { useClassDetailsViewModel } from '../../viewmodels/useClassDetailsViewModel';
 import { useJoinMeeting } from '../../viewmodels/useJoinMeeting';
-import { getRegionDateFromISO, getUserRegion } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import VideoPlayer from '../common/VideoPlayer';
 
@@ -38,11 +37,6 @@ interface ClassDetailsScreenProps {
   route: ClassDetailsRouteProp;
 }
 
-interface UserRegion {
-  timezone: string;
-  region: string;
-}
-
 const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   route,
   navigation,
@@ -53,7 +47,6 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
   const [isJoinButtonDisabled, setIsJoinButtonDisabled] = useState(true);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string>('');
@@ -75,13 +68,18 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
 
     const checkJoinButtonStatus = () => {
       try {
-        const meetingStartTime = new Date(classDetails.regionTime).getTime();
+        const meetingStartDate = new Date(classDetails.regionTime);
+        if (isNaN(meetingStartDate.getTime())) {
+          setIsJoinButtonDisabled(true);
+          return;
+        }
+        const meetingStartTime = meetingStartDate.getTime();
         const currentTime = Date.now();
         const timeUntilStart = meetingStartTime - currentTime;
         const fiveMinutesInMs = 5 * 60 * 1000;
 
         console.log('🔔 Join Button Check:');
-        console.log('  Meeting Time:', new Date(classDetails.regionTime).toISOString());
+        console.log('  Meeting Time:', meetingStartDate.toISOString());
         console.log('  Current Time:', new Date(currentTime).toISOString());
         console.log('  Minutes until start:', timeUntilStart / 1000 / 60);
 
@@ -102,18 +100,6 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
     const interval = setInterval(checkJoinButtonStatus, 60000);
     return () => clearInterval(interval);
   }, [classDetails?.regionTime]);
-
-  // Initialize user region on mount
-  useEffect(() => {
-    try {
-      const region = getUserRegion();
-      setUserRegion(region);
-      console.log('👤 User Region Set:', region);
-    } catch (err) {
-      console.error('❌ Failed to get user region:', err);
-      setUserRegion({ timezone: 'UTC', region: 'APAC' });
-    }
-  }, []);
 
   // Fetch class details
   useEffect(() => {
@@ -231,48 +217,34 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   };
 
 
-  // ✅ FIXED: Use regional timezone for correct date/time display
-  // This ensures dates match across all regions, even near midnight
   const getFormattedDateTime = () => {
-    if (!classDetails || !userRegion) {
+    if (!classDetails) {
       return { date: '--', time: '--:--' };
     }
 
-    // Find region-specific timezone
-    const regionInfo = classDetails?.regions?.find(
-      (r: any) => r.region === userRegion.region,
-    );
+    const isoString = classDetails?.regionTime || classDetails?.localTime;
+    if (!isoString) {
+      return { date: '--', time: '--:--' };
+    }
 
-    // Fallback to first region if user's region not found
-    const displayRegionInfo = regionInfo || classDetails?.regions?.[0];
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) {
+      return { date: 'Invalid Date', time: '--:--' };
+    }
 
-    // Use regionInfo timezone for accurate date/time in that region
-    const timezone = displayRegionInfo?.timezone || userRegion?.timezone;
-    const mode = displayRegionInfo?.mode || 'live';
-    const regionTimeStr = displayRegionInfo?.localTime; // e.g., "10:00 AM"
+    const formattedDate = date
+      .toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+      .replace(',', '');
 
-    console.log('📅 getFormattedDateTime Debug:');
-    console.log('  ISO Time (regionTime):', classDetails.regionTime);
-    console.log('  User Region:', userRegion.region);
-    console.log('  Region Info:', displayRegionInfo);
-    console.log('  Timezone:', timezone);
-    console.log('  Mode:', mode);
-    console.log('  Region Time Str:', regionTimeStr);
-
-    // ✅ CRITICAL: Format date using the region's timezone
-    // This ensures the date matches what the region sees, not what a generic formatter shows
-    const formattedDate = formatDateWithTimezone(
-      classDetails.localTime,
-      timezone,
-      regionTimeStr,
-      mode,
-    );
-
-    // Use pre-formatted time from regions array
-    const formattedTime = displayRegionInfo?.localTime || '--:--';
-
-    console.log('aaa:', formattedDate);
-    console.log('  Formatted Time:', formattedTime);
+    const formattedTime = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
 
     return {
       date: formattedDate,
@@ -280,11 +252,6 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
     };
   };
 
-  const regionInfo = classDetails?.regions?.find(
-    (r: any) => r.region === userRegion?.region,
-  );
-
-  const displayRegionInfo = regionInfo || classDetails?.regions?.[0];
   const meetingStartSource = classDetails?.regionTime || classDetails?.localTime;
   const meetingStart =
     meetingStartSource && !isNaN(new Date(meetingStartSource).getTime())
@@ -297,94 +264,6 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   // Only show "RECORDING" for past sessions. Upcoming should never show recording.
   const isLive = !isPastMeeting;
   const showRecordingCta = isPastMeeting;
-
-  // ✅ FIXED: Helper function to format date with timezone awareness
-  // This correctly handles dates near midnight boundaries
-  // If region is not 'live' and region time has passed, shows next day date for recording
-  const formatDateWithTimezone = (
-    isoString: string,
-    timezone?: string,
-    regionTimeStr?: string,
-    mode?: string,
-  ) => {
-    console.log('🎯 formatDateWithTimezone called:', {
-      isoString,
-      timezone,
-      regionTimeStr,
-      mode,
-    });
-
-    if (!isoString) return 'N/A';
-
-    try {
-      let date = new Date(isoString);
-
-      // Validate date
-      if (isNaN(date.getTime())) {
-        return 'Invalid Date';
-      }
-
-      // ✅ NEW LOGIC: If region is not live and region time has passed,
-      // show next day's date for recording class
-      if (mode !== 'live' && regionTimeStr) {
-        const classDatetime = new Date(isoString);
-        const currentTime = Date.now();
-
-        console.log('📅 Recording Mode Detected:');
-        console.log('  ISO Time:', isoString);
-        console.log('  Region Time String:', regionTimeStr);
-        console.log('  Class DateTime:', classDatetime.toISOString());
-        console.log('  Current Time:', new Date(currentTime).toISOString());
-
-        // Parse region time string (e.g., "10:00 AM")
-        const [timeStr, period] = regionTimeStr.split(' ');
-        const [hours, minutes] = timeStr.split(':');
-
-        let hour = parseInt(hours, 10);
-        const minute = parseInt(minutes, 10);
-
-        // Convert to 24-hour format
-        if (period === 'PM' && hour !== 12) {
-          hour += 12;
-        } else if (period === 'AM' && hour === 12) {
-          hour = 0;
-        }
-
-        // Create a new date with the region's time for comparison
-        const regionDateTime = new Date(classDatetime);
-        regionDateTime.setHours(hour, minute, 0, 0);
-
-        console.log('  Region DateTime (for comparison):', regionDateTime.toISOString());
-        console.log('  Time Difference (ms):', currentTime - regionDateTime.getTime());
-
-        // If region time is in the past and mode is 'replay', add 1 day to the date
-        if (currentTime > regionDateTime.getTime()) {
-          console.log(
-            '📅 Recording class time has passed, showing next day date',
-          );
-          date = new Date(date.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours
-        }
-      }
-
-      // Use timezone if available, otherwise user's local timezone
-      const options = {
-        day: 'numeric' as const,
-        month: 'short' as const,
-        year: 'numeric' as const,
-        timeZone: timezone || undefined,
-      };
-
-      const formattedDate = date
-        .toLocaleDateString('en-GB', options)
-        .replace(',', '');
-      console.log('✅ Final Formatted Date:', formattedDate);
-
-      return formattedDate;
-    } catch (error) {
-      console.error('Date formatting error:', error);
-      return 'N/A';
-    }
-  };
 
   const { date, time } = getFormattedDateTime();
 
