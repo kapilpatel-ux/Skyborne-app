@@ -285,14 +285,17 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   );
 
   const displayRegionInfo = regionInfo || classDetails?.regions?.[0];
-  const meetingStart = classDetails?.localTime
-    ? new Date(classDetails.localTime).getTime()
-    : null;
+  const meetingStartSource = classDetails?.regionTime || classDetails?.localTime;
+  const meetingStart =
+    meetingStartSource && !isNaN(new Date(meetingStartSource).getTime())
+      ? new Date(meetingStartSource).getTime()
+      : null;
   const meetingDurationMs = (classDetails?.duration || 0) * 60000;
   const meetingEnd =
     meetingStart !== null ? meetingStart + meetingDurationMs : null;
   const isPastMeeting = meetingEnd !== null ? Date.now() > meetingEnd : false;
-  const isLive = displayRegionInfo?.mode === 'live' && !isPastMeeting;
+  // Only show "RECORDING" for past sessions. Upcoming should never show recording.
+  const isLive = !isPastMeeting;
   const showRecordingCta = isPastMeeting;
 
   // ✅ FIXED: Helper function to format date with timezone awareness
