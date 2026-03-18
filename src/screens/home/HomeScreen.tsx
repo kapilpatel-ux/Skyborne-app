@@ -140,6 +140,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [userRegionCode, setUserRegionCode] = useState<string | null>(null);
   const [userRegionName, setUserRegionName] = useState<string | null>(null);
   const [isRegionLoading, setIsRegionLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const percentage = Math.round((currentWater / MAX_WATER) * 100);
 
@@ -206,9 +207,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    // Initial load - no search
-    fetchAll();
-  }, []);
+    let isMounted = true;
+    (async () => {
+      // Initial load - no search
+      await fetchAll();
+      if (isMounted) {
+        setHasLoaded(true);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchAll]);
 
   useEffect(() => {
     fetchWeekly();
@@ -518,6 +528,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const isSearchActive = showSearchBar && localSearchQuery.trim().length > 0;
+  const canShowEmptyState =
+    hasLoaded && !isLoading && !isRegionLoading && !isSearchActive;
+  const showSectionLoaders = !showSearchBar && (isLoading || isRegionLoading);
 
   return (
     <GradientBackground>
@@ -641,16 +654,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           )}
 
           {/* Loading State */}
-          {(isLoading || isRegionLoading) && (
+          {isSearchActive && isLoading && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#B95E82" />
-              <Text style={styles.loadingText}>
-                {isRegionLoading
-                  ? 'Detecting your location...'
-                  : isSearchActive
-                  ? 'Searching...'
-                  : 'Loading sessions...'}
-              </Text>
+              <Text style={styles.loadingText}>Searching...</Text>
             </View>
           )}
 
@@ -708,7 +715,21 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           )}
 
           {/* Normal View - Today's Sessions */}
-          {!showSearchBar && !isLoading && resolvedTodayMeetings.length > 0 && (
+          {showSectionLoaders && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Today's Sessions</Text>
+              </View>
+              <View style={styles.inlineLoader}>
+                <ActivityIndicator size="small" color="#B95E82" />
+              </View>
+            </>
+          )}
+
+          {!showSearchBar &&
+            !isLoading &&
+            !isRegionLoading &&
+            resolvedTodayMeetings.length > 0 && (
             <>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Today's Sessions</Text>
@@ -732,7 +753,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </>
           )}
 
-          {!showSearchBar && !isLoading && resolvedTodayMeetings.length === 0 && (
+          {!showSearchBar && canShowEmptyState && resolvedTodayMeetings.length === 0 && (
             <>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>
@@ -745,30 +766,55 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </TouchableOpacity>{' '} */}
               </View>
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyMessage}>No record found</Text>
+                <Text style={styles.emptyMessage}>No today's session</Text>
               </View>
             </>
           )}
 
           {/* Upcoming Classes Section */}
-          {!showSearchBar && !isLoading && resolvedUpcomingMeetings.length > 0 && (
+          {showSectionLoaders && (
+            <View style={styles.upcomingSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.upcomingTitle}>Upcoming Classes</Text>
+              </View>
+              <View style={styles.inlineLoader}>
+                <ActivityIndicator size="small" color="#B95E82" />
+              </View>
+            </View>
+          )}
+
+          {!showSearchBar &&
+            !isLoading &&
+            !isRegionLoading &&
+            resolvedUpcomingMeetings.length > 0 && (
             <View style={styles.upcomingSection}>
               <Text style={styles.upcomingTitle}>Upcoming Classes</Text>
               <DynamicClassCard meeting={resolvedUpcomingMeetings[0]} />
             </View>
           )}
 
-          {!showSearchBar && !isLoading && resolvedUpcomingMeetings.length === 0 && (
+          {!showSearchBar && canShowEmptyState && resolvedUpcomingMeetings.length === 0 && (
             <View style={styles.upcomingSection}>
               <Text style={styles.upcomingTitle}>Upcoming Classes</Text>
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyMessage}>No record found</Text>
+                <Text style={styles.emptyMessage}>No upcoming session</Text>
               </View>
             </View>
           )}
 
           {/* This Week Activity Section */}
-          {!showSearchBar && (
+          {!showSearchBar && showSectionLoaders && (
+            <View style={styles.weekActivitySection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.weekActivityTitle}>This Week Activity</Text>
+              </View>
+              <View style={styles.inlineLoader}>
+                <ActivityIndicator size="small" color="#B95E82" />
+              </View>
+            </View>
+          )}
+
+          {!showSearchBar && !showSectionLoaders && (
             <View style={styles.weekActivitySection}>
               <Text style={styles.weekActivityTitle}>This Week Activity</Text>
               <View style={styles.weekActivityCard}>
@@ -1073,6 +1119,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 40,
     marginBottom: 25,
+  },
+  inlineLoader: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
   },
   sectionTitle: {
     fontFamily: 'Satoshi-Bold',
