@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import { SignupPayload } from '../viewmodels/useAuthViewModel';
 import { API_BASE_URL as ENV_API_BASE_URL } from '@env';
 
@@ -98,6 +98,28 @@ class AuthService {
     );
   }
 
+  private logAxiosError(context: string, error: any): void {
+    const axiosError = error as AxiosError<any>;
+    const status = axiosError.response?.status;
+    const responseData = axiosError.response?.data;
+    const requestUrl = axiosError.config?.url;
+    const method = axiosError.config?.method;
+    const timeout = axiosError.config?.timeout;
+
+    console.error(`[AuthService] ${context} failed`, {
+      message: axiosError.message,
+      code: axiosError.code,
+      baseURL: axiosError.config?.baseURL,
+      url: requestUrl,
+      method,
+      timeout,
+      status,
+      responseData,
+      hasResponse: !!axiosError.response,
+      hasRequest: !!axiosError.request,
+    });
+  }
+
   /**
    * Signup - Register user with complete onboarding data
    */
@@ -117,6 +139,7 @@ class AuthService {
       
       return response.data;
     } catch (error: any) {
+      this.logAxiosError('signupService', error);
       const errorMessage =
         error.response?.data?.message ||
         error.message ||

@@ -15,7 +15,7 @@ import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
 import { getUserRegion } from '../../utils/timezoneUtils';
 import { ArrowRight, ArrowLeft } from 'lucide-react-native';
-import Video from 'react-native-video';
+import Video, { type VideoRef } from 'react-native-video';
 
 interface UserRegion {
   timezone: string;
@@ -70,6 +70,7 @@ const ExploreScreen = ({ navigation }: any) => {
   const scrollYRef = useRef(0);
   const viewportHeightRef = useRef(0);
   const videoLayoutRef = useRef({ y: 0, height: 0 });
+  const videoRef = useRef<VideoRef>(null);
 
   const { isLoading, error, fetchSearch } = useHomeViewModel();
 
@@ -547,14 +548,21 @@ const ExploreScreen = ({ navigation }: any) => {
               }}
             >
               <Video
+                ref={videoRef}
                 source={{ uri: TRAINING_VIDEO_URL }}
                 style={styles.trainingVideo}
-                controls
+                controls={false}
                 paused={!isVideoInView}
                 resizeMode="cover"
                 onLoadStart={() => setIsVideoLoading(true)}
                 onLoad={() => setIsVideoLoading(false)}
               />
+              <Pressable
+                style={styles.fullscreenButton}
+                onPress={() => videoRef.current?.presentFullscreenPlayer()}
+              >
+                <Text style={styles.fullscreenButtonText}>Full Screen</Text>
+              </Pressable>
               {isVideoLoading && (
                 <View style={styles.videoLoading}>
                   <ActivityIndicator size="large" color="#FFFFFF" />
@@ -804,6 +812,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.25)',
+  },
+  fullscreenButton: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    zIndex: 2,
+  },
+  fullscreenButtonText: {
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 12,
+    color: '#FFFFFF',
   },
 
   categoriesScroll: {

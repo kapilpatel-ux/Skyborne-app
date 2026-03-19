@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,18 +8,52 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
 import { getData } from 'country-list';
 import * as ct from 'countries-and-timezones';
+import { getCountryCallingCode, parsePhoneNumberFromString } from 'libphonenumber-js';
+import type { CountryCode } from 'libphonenumber-js';
 import { useAuthViewModel } from '../../viewmodels/useAuthViewModel';
 import { useOnboardingStore } from '../../store/onboardingSlice';
 import { RootState } from '../../store';
 import Toast from 'react-native-toast-message';
 import { useSignup } from '../../store/SignupContext';
 import { IconImages } from '../../assets/icons';
+
+const getDialingCodeByIso = (isoCode?: string | null): string | null => {
+  if (!isoCode) {
+    return null;
+  }
+
+  try {
+    return `+${getCountryCallingCode(isoCode.toUpperCase() as CountryCode)}`;
+  } catch {
+    return null;
+  }
+};
+
+const normalizePhoneByCountry = (
+  isoCode: string,
+  phoneInput: string,
+): { phoneNumber: string; phoneCountryCode: string; nationalNumber: string } | null => {
+  const normalizedIso = isoCode.toUpperCase() as CountryCode;
+  const raw = phoneInput.trim();
+  const parsed = parsePhoneNumberFromString(raw, normalizedIso);
+
+  if (!parsed || !parsed.isValid()) {
+    return null;
+  }
+
+  return {
+    phoneNumber: parsed.number,
+    phoneCountryCode: `+${parsed.countryCallingCode}`,
+    nationalNumber: parsed.nationalNumber,
+  };
+};
 
 type DropdownInputProps = {
   label: string;
@@ -54,6 +88,8 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
   const tempUserId = authState.tempUserId;
   const phone = authState.phone;
   const { formData } = useSignup();
+  const authProvider = formData?.step2?.authProvider || 'email';
+  const isPrefillProviderFlow = authProvider === 'google' || authProvider === 'apple';
   const countries = getData();
   const [selectedCountry, setSelectedCountry] = useState<{
     name: string;
@@ -62,11 +98,23 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [timezone, setTimezone] = useState<string | null>(null);
   const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
+  const [phoneNumberInput, setPhoneNumberInput] = useState(
+    phone || formData?.step3?.phoneNumber || '',
+  );
+  const [phoneCountryCode, setPhoneCountryCode] = useState<string | null>(null);
+  const [showPhoneCountryCodeDropdown, setShowPhoneCountryCodeDropdown] =
+    useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const timezones = selectedCountry
     ? ct.getTimezonesForCountry(selectedCountry.code)
     : [];
+
+  const selectedCountryDialingCode = getDialingCodeByIso(selectedCountry?.code);
+
+  const phoneCountryCodeOption = selectedCountry
+    ? `${selectedCountry.name} (${selectedCountryDialingCode || selectedCountry.code})`
+    : null;
 
   const showToast = (
     message: string,
@@ -82,7 +130,61 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
     });
   };
 
+  useEffect(() => {
+    console.log('[OnboardingLocation] Screen loaded with signup context:', {
+      authProvider,
+      tempUserIdFromAuth: tempUserId,
+      tempUserIdFromContext: formData?.step4?.tempUserId,
+      phoneFromAuth: phone,
+      phoneFromContext: formData?.step3?.phoneNumber,
+      email: formData?.step2?.email,
+      googleId: formData?.step2?.googleId,
+      hasCountrySelected: !!selectedCountry,
+      hasTimezoneSelected: !!timezone,
+      phoneCountryCode,
+      phoneNumberInput,
+    });
+  }, [
+    authProvider,
+    formData?.step2?.email,
+    formData?.step2?.googleId,
+    formData?.step3?.phoneNumber,
+    formData?.step4?.tempUserId,
+    phone,
+    phoneCountryCode,
+    phoneNumberInput,
+    selectedCountry,
+    tempUserId,
+    timezone,
+  ]);
+
+  useEffect(() => {
+    if (!selectedCountry) {
+      setPhoneCountryCode(null);
+      setShowPhoneCountryCodeDropdown(false);
+      return;
+    }
+
+    setPhoneCountryCode(getDialingCodeByIso(selectedCountry.code));
+  }, [selectedCountry]);
+
   const handleCompleteProfile = async () => {
+    const resolvedAuthProvider = authProvider;
+    const resolvedPassword = (formData?.step2?.password || '').trim();
+
+    console.log('[OnboardingLocation] Complete Profile tapped:', {
+      authProvider,
+      resolvedAuthProvider,
+      hasPassword: !!resolvedPassword,
+      passwordLength: resolvedPassword.length,
+      tempUserIdFromAuth: tempUserId,
+      tempUserIdFromContext: formData?.step4?.tempUserId,
+      selectedCountry,
+      timezone,
+      phoneCountryCode,
+      phoneNumberInput,
+    });
+
     // Validation
     if (!selectedCountry) {
       showToast('Please select a country', 'error');
@@ -92,7 +194,32 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
       showToast('Please select a timezone', 'error');
       return;
     }
-    if (!tempUserId) {
+    if (!phoneCountryCode) {
+      showToast('Please select phone country code', 'error');
+      return;
+    }
+    if (!phoneNumberInput.trim()) {
+      showToast('Please enter phone number', 'error');
+      return;
+    }
+    const normalizedPhone = normalizePhoneByCountry(
+      selectedCountry.code,
+      phoneNumberInput,
+    );
+    if (!normalizedPhone) {
+      showToast('Please enter a valid phone number for selected country', 'error');
+      return;
+    }
+    if (!isPrefillProviderFlow && !resolvedPassword) {
+      showToast('Password is required. Please set it in signup step.', 'error');
+      return;
+    }
+    if (!isPrefillProviderFlow && resolvedPassword.length < 6) {
+      showToast('Password must be at least 6 characters', 'error');
+      return;
+    }
+    const resolvedTempUserId = tempUserId || formData?.step4?.tempUserId;
+    if (!resolvedTempUserId) {
       showToast('Invalid session. Please restart signup.', 'error');
       return;
     }
@@ -102,16 +229,22 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
     try {
       // Prepare the complete signup payload
       const signupPayload = {
-        tempUserId,
-        phoneNumber: phone,
+        tempUserId: resolvedTempUserId,
+        phoneNumber: normalizedPhone.phoneNumber,
+        phone: normalizedPhone.phoneNumber,
         country: selectedCountry.name,
         countryCode: selectedCountry.code,
+        phoneCountryCode: normalizedPhone.phoneCountryCode,
         timezone,
-        firstName: formData?.step2?.firstName,
-        lastName: formData?.step2?.lastName,
-        email: formData?.step2?.email,
-        password: formData?.step2?.password,
-        authProvider: formData?.step2?.authProvider,
+        firstName: (formData?.step2?.firstName || '').trim(),
+        lastName: (formData?.step2?.lastName || '').trim(),
+        email: (formData?.step2?.email || '').trim(),
+        ...(isPrefillProviderFlow ? {} : { password: resolvedPassword }),
+        authProvider: resolvedAuthProvider,
+        googleId:
+          resolvedAuthProvider === 'google' ? formData?.step2?.googleId : '',
+        appleId:
+          resolvedAuthProvider === 'apple' ? formData?.step2?.appleId : '',
         // Onboarding data from Zustand store
         motivation: inspiration,
         goal: firstGoal,
@@ -134,6 +267,8 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
               exerciseFrequency: null,
             },
       };
+
+      console.log('[OnboardingLocation] Final signup payload:', signupPayload);
 
       // Call signup API
       const response = await signup(signupPayload);
@@ -237,6 +372,67 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
               </View>
 
               <View style={{ height: 28 }} />
+
+              <View style={{ marginTop: 20, position: 'relative' }}>
+                <Text
+                  style={[styles.fieldLabel, styles.phoneFieldLabel]}
+                  numberOfLines={1}
+                >
+                  Phone Number
+                </Text>
+
+                <View style={styles.phoneRow}>
+                  <TouchableOpacity
+                    style={[
+                      styles.phoneCodeInput,
+                      !selectedCountry && styles.dropdownInputDisabled,
+                    ]}
+                    onPress={() =>
+                      setShowPhoneCountryCodeDropdown(!showPhoneCountryCodeDropdown)
+                    }
+                    disabled={!selectedCountry}
+                  >
+                    <Text
+                      style={
+                        phoneCountryCode
+                          ? styles.dropdownText
+                          : styles.dropdownPlaceholder
+                      }
+                    >
+                      {phoneCountryCode || '+Code'}
+                    </Text>
+
+                    <Image
+                      source={IconImages?.downArrow}
+                      style={styles.dropdownIcon}
+                    />
+                  </TouchableOpacity>
+
+                  <TextInput
+                    style={styles.phoneNumberInput}
+                    value={phoneNumberInput}
+                    onChangeText={setPhoneNumberInput}
+                    placeholder="Enter phone number"
+                    placeholderTextColor="#000000B2"
+                    keyboardType="phone-pad"
+                    maxLength={16}
+                  />
+                </View>
+
+                {showPhoneCountryCodeDropdown && phoneCountryCodeOption && (
+                  <View style={styles.phoneCodeDropdown}>
+                    <TouchableOpacity
+                      style={styles.countryItem}
+                      onPress={() => {
+                        setPhoneCountryCode(getDialingCodeByIso(selectedCountry?.code));
+                        setShowPhoneCountryCodeDropdown(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownText}>{phoneCountryCodeOption}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
 
               <View style={{ marginTop: 20, position: 'relative' }}>
                 <Text style={styles.fieldLabel}>Timezone</Text>
@@ -363,6 +559,9 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     width: 111,
   },
+  phoneFieldLabel: {
+    width: 'auto',
+  },
   dropdownInput: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -375,6 +574,47 @@ const styles = StyleSheet.create({
     borderColor: '#EAEAEA',
     paddingHorizontal: 16,
     marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 10,
+  },
+  phoneCodeInput: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: 120,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  phoneNumberInput: {
+    flex: 1,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    paddingHorizontal: 16,
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 14,
+    lineHeight: 15.4,
+    color: '#000000B2',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -441,6 +681,24 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     zIndex: 1,
+  },
+  phoneCodeDropdown: {
+    position: 'absolute',
+    top: 78,
+    width: 120,
+    left: 0,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 12,
+    marginTop: 6,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 3,
   },
   countryItem: {
     paddingVertical: 12,

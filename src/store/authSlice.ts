@@ -13,9 +13,19 @@ export interface SignupPayload {
   tempUserId: string;
   email?: string;
   phone?: string;
+  phoneNumber?: string;
   country: string;
   countryCode: string;
+  phoneCountryCode?: string;
   timezone: string;
+  firstName?: string;
+  lastName?: string;
+  password?: string;
+  authProvider?: string;
+  googleId?: string;
+  appleId?: string;
+  motivation?: number;
+  goal?: number;
   inspiration?: number;
   firstGoal?: number;
   fitnessLevel?: number | null | undefined;
@@ -343,6 +353,8 @@ const authSlice = createSlice({
           state.tempUserId = action.payload.data?.tempUserId;
           state.accessToken = action.payload.data?.token;
           state.refreshToken = action.payload.data?.refreshToken;
+          state.phone = action.meta.arg?.phone || state.phone;
+          state.email = action.meta.arg?.email || state.email;
           state.error = undefined;
           // Don't set loggedIn yet - wait for final signup
         }

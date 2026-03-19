@@ -80,6 +80,15 @@ export interface PaymentVerificationResponse {
   gateway?: string;
 }
 
+export interface CardPortalSessionResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    customerId?: string;
+    url?: string;
+  };
+}
+
 class PaymentService {
   private api: AxiosInstance;
   private authTokenKey = '@auth_token';
@@ -246,6 +255,29 @@ class PaymentService {
         error.message ||
         'Upgrade plan request failed';
       console.error('❌ Upgrade plan error:', errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Create a Stripe billing portal session for updating card details
+   */
+  async createCardPortalSession(
+    returnUrl?: string,
+  ): Promise<CardPortalSessionResponse> {
+    try {
+      const payload = returnUrl ? { returnUrl } : {};
+      const response = await this.api.post(
+        '/payment/card-portal-session',
+        payload,
+      );
+      return response.data;
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to open card update page';
+      console.error('❌ Card portal session error:', errorMessage);
       throw new Error(errorMessage);
     }
   }
@@ -453,6 +485,9 @@ export const createPaymentOrder = (payload: PaymentOrderPayload) =>
 
 export const upgradePlanOrder = (payload: PaymentOrderPayload) =>
   paymentService.upgradePlanOrder(payload);
+
+export const createCardPortalSession = (returnUrl?: string) =>
+  paymentService.createCardPortalSession(returnUrl);
 
 export const verifyMobilePayment = (payload?: PaymentVerificationPayload) =>
   paymentService.verifyMobilePayment(payload);

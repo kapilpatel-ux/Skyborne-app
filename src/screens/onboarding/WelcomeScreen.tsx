@@ -6,9 +6,9 @@ import {
   Image,
   Dimensions,
   StatusBar,
-  SafeAreaView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../../components/Button';
 import GradientBackground from '../../components/GradientBackground';
 import { FontFamilies} from '../../constants/fonts';

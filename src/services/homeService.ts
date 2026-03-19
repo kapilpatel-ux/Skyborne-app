@@ -246,6 +246,24 @@ async getUpcomingMeetings(search?: string, skip: number = 0, limit: number = 10)
       throw new Error('Failed to fetch upcoming meetings');
     }
 
+    console.log(
+      '[HomeService] /meetings/upcoming response:',
+      JSON.stringify(
+        {
+          success: response.data.success,
+          count: response.data.count,
+          totalCount: response.data.totalCount,
+          hasMore: response.data.hasMore,
+          meetingsLength: Array.isArray(response.data.meetings)
+            ? response.data.meetings.length
+            : 0,
+          meetings: response.data.meetings,
+        },
+        null,
+        2,
+      ),
+    );
+
     return response.data;
   } catch (error: any) {
     const errorMessage =

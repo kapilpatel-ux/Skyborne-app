@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Image,
   ImageSourcePropType,
+  Linking,
+  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SubscriptionImages } from '../../assets/images/subscriptions';
@@ -15,10 +17,10 @@ import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 import { useState, useEffect } from 'react';
 import { useBillingViewModel } from '../../viewmodels/useBillingViewModel';
 import {
+  createCardPortalSession,
   getStoredPaymentDetails,
   verifyPayment,
 } from '../../services/paymentService';
-import { Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 interface BillingInfo {
@@ -31,10 +33,12 @@ interface SettingOption {
   title: string;
   icon: ImageSourcePropType;
   page?: string;
+  onPress?: () => void;
 }
 
 const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isOpeningCardPortal, setIsOpeningCardPortal] = useState(false);
 
   const {
     user,
@@ -145,6 +149,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
     subscriptionStatus !== 'inactive' &&
     subscriptionStatus !== 'expired' &&
     subscriptionStatus !== 'suspended';
+  const canEditCard = subscriptionStatus === 'active';
   const displayPlan = isPlanActive
     ? user?.plan?.toUpperCase() ?? '--'
     : 'NO PLAN';
@@ -191,6 +196,45 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
     );
   };
 
+  const handleUpdateCard = async () => {
+    if (isOpeningCardPortal) return;
+
+    if (!canEditCard) {
+      Toast.show({
+        type: 'info',
+        text1: 'No active subscription',
+        text2: 'Update Card is available for active plans.',
+      });
+      return;
+    }
+
+    try {
+      setIsOpeningCardPortal(true);
+      const response = await createCardPortalSession();
+      const portalUrl = response?.data?.url;
+
+      if (!portalUrl) {
+        Toast.show({
+          type: 'error',
+          text1: 'Unable to open Update Card',
+          text2: 'No update link available.',
+        });
+        return;
+      }
+
+      await Linking.openURL(portalUrl);
+    } catch (error: any) {
+      console.error('Update card error:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Unable to open Update Card',
+        text2: error?.message || 'Please try again.',
+      });
+    } finally {
+      setIsOpeningCardPortal(false);
+    }
+  };
+
   const settingOptions: SettingOption[] = [
     {
       id: 1,
@@ -198,8 +242,18 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       icon: SubscriptionImages.upgradeIcon,
       page: 'UpgradePlan',
     },
-     {
-      id: 2,
+    ...(canEditCard
+      ? [
+          {
+            id: 2,
+            title: 'Update Card',
+            icon: SubscriptionImages.paymentIcon,
+            onPress: handleUpdateCard,
+          },
+        ]
+      : []),
+    {
+      id: 3,
       title: 'Payment History',
       icon: SubscriptionImages.paymentIcon,
       page: 'PaymentHistory',
@@ -363,7 +417,15 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
             <View key={option.id}>
               <TouchableOpacity
                 style={styles.settingItem}
-                onPress={() => navigation.navigate(option?.page)}
+                onPress={() => {
+                  if (option.onPress) {
+                    option.onPress();
+                    return;
+                  }
+                  if (option.page) {
+                    navigation.navigate(option.page);
+                  }
+                }}
               >
                 <View style={styles.settingIconContainer}>
                   {/* <Image source={option.icon}/> */}

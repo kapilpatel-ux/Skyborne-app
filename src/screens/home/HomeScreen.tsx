@@ -23,6 +23,7 @@ import {
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import HomeSidebar from './HomeSidebar';
 import { Meeting, UserProfile } from '../../services/homeService';
+import { weeklyScheduleService } from '../../services/WeeklyScheduleService';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -37,6 +38,20 @@ interface UserRegion {
 
 const capitalizeWords = (text: string = '') =>
   text.replace(/\b\w/g, char => char.toUpperCase());
+
+const normalizeRegionLabel = (value: string = ''): string => {
+  const raw = value.trim().toLowerCase();
+  if (!raw) return '';
+
+  if (raw.includes('gulf')) return 'gulf';
+  if (raw.includes('uk') || raw.includes('europe')) return 'uk / europe';
+  if (raw.includes('canada') || raw.includes('usa') || raw.includes('us'))
+    return 'canada / usa';
+  if (raw.includes('apac') || raw.includes('asia') || raw.includes('pacific'))
+    return 'apac';
+
+  return raw.replace(/\s*\/\s*/g, ' / ').replace(/\s+/g, ' ').trim();
+};
 
 // ✅ Helper function to format date with timezone awareness
 // If region is not 'live' and region time has passed, shows next day date for recording
@@ -141,6 +156,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [userRegionName, setUserRegionName] = useState<string | null>(null);
   const [isRegionLoading, setIsRegionLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [weeklyMeetings, setWeeklyMeetings] = useState<Meeting[]>([]);
+  const [isWeeklyMeetingsLoading, setIsWeeklyMeetingsLoading] = useState(false);
 
   const percentage = Math.round((currentWater / MAX_WATER) * 100);
 
@@ -224,6 +241,35 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     fetchWeekly();
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadWeeklyMeetings = async () => {
+      try {
+        setIsWeeklyMeetingsLoading(true);
+        const response = await weeklyScheduleService.getWeeklyMeetings();
+        if (isMounted && response?.success) {
+          setWeeklyMeetings(response.meetings || []);
+        }
+      } catch (err) {
+        console.error('Failed to load weekly meetings:', err);
+        if (isMounted) {
+          setWeeklyMeetings([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsWeeklyMeetingsLoading(false);
+        }
+      }
+    };
+
+    loadWeeklyMeetings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Debounced search - send request to backend
   useEffect(() => {
     // Clear previous timeout
@@ -274,14 +320,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     (user?.classCredits?.zumba ?? 0) +
     (user?.classCredits?.specialty ?? 0);
 
-  const normalizedUserRegionCode = String(userRegionCode || '')
-    .trim()
-    .toLowerCase();
-  const normalizedUserRegionName = String(
-    userRegionName || userRegion?.region || '',
-  )
-    .trim()
-    .toLowerCase();
+  const normalizedUserRegionCode = normalizeRegionLabel(
+    String(userRegionCode || ''),
+  );
+  const normalizedUserRegionName = normalizeRegionLabel(
+    String(userRegionName || userRegion?.region || ''),
+  );
 
   const getMeetingRegionInfo = useCallback(
     (meeting: Meeting) => {
@@ -289,18 +333,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
       const matchedByName = regions.find(
         (r: any) =>
-          String(r?.region || '')
-            .trim()
-            .toLowerCase() === normalizedUserRegionName,
+          normalizeRegionLabel(String(r?.region || '')) ===
+          normalizedUserRegionName,
       );
 
       if (matchedByName) return matchedByName;
 
       const matchedByCode = regions.find(
         (r: any) =>
-          String(r?.region || '')
-            .trim()
-            .toLowerCase() === normalizedUserRegionCode,
+          normalizeRegionLabel(String(r?.region || '')) ===
+          normalizedUserRegionCode,
       );
 
       if (matchedByCode) return matchedByCode;
@@ -314,20 +356,31 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     (meeting: Meeting) => {
       if (!normalizedUserRegionCode && !normalizedUserRegionName) return true;
 
-      const meetingLiveRegion = String(meeting?.liveRegion || '')
-        .trim()
-        .toLowerCase();
+      const regionCandidates: string[] = [];
+
+      const meetingLiveRegion = normalizeRegionLabel(
+        String(meeting?.liveRegion || ''),
+      );
+      if (meetingLiveRegion) regionCandidates.push(meetingLiveRegion);
+
+      const regions = Array.isArray(meeting?.regions) ? meeting.regions : [];
+      regions.forEach((region: any) => {
+        const normalized = normalizeRegionLabel(String(region?.region || ''));
+        if (normalized) regionCandidates.push(normalized);
+      });
+
+      if (regionCandidates.length === 0) return true;
 
       if (
         normalizedUserRegionName &&
-        meetingLiveRegion === normalizedUserRegionName
+        regionCandidates.includes(normalizedUserRegionName)
       ) {
         return true;
       }
 
       if (
         normalizedUserRegionCode &&
-        meetingLiveRegion === normalizedUserRegionCode
+        regionCandidates.includes(normalizedUserRegionCode)
       ) {
         return true;
       }
@@ -342,6 +395,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const last = lastName?.charAt(0).toUpperCase() ?? '';
     return `${first}${last}`;
   };
+
+  const isSearchActive = showSearchBar && localSearchQuery.trim().length > 0;
 
   const { resolvedTodayMeetings, resolvedUpcomingMeetings } = useMemo(() => {
     const getLocalDateKey = (value: Date | string) => {
@@ -365,9 +420,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       }
     };
 
-    const combinedMeetings = [...todayMeetings, ...upcomingMeetings].filter(
-      isMeetingForUserRegion,
-    );
+    const shouldUseWeeklyFallback =
+      !isSearchActive &&
+      upcomingMeetings.length === 0 &&
+      weeklyMeetings.length > 0;
+
+    const meetingPool = [
+      ...todayMeetings,
+      ...upcomingMeetings,
+      ...(shouldUseWeeklyFallback ? weeklyMeetings : []),
+    ];
+
+    const regionFilteredMeetings = meetingPool.filter(isMeetingForUserRegion);
+
+    const combinedMeetings =
+      shouldUseWeeklyFallback && regionFilteredMeetings.length === 0
+        ? meetingPool
+        : regionFilteredMeetings;
 
     const seenCombinedIds = new Set<string>();
     const uniqueMeetings = combinedMeetings.filter(meeting => {
@@ -398,7 +467,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   }, [
     todayMeetings,
     upcomingMeetings,
+    weeklyMeetings,
     isMeetingForUserRegion,
+    isSearchActive,
   ]);
 
   const DynamicSessionCard = ({ meeting }: any) => {
@@ -498,9 +569,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     );
   };
 
-  const isSearchActive = showSearchBar && localSearchQuery.trim().length > 0;
   const canShowEmptyState =
-    hasLoaded && !isLoading && !isRegionLoading && !isSearchActive;
+    hasLoaded &&
+    !isLoading &&
+    !isRegionLoading &&
+    !isWeeklyMeetingsLoading &&
+    !isSearchActive;
   const showSectionLoaders = !showSearchBar && (isLoading || isRegionLoading);
 
   return (

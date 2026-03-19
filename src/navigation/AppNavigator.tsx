@@ -178,19 +178,15 @@ export default function AppNavigator() {
         <Stack.Screen name="Support" component={SupportScreen} />
         <Stack.Screen name="Feedback" component={FeedbackScreen} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        <Stack.Screen
-          name="VideoPlayer"
-          component={({
-            route,
-            navigation,
-          }: VideoPlayerScreenProps) => (
+        <Stack.Screen name="VideoPlayer">
+          {({ route, navigation }: VideoPlayerScreenProps) => (
             <VideoPlayer
               url={route.params.videoUrl}
               isVisible={true}
               onClose={() => navigation.goBack()}
             />
           )}
-        />
+        </Stack.Screen>
 
       </Stack.Navigator>
     </SignupProvider>

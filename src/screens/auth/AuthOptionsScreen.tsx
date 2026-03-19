@@ -104,9 +104,18 @@ export default function AuthOptionsScreen({ navigation }: Props) {
         googleId: userInfo?.data?.user.id,
       };
 
+      console.log(
+        '[AuthOptions] Google account used for email/profile prefill only:',
+        googleData,
+      );
+
       updateStepData('step2', googleData);
 
-     navigation.navigate('OnboardingInspiration');
+      console.log(
+        '[AuthOptions] Navigating to OTP after Google prefill to generate tempUserId',
+      );
+
+      navigation.navigate('OTP', { email: googleData.email });
 
       // You can navigate to next screen or handle the data as needed
       // navigation.navigate('NextScreen', { userData: googleData });
@@ -114,7 +123,7 @@ export default function AuthOptionsScreen({ navigation }: Props) {
       Toast.show({
         type: 'success',
         text1: 'Success',
-        text2: `Signed in as ${googleData.email}`,
+        text2: `Continue OTP verification for ${googleData.email}`,
       });
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
