@@ -533,7 +533,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
                 {showRecordingCta
                   ? 'Watch Recording'
                   : isJoinButtonDisabled
-                    ? 'Join soon'
+                    ? 'Join session'
                     : 'Join class'}
               </Text>
             )}
