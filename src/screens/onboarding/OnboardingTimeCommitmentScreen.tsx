@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, SafeAreaVi
 import GradientBackground from '../../components/GradientBackground';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../../components/Button';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -11,6 +12,7 @@ type Props = {
 };
 
 const OnboardingTimeCommitmentScreen = ({ navigation }: Props)  => {
+  const insets = useSafeAreaInsets();
   const [busyLevel, setBusyLevel] = useState('moderately_busy');
   const [timeCommitment, setTimeCommitment] = useState('30_minutes');
 
@@ -82,7 +84,7 @@ const OnboardingTimeCommitmentScreen = ({ navigation }: Props)  => {
             ))}
           </View>
 
-          <View style={styles.buttonContainer}>
+          <View style={[styles.buttonContainer, { paddingBottom: 16 + insets.bottom }]}>
             <Button title="Continue" 
             
             // TO DO: Implement next step navigation
@@ -216,7 +218,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    marginBottom: 20,
+    marginBottom: 0,
   },
 
 });

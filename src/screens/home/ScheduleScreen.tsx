@@ -11,6 +11,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ScheduleImages } from '../../assets/images/schedule';
 import BottomNav from '../../components/BottomNav';
@@ -45,6 +46,7 @@ interface WeekDay {
 const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
   navigation,
 }) => {
+  const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState<number>(
     new Date().getDate(),
   );
@@ -283,6 +285,10 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 160 + insets.bottom },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -554,6 +560,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   header: {
     paddingHorizontal: 16,

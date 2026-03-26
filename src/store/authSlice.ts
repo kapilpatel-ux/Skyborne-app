@@ -180,9 +180,16 @@ export const verifyOtp = createAsyncThunk(
         },
       };
     } catch (error: any) {
-      console.error('VerifyOtp error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error';
+      const errorStatus = error?.response?.status;
+      console.error('VerifyOtp error:', {
+        message: errorMessage,
+        status: errorStatus,
+        fullError: error,
+        stack: error?.stack,
+      });
       return rejectWithValue(
-        normalizeErrorMessage(error?.message, 'OTP verification failed')
+        normalizeErrorMessage(errorMessage, 'OTP verification failed')
       );
     }
   }
@@ -193,17 +200,17 @@ export const verifyOtp = createAsyncThunk(
  */
 export const login = createAsyncThunk(
   'auth/login',
-  async (payload: { email: string; password: string }, { rejectWithValue, signal }) => {
+  async (payload: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      // Create abort timeout - 20 seconds
-      const timeoutId = setTimeout(() => {
-        if (signal) {
-          signal.dispatchEvent(new Event('abort'));
-        }
-      }, 20000);
+      // Guard against hanging requests without relying on browser-only Event APIs.
+      const LOGIN_TIMEOUT_MS = 25000;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Login request timed out. Please try again.'));
+        }, LOGIN_TIMEOUT_MS);
+      });
 
-      const res = await loginService(payload);
-      clearTimeout(timeoutId);
+      const res = await Promise.race([loginService(payload), timeoutPromise]);
 
       if (!res.success) {
         return rejectWithValue(

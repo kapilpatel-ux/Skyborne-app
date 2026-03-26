@@ -12,6 +12,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Star
 } from 'lucide-react-native';
@@ -27,6 +28,7 @@ interface FeelingOption {
 }
 
 const FeedbackScreen = ({ navigation }: { navigation: any }) => {
+  const insets = useSafeAreaInsets();
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [selectedFeeling, setSelectedFeeling] = useState<number | null>(null);
   const [comment, setComment] = useState<string>('');
@@ -156,7 +158,10 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
       >
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: 120 + insets.bottom },
+          ]}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.container}>
@@ -258,7 +263,10 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
             </TouchableOpacity>
 
             {/* Skip Button */}
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+            <TouchableOpacity
+              style={[styles.skipButton, { marginBottom: 20 + insets.bottom }]}
+              onPress={handleSkip}
+            >
               <Text style={styles.skipText}>Skip</Text>
             </TouchableOpacity>
           </View>

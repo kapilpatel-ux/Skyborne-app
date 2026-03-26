@@ -13,7 +13,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
-import { getData } from 'country-list';
+import { Country, State } from 'country-state-city';
 import * as ct from 'countries-and-timezones';
 import { getCountryCallingCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import type { CountryCode } from 'libphonenumber-js';
@@ -23,6 +23,7 @@ import { RootState } from '../../store';
 import Toast from 'react-native-toast-message';
 import { useSignup } from '../../store/SignupContext';
 import { IconImages } from '../../assets/icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const getDialingCodeByIso = (isoCode?: string | null): string | null => {
   if (!isoCode) {
@@ -55,6 +56,18 @@ const normalizePhoneByCountry = (
   };
 };
 
+type CountryOption = {
+  name: string;
+  code: string;
+};
+
+const COUNTRY_OPTIONS: CountryOption[] = Country.getAllCountries().map(
+  (country) => ({
+    name: country.name,
+    code: country.isoCode,
+  }),
+);
+
 type DropdownInputProps = {
   label: string;
   value: string | null;
@@ -77,6 +90,7 @@ const DropdownInput = ({ label, value, placeholder }: DropdownInputProps) => (
 );
 
 const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
+  const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const { signup } = useAuthViewModel();
   const authState = useSelector((state: RootState) => state.auth);
@@ -90,17 +104,20 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
   const { formData } = useSignup();
   const authProvider = formData?.step2?.authProvider || 'email';
   const isPrefillProviderFlow = authProvider === 'google' || authProvider === 'apple';
-  const countries = getData();
+  const countries = COUNTRY_OPTIONS;
   const [selectedCountry, setSelectedCountry] = useState<{
     name: string;
     code: string;
   } | null>(null);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [showStateDropdown, setShowStateDropdown] = useState(false);
   const [timezone, setTimezone] = useState<string | null>(null);
   const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
   const [phoneNumberInput, setPhoneNumberInput] = useState(
     phone || formData?.step3?.phoneNumber || '',
   );
+  const [stateName, setStateName] = useState('');
+  const [city, setCity] = useState('');
   const [phoneCountryCode, setPhoneCountryCode] = useState<string | null>(null);
   const [showPhoneCountryCodeDropdown, setShowPhoneCountryCodeDropdown] =
     useState(false);
@@ -108,6 +125,10 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
 
   const timezones = selectedCountry
     ? ct.getTimezonesForCountry(selectedCountry.code)
+    : [];
+
+  const stateOptions = selectedCountry
+    ? State.getStatesOfCountry(selectedCountry.code)
     : [];
 
   const selectedCountryDialingCode = getDialingCodeByIso(selectedCountry?.code);
@@ -190,6 +211,16 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
       showToast('Please select a country', 'error');
       return;
     }
+    if (!stateName.trim()) {
+      const stateMessage =
+        stateOptions.length > 0 ? 'Please select a state' : 'Please enter state';
+      showToast(stateMessage, 'error');
+      return;
+    }
+    if (!city.trim()) {
+      showToast('Please enter city', 'error');
+      return;
+    }
     if (!timezone) {
       showToast('Please select a timezone', 'error');
       return;
@@ -234,6 +265,8 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
         phone: normalizedPhone.phoneNumber,
         country: selectedCountry.name,
         countryCode: selectedCountry.code,
+        state: stateName.trim(),
+        city: city.trim(),
         phoneCountryCode: normalizedPhone.phoneCountryCode,
         timezone,
         firstName: (formData?.step2?.firstName || '').trim(),
@@ -318,10 +351,16 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.container}>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.formScrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.formSection}>
               <View style={{ position: 'relative' }}>
-                <Text style={styles.fieldLabel}>Select Country</Text>
+                <Text style={[styles.fieldLabel, styles.selectCountryLabel]}>
+                  Select Country
+                </Text>
 
                 <TouchableOpacity
                   style={styles.dropdownInput}
@@ -358,6 +397,9 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
                           onPress={() => {
                             setSelectedCountry(item);
                             setTimezone(null);
+                            setStateName('');
+                            setShowStateDropdown(false);
+                            setShowTimezoneDropdown(false);
                             setShowCountryDropdown(false);
                           }}
                         >
@@ -371,7 +413,94 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
                 )}
               </View>
 
-              <View style={{ height: 28 }} />
+              <View style={{ height: 18 }} />
+
+              <View style={{ marginTop: 14, position: 'relative' }}>
+                <Text style={styles.fieldLabel}>State</Text>
+
+                {selectedCountry ? (
+                  stateOptions.length > 0 ? (
+                    <>
+                      <TouchableOpacity
+                        style={styles.dropdownInput}
+                        onPress={() =>
+                          setShowStateDropdown(!showStateDropdown)
+                        }
+                      >
+                        <Text
+                          style={
+                            stateName
+                              ? styles.dropdownText
+                              : styles.dropdownPlaceholder
+                          }
+                        >
+                          {stateName || 'Select an option'}
+                        </Text>
+                        <Image
+                          source={IconImages?.downArrow}
+                          style={styles.dropdownIcon}
+                        />
+                      </TouchableOpacity>
+
+                      {showStateDropdown && (
+                        <View style={styles.stateDropdown}>
+                          <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            nestedScrollEnabled
+                          >
+                            {stateOptions.map(state => (
+                              <TouchableOpacity
+                                key={`${state.isoCode}-${state.name}`}
+                                style={styles.countryItem}
+                                onPress={() => {
+                                  setStateName(state.name);
+                                  setShowStateDropdown(false);
+                                }}
+                              >
+                                <Text style={styles.dropdownText}>
+                                  {state.name}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        </View>
+                      )}
+                    </>
+                  ) : (
+                    <TextInput
+                      style={styles.textFieldInput}
+                      value={stateName}
+                      onChangeText={setStateName}
+                      placeholder="Enter state"
+                      placeholderTextColor="#000000B2"
+                    />
+                  )
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.dropdownInput, styles.dropdownInputDisabled]}
+                    disabled
+                  >
+                    <Text style={styles.dropdownPlaceholder}>
+                      Select a country first
+                    </Text>
+                    <Image
+                      source={IconImages?.downArrow}
+                      style={styles.dropdownIcon}
+                    />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={{ marginTop: 20 }}>
+                <Text style={styles.fieldLabel}>City</Text>
+                <TextInput
+                  style={styles.textFieldInput}
+                  value={city}
+                  onChangeText={setCity}
+                  placeholder="Enter city"
+                  placeholderTextColor="#000000B2"
+                />
+              </View>
 
               <View style={{ marginTop: 20, position: 'relative' }}>
                 <Text
@@ -434,7 +563,13 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
                 )}
               </View>
 
-              <View style={{ marginTop: 20, position: 'relative' }}>
+              <View
+                style={{
+                  marginTop: 20,
+                  position: 'relative',
+                  zIndex: showTimezoneDropdown ? 50 : 1,
+                }}
+              >
                 <Text style={styles.fieldLabel}>Timezone</Text>
 
                 <TouchableOpacity
@@ -463,7 +598,11 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
 
                 {showTimezoneDropdown && timezones!.length > 0 && (
                   <View style={styles.timezoneDropdown}>
-                    <ScrollView showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                      showsVerticalScrollIndicator={false}
+                      nestedScrollEnabled
+                      keyboardShouldPersistTaps="handled"
+                    >
                       {timezones!.map(tz => (
                         <TouchableOpacity
                           key={tz.name}
@@ -485,7 +624,12 @@ const OnboardingLocationScreen = ({ navigation }: { navigation: any }) => {
             </View>
           </ScrollView>
 
-          <View style={styles.ctaButtonContainer}>
+          <View
+            style={[
+              styles.ctaButtonContainer,
+              { paddingBottom: 16 + insets.bottom },
+            ]}
+          >
             <Button
               title={isLoading ? 'Completing...' : 'Complete Profile'}
               onPress={handleCompleteProfile}
@@ -513,8 +657,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 18,
-    paddingTop: 26,
-    paddingBottom: 24,
+    // paddingTop: 16,
+    // paddingBottom: 24,
   },
   header: {
     minHeight: 120,
@@ -549,7 +693,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   formSection: {
-    marginTop: 80,
+    marginTop: 68,
+    overflow: 'visible',
+  },
+  formScrollContent: {
+    paddingBottom: 140,
   },
   fieldLabel: {
     fontFamily: 'Satoshi-Bold',
@@ -558,6 +706,9 @@ const styles = StyleSheet.create({
     color: '#494949',
     textAlign: 'left',
     width: 111,
+  },
+  selectCountryLabel: {
+    width: 'auto',
   },
   phoneFieldLabel: {
     width: 'auto',
@@ -574,6 +725,24 @@ const styles = StyleSheet.create({
     borderColor: '#EAEAEA',
     paddingHorizontal: 16,
     marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  textFieldInput: {
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    paddingHorizontal: 16,
+    marginTop: 12,
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 14,
+    lineHeight: 15.4,
+    color: '#000000B2',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -663,6 +832,24 @@ const styles = StyleSheet.create({
     elevation: 3,
     zIndex: 2,
   },
+  stateDropdown: {
+    position: 'absolute',
+    top: 78,
+    maxHeight: 180,
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 12,
+    marginTop: 6,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 2,
+  },
   timezoneDropdown: {
     position: 'absolute',
     top: 78,
@@ -675,12 +862,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 6,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    zIndex: 1,
+    zIndex: 200,
   },
   phoneCodeDropdown: {
     position: 'absolute',

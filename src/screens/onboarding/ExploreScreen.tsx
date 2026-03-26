@@ -9,9 +9,11 @@ import {
   TouchableOpacity,
   ImageBackground,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExploreImages } from '../../assets/images/explore';
 
 const ExploreScreen = () => {
+  const insets = useSafeAreaInsets();
   const categories = [
     {
       id: 1,
@@ -207,7 +209,7 @@ const ExploreScreen = () => {
         </View>
 
         {/* Bottom Spacing */}
-        <View style={styles.bottomSpacer} />
+        <View style={[styles.bottomSpacer, { paddingBottom: 16 + insets.bottom }]} />
       </ScrollView>
     </SafeAreaView>
   );

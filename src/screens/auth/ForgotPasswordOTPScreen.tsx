@@ -14,12 +14,14 @@ import {
 } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { useForgotPasswordViewModel } from '../../viewmodels/useForgotPasswordViewModel';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { Images } from '../../assets/images';
 import { normalizeErrorMessage } from '../../utils/errorUtils';
 
 const ForgotPasswordOTPScreen = ({ navigation, route }: { navigation: any; route: any }) => {
   const { email } = route.params;
+  const insets = useSafeAreaInsets();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
@@ -239,7 +241,7 @@ const ForgotPasswordOTPScreen = ({ navigation, route }: { navigation: any; route
             </View>
 
             {/* Buttons */}
-            <View style={styles.buttonContainer}>
+            <View style={[styles.buttonContainer, { paddingBottom: 28 + insets.bottom }]}>
               <TouchableOpacity
                 style={[styles.button, isLoading && { opacity: 0.7 }]}
                 onPress={handleVerifyOTP}

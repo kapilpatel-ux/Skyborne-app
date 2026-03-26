@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { Minus, ShoppingCart, Plus, ChevronLeft } from 'lucide-react-native';
@@ -19,6 +20,7 @@ import { ShopProduct, shopService } from '../../services/shopService';
 type Props = NativeStackScreenProps<RootStackParamList, 'ProductDetails'>;
 
 const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const [product, setProduct] = useState<ShopProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -123,7 +125,12 @@ const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: 300 + insets.bottom },
+        ]}
+      >
         <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
 
         {!!categoryLabel && (
@@ -158,7 +165,7 @@ const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
       </ScrollView>
 
-      <View style={styles.bottomCta}>
+      <View style={[styles.bottomCta, { paddingBottom: 40 + insets.bottom }]}>
         <TouchableOpacity
           style={styles.addBtn}
           disabled={adding}

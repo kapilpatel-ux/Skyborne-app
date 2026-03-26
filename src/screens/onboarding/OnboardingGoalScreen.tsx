@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../components/Button';
 import { useOnboardingStore } from '../../store/onboardingSlice';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -20,6 +21,7 @@ const GOALS = [
 
 export default function OnboardingGoalScreen({ navigation }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number>(3); // Default to 'Join a group challenge' (index 3)
+  const insets = useSafeAreaInsets();
   const { setFirstGoal } = useOnboardingStore();
   const dispatch = useDispatch();
 
@@ -76,7 +78,7 @@ export default function OnboardingGoalScreen({ navigation }: Props) {
           </View>
 
           {/* CTA */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: 16 + insets.bottom }]}>
             <Button title="Continue" onPress={next} />
           </View>
         </View>

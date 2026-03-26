@@ -77,7 +77,7 @@ class AuthService {
   constructor() {
     this.api = axios.create({
       baseURL: API_BASE_URL,
-       timeout: 15000,
+      timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -125,9 +125,22 @@ class AuthService {
    */
   async signupService(payload: SignupPayload): Promise<SignupResponse> {
     try {
-      console.log('Signup payload:', payload);
+      const sanitizedPayload: SignupPayload = {
+        ...payload,
+        ...(payload.googleId ? { googleId: payload.googleId } : {}),
+        ...(payload.appleId ? { appleId: payload.appleId } : {}),
+      };
 
-      const response = await this.api.post('/signup', payload);
+      if (!sanitizedPayload.googleId) {
+        delete sanitizedPayload.googleId;
+      }
+      if (!sanitizedPayload.appleId) {
+        delete sanitizedPayload.appleId;
+      }
+
+      console.log('Signup payload:', sanitizedPayload);
+
+      const response = await this.api.post('/signup', sanitizedPayload);
       
       if (response.data?.success && response.data?.data?.accessToken) {
         // Store tokens in AsyncStorage

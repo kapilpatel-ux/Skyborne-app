@@ -11,8 +11,10 @@ import {
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
 import { useOnboardingStore } from '../../store/onboardingSlice';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const OnboardingHabitsScreen = ({ navigation }: any) => {
+  const insets = useSafeAreaInsets();
   const [waterIntakeIndex, setWaterIntakeIndex] = useState<number | null>(null);
   const [sleepQualityIndex, setSleepQualityIndex] = useState<number | null>(
     null,
@@ -134,7 +136,12 @@ const OnboardingHabitsScreen = ({ navigation }: any) => {
               </View>
             </View>
 
-            <View style={styles.ctaButtonContainer}>
+            <View
+              style={[
+                styles.ctaButtonContainer,
+                { paddingBottom: 16 + insets.bottom },
+              ]}
+            >
               <Button
                 title="Continue"
                 onPress={handleContinue}
@@ -158,7 +165,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 18,
-    paddingTop: 16,
+    // paddingTop: 16,
     paddingBottom: 24,
   },
 

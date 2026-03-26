@@ -1,18 +1,24 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Image, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
 import { GetStartedImages } from '../../assets/images/getstarted';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const GetStartedScreen = ({ navigation }: { navigation: any }) => {
+  const insets = useSafeAreaInsets();
+  const frameScale = Math.min(1, (SCREEN_WIDTH - 24) / 390);
+
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingBottom: 16 + insets.bottom }] }>
           <Text style={styles.title}>Begin Your Skyborne Wellness Journey</Text>
 
           {/* Frames container */}
-          <View style={styles.framesContainer}>
+          <View style={[styles.framesContainer, { transform: [{ scale: frameScale }] }]}> 
             {/* Frame 1 */}
             <Image
               source={GetStartedImages.frame9} // Frame 2147226197
@@ -136,7 +142,7 @@ const GetStartedScreen = ({ navigation }: { navigation: any }) => {
           </Text>
 
 
-          <View style={{ flex: 1 }} />
+          <View style={styles.spacer} />
           <Button
             title="Get Started"
             onPress={() => navigation.navigate('Home')}
@@ -156,16 +162,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 18,
-    paddingTop: 40,
+    paddingTop: 24,
     paddingBottom: 24,
     alignItems: 'center',
+  },
+  spacer: {
+    flex: 1,
   },
   title: {
     marginTop: 56,
     marginLeft:17,
     marginRight:17,
-    height: 66,
-    width: 320,
+    width: '100%',
+    maxWidth: 320,
     fontFamily: 'Satoshi-Bold',
     fontSize: 30,
     lineHeight: 33,
@@ -174,24 +183,25 @@ const styles = StyleSheet.create({
     // opacity: 1,
   },
   description: {
-    marginTop: 121,          
-    width: 348,
-    height: 57,
+    marginTop: 90,
+    width: '100%',
+    maxWidth: 348,
     fontFamily: 'Satoshi-Regular',
     fontSize: 14,
-    lineHeight: 20,          
+    lineHeight: 20,
     textAlign: 'center',
     color: '#050505',
   },
   getStartedButton: {
-    position: 'absolute', 
     alignItems: 'center',
-    width: 346.08,
+    width: '100%',
+    maxWidth: 346.08,
     height: 54.3,
     borderRadius: 40,
     backgroundColor: '#B95E82',
     opacity: 1,
-    top: 700, 
+    alignSelf: 'center',
+    marginTop: 16,
   },
   getStartedButtonText: {
     fontFamily: 'Satoshi-Medium',

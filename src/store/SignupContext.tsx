@@ -13,6 +13,8 @@ export interface Step2Data {
 
 export interface Step3Data {
   phoneNumber: string;
+  state?: string;
+  city?: string;
 }
 
 export interface Step4Data {

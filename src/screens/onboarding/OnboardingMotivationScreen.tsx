@@ -10,6 +10,7 @@ import {
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const motivationOptions = [
   {
@@ -43,6 +44,7 @@ type Props = {
 };
 
 const OnboardingMotivationScreen = ({ navigation }: Props) => {
+  const insets = useSafeAreaInsets();
   const [selectedMotivation, setSelectedMotivation] = useState<any>(null);
 
   const MotivationCard = ({ option, isSelected, onPress }: any) => (
@@ -96,7 +98,12 @@ const OnboardingMotivationScreen = ({ navigation }: Props) => {
             ))}
           </View>
 
-          <View style={styles.ctaButtonContainer}>
+          <View
+            style={[
+              styles.ctaButtonContainer,
+              { paddingBottom: 16 + insets.bottom },
+            ]}
+          >
             <Button
               title="Complete Profile"
               onPress={() => navigation.navigate('OnboardingLocation')}

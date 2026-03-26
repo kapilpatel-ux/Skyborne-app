@@ -10,6 +10,7 @@ import {
   ImageBackground,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExploreImages } from '../../assets/images/explore';
 import BottomNav from '../../components/BottomNav';
 import { useHomeViewModel } from '../../viewmodels/useHomeViewModel';
@@ -23,6 +24,7 @@ interface UserRegion {
 }
 
 const ExploreScreen = ({ navigation }: any) => {
+  const insets = useSafeAreaInsets();
   const TRAINING_VIDEO_URL =
     'https://skyborne-images.s3.ap-south-1.amazonaws.com/skyborne+drop.mp4';
 
@@ -320,6 +322,10 @@ const ExploreScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 160 + insets.bottom },
+        ]}
         showsVerticalScrollIndicator={false}
         onScroll={(e) => {
           const { contentOffset, layoutMeasurement } = e.nativeEvent;
@@ -584,6 +590,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   categoryCardDisabled: {
     opacity: 0.9,

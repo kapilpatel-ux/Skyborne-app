@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../components/Button';
 import { useOnboardingStore } from '../../store/onboardingSlice';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -22,6 +23,7 @@ const OPTIONS = [
 
 export default function OnboardingInspirationScreen({ navigation }: Props) {
   const { setInspiration } = useOnboardingStore();
+  const insets = useSafeAreaInsets();
   const [selectedIndex, setSelectedIndex] = useState<number>(3); // Default to 'Reduce stress' (index 3)
 
   const next = () => {
@@ -74,7 +76,7 @@ export default function OnboardingInspirationScreen({ navigation }: Props) {
         </View>
 
         {/* CTA */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: 16 + insets.bottom }]}>
           <Button title="Continue" onPress={next} />
         </View>
       </View>

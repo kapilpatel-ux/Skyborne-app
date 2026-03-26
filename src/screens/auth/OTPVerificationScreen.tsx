@@ -17,12 +17,14 @@ import { useAuthViewModel } from '../../viewmodels/useAuthViewModel';
 import Toast from 'react-native-toast-message';
 import RNOtpVerify from 'react-native-otp-auto-fill';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { normalizeErrorMessage } from '../../utils/errorUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OTP'>;
 
 export default function OTPVerificationScreen({ navigation, route }: Props) {
   const { sendOtp, verifyOtp } = useAuthViewModel();
+  const insets = useSafeAreaInsets();
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
@@ -190,8 +192,15 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
         inputs.current[0]?.focus();
       }
     } catch (err: any) {
+      const errorMsg = err?.message || 'OTP verification failed';
+      console.error('OTP Verification Error:', {
+        message: errorMsg,
+        payloadEmail: userEmail,
+        otpLength: code.length,
+        fullError: err,
+      });
       showToast(
-        normalizeErrorMessage(err?.message, 'OTP verification failed'),
+        normalizeErrorMessage(errorMsg, 'OTP verification failed'),
         'error'
       );
       setOtp(['', '', '', '', '', '']);
@@ -272,6 +281,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
           style={[
             styles.continueButton,
             (isVerifying || isSendingOtp) && { opacity: 0.6 },
+            { marginBottom: 28 + insets.bottom },
           ]}
           onPress={onVerify}
           disabled={isVerifying || isSendingOtp}
@@ -368,7 +378,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 'auto',
-    marginBottom: 40,
   },
   continueText: {
     color: '#FFF',

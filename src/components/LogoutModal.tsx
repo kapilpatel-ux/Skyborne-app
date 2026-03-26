@@ -103,17 +103,16 @@ const styles = StyleSheet.create({
   /* BUTTON ROW */
   actions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 28,
-    paddingRight: 60,
   },
 
   /* CANCEL */
   cancelBtn: {
-    paddingHorizontal: 16,
+    minWidth: 96,
     paddingVertical: 10,
-    marginRight: 10,
-    marginLeft: 10,
+    marginHorizontal: 6,
     borderWidth: 1,
     borderColor: '#a7a1a1',
     borderRadius: 6,
@@ -129,9 +128,12 @@ const styles = StyleSheet.create({
   /* CONFIRM */
   confirmBtn: {
     backgroundColor: '#B95E82',
-    paddingHorizontal: 18,
+    minWidth: 96,
     paddingVertical: 10,
+    marginHorizontal: 6,
     borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   confirmText: {
     fontSize: 14,

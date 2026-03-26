@@ -8,7 +8,7 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../components/Button';
 import GradientBackground from '../../components/GradientBackground';
 import { FontFamilies} from '../../constants/fonts';
@@ -16,6 +16,7 @@ import { FontFamilies} from '../../constants/fonts';
 const { width } = Dimensions.get('window');
 
 export default function WelcomeScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const handleGetStarted = () => {
     console.log('Get Started Pressed!');
     navigation.replace('AuthOptions');
@@ -39,7 +40,7 @@ export default function WelcomeScreen({ navigation }: any) {
             </View>
 
             {/* Content Section */}
-            <View style={styles.contentSection}>
+            <View style={[styles.contentSection, { paddingBottom: 16 + insets.bottom }] }>
               {/* Headline */}
               <Text style={styles.headline}>Welcome to Skyborne Drop</Text>
 
@@ -115,6 +116,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 100,
     backgroundColor: '#B95E82',
+    marginTop: 'auto',
   },
   getStartedButtonText: {
     color: '#FFFFFF',

@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { Minus, Plus, Trash2, ShoppingBag, ChevronLeft, ArrowRight } from 'lucide-react-native';
@@ -32,6 +33,7 @@ const C = {
 };
 
 const CartScreen: React.FC<Props> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [cart, setCart] = React.useState<CartData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [fetching, setFetching] = React.useState(false);
@@ -246,12 +248,15 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
         data={items}
         renderItem={renderItem}
         keyExtractor={item => item.product}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: 340 + insets.bottom },
+        ]}
         onRefresh={() => { setFetching(true); loadCart(); }}
         refreshing={fetching}
         showsVerticalScrollIndicator={false}
       />
-      <View style={styles.summaryCard}>
+      <View style={[styles.summaryCard, { paddingBottom: 40 + insets.bottom }]}>
         <View style={styles.summaryInner}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>

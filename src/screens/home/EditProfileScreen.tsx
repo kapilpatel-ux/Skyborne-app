@@ -9,20 +9,52 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { ChevronLeft, ArrowLeft } from 'lucide-react-native';
 import TextInput from '../../components/TextInput';
 import Button from '../../components/Button';
+import { Country, State } from 'country-state-city';
 import { FontFamilies } from '../../constants/fonts';
 import GradientBackground from '../../components/GradientBackground';
 import { Images } from '../../assets/images';
+import { IconImages } from '../../assets/icons';
 import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProfile'>;
 
+const ALL_COUNTRIES = Country.getAllCountries();
+const COUNTRY_OPTIONS = ALL_COUNTRIES.map((country) => ({
+  name: country.name,
+  code: country.isoCode,
+}));
+const COUNTRY_NAME_BY_CODE = new Map(
+  ALL_COUNTRIES.map((country) => [country.isoCode, country.name]),
+);
+const COUNTRY_CODE_BY_NAME = new Map(
+  ALL_COUNTRIES.map((country) => [country.name.toLowerCase(), country.isoCode]),
+);
+
+const resolveCountryCode = (value: string, fallback = '') => {
+  if (!value) return fallback;
+  const trimmed = value.trim();
+  if (/^[a-z]{2}$/i.test(trimmed)) return trimmed.toUpperCase();
+  return COUNTRY_CODE_BY_NAME.get(trimmed.toLowerCase()) || fallback || '';
+};
+
+const resolveCountryName = (value: string) => {
+  if (!value) return '';
+  const trimmed = value.trim();
+  if (/^[a-z]{2}$/i.test(trimmed)) {
+    return COUNTRY_NAME_BY_CODE.get(trimmed.toUpperCase()) || trimmed;
+  }
+  return trimmed;
+};
+
 const EditProfileScreen = ({ navigation }: Props) => {
+  const insets = useSafeAreaInsets();
   // Initialize with user data - replace with actual user data from your store/context
   // const [firstName, setFirstName] = useState(user?.firstName ?? '');
   // const [lastName, setLastName] = useState(user?.lastName ?? '');
@@ -31,6 +63,11 @@ const EditProfileScreen = ({ navigation }: Props) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [country, setCountry] = useState('');
+  const [stateName, setStateName] = useState('');
+  const [city, setCity] = useState('');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [showStateDropdown, setShowStateDropdown] = useState(false);
 
 
   const { user, loadProfile, updateProfile } :any= useProfileViewModel();
@@ -38,13 +75,21 @@ const EditProfileScreen = ({ navigation }: Props) => {
   const [errors, setErrors] = useState({
     firstName: '',
     lastName: '',
+    city: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const normalizedCountryCode = /^[a-z]{2}$/i.test(country.trim())
+    ? country.trim().toUpperCase()
+    : '';
+  const stateOptions = normalizedCountryCode
+    ? State.getStatesOfCountry(normalizedCountryCode)
+    : [];
+
   const validateForm = () => {
     let isValid = true;
-    const newErrors = { firstName: '', lastName: '' };
+    const newErrors = { firstName: '', lastName: '', city: '' };
 
     // Validate First Name
     if (!firstName.trim()) {
@@ -61,6 +106,12 @@ const EditProfileScreen = ({ navigation }: Props) => {
       isValid = false;
     }
 
+    // Validate City
+    if (!city.trim()) {
+      newErrors.city = 'City is required';
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -71,6 +122,9 @@ const EditProfileScreen = ({ navigation }: Props) => {
     const payload = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
+      country: country.trim(),
+      state: stateName.trim(),
+      city: city.trim(),
     };
 
     setIsSubmitting(true);
@@ -91,10 +145,18 @@ const EditProfileScreen = ({ navigation }: Props) => {
   }, []);
 
   useEffect(() => {
-    if(user) {
+    if (user) {
+      const resolvedCountryCode = resolveCountryCode(
+        user.country ?? '',
+        user.countryCode ?? '',
+      );
+
       setFirstName(user.firstName ?? '');
       setLastName(user.lastName ?? '');
       setEmail(user.email ?? '');
+      setCountry(resolvedCountryCode || user.country || '');
+      setStateName(user.state ?? '');
+      setCity(user.city ?? '');
     }
   }, [user]);
 
@@ -118,7 +180,10 @@ const EditProfileScreen = ({ navigation }: Props) => {
           <ScrollView 
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: 120 + insets.bottom },
+            ]}
           >
             {/* Profile Image Section */}
             {/* <View style={styles.profileImageSection}>
@@ -174,6 +239,155 @@ const EditProfileScreen = ({ navigation }: Props) => {
                 ) : null}
               </View>
 
+              {/* Country */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Country</Text>
+                <View style={{ position: 'relative' }}>
+                  <TouchableOpacity
+                    style={styles.dropdownInput}
+                    onPress={() =>
+                      setShowCountryDropdown(!showCountryDropdown)
+                    }
+                    disabled={isSubmitting}
+                  >
+                    <Text
+                      style={
+                        country ? styles.dropdownText : styles.dropdownPlaceholder
+                      }
+                    >
+                      {country ? resolveCountryName(country) : 'Select an option'}
+                    </Text>
+                    <Image
+                      source={IconImages?.downArrow}
+                      style={styles.dropdownIcon}
+                    />
+                  </TouchableOpacity>
+
+                  {showCountryDropdown && (
+                    <View style={styles.dropdownList}>
+                      <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        nestedScrollEnabled
+                      >
+                        {COUNTRY_OPTIONS.map(item => (
+                          <TouchableOpacity
+                            key={item.code}
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setCountry(item.code);
+                              setStateName('');
+                              setShowStateDropdown(false);
+                              setShowCountryDropdown(false);
+                            }}
+                          >
+                            <Text style={styles.dropdownText}>
+                              {item.name} ({item.code})
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* State */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>State</Text>
+                <View style={{ position: 'relative' }}>
+                  {country ? (
+                    stateOptions.length > 0 ? (
+                      <>
+                        <TouchableOpacity
+                          style={styles.dropdownInput}
+                          onPress={() =>
+                            setShowStateDropdown(!showStateDropdown)
+                          }
+                          disabled={isSubmitting}
+                        >
+                          <Text
+                            style={
+                              stateName
+                                ? styles.dropdownText
+                                : styles.dropdownPlaceholder
+                            }
+                          >
+                            {stateName || 'Select an option'}
+                          </Text>
+                          <Image
+                            source={IconImages?.downArrow}
+                            style={styles.dropdownIcon}
+                          />
+                        </TouchableOpacity>
+
+                        {showStateDropdown && (
+                          <View style={styles.dropdownList}>
+                            <ScrollView
+                              showsVerticalScrollIndicator={false}
+                              nestedScrollEnabled
+                            >
+                              {stateOptions.map(state => (
+                                <TouchableOpacity
+                                  key={`${state.isoCode}-${state.name}`}
+                                  style={styles.dropdownItem}
+                                  onPress={() => {
+                                    setStateName(state.name);
+                                    setShowStateDropdown(false);
+                                  }}
+                                >
+                                  <Text style={styles.dropdownText}>
+                                    {state.name}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))}
+                            </ScrollView>
+                          </View>
+                        )}
+                      </>
+                    ) : (
+                      <TextInput
+                        value={stateName}
+                        onChangeText={setStateName}
+                        placeholder="Enter state"
+                        editable={!isSubmitting}
+                      />
+                    )
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.dropdownInput, styles.dropdownInputDisabled]}
+                      disabled
+                    >
+                      <Text style={styles.dropdownPlaceholder}>
+                        Select a country first
+                      </Text>
+                      <Image
+                        source={IconImages?.downArrow}
+                        style={styles.dropdownIcon}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {/* City */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>City*</Text>
+                <TextInput
+                  value={city}
+                  onChangeText={(text) => {
+                    setCity(text);
+                    if (errors.city) {
+                      setErrors({ ...errors, city: '' });
+                    }
+                  }}
+                  placeholder="Enter city"
+                  editable={!isSubmitting}
+                />
+                {errors.city ? (
+                  <Text style={styles.errorText}>{errors.city}</Text>
+                ) : null}
+              </View>
+
               {/* Email (Not Editable) */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Email Address</Text>
@@ -194,7 +408,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
             </View>
 
             {/* Save Button */}
-            <View style={styles.buttonContainer}>
+            <View style={[styles.buttonContainer, { marginBottom: 24 + insets.bottom }]}>
               <Button
                 title={isSubmitting ? 'Saving...' : 'Save Changes'}
                 onPress={handleSave}
@@ -294,6 +508,59 @@ const styles = StyleSheet.create({
     color: '#494949',
     marginBottom: 8,
     fontFamily: FontFamilies.SatoshiMedium,
+  },
+  dropdownInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    height: 44,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e6e6e6',
+    backgroundColor: '#FFFFFF',
+  },
+  dropdownInputDisabled: {
+    backgroundColor: '#F5F5F5',
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: '#494949',
+    fontFamily: FontFamilies.SatoshiMedium,
+  },
+  dropdownPlaceholder: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontFamily: FontFamilies.SatoshiMedium,
+  },
+  dropdownIcon: {
+    width: 16,
+    height: 16,
+    tintColor: '#8A95A5',
+  },
+  dropdownList: {
+    position: 'absolute',
+    top: 50,
+    width: '100%',
+    maxHeight: 200,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#e6e6e6',
+    borderRadius: 8,
+    marginTop: 6,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 10,
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F2',
   },
   disabledInputContainer: {
     position: 'relative',

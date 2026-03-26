@@ -28,6 +28,7 @@ import SocketService from '../../services/socketService';
 import { fetchUserProfile } from '../../store/homeSlice';
 import { RootState } from '../../store';
 import { SubscriptionImages } from '../../assets/images/subscriptions';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ✅ PLAN CONFIG WITH MONTHLY/YEARLY PRICING
 const PLAN_CONFIG = {
@@ -115,6 +116,7 @@ const goldSubOptions = [
 ];
 
 const PricingScreen = ({ navigation }: { navigation: any }) => {
+  const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('diamond');
   const [showGoldModal, setShowGoldModal] = useState(false);
   const [selectedGoldOption, setSelectedGoldOption] = useState<number | null>(null);
@@ -660,7 +662,12 @@ const PricingScreen = ({ navigation }: { navigation: any }) => {
         </ScrollView>
 
         {/* CTA Button - Fixed at Bottom */}
-        <View style={styles.ctaButtonContainer}>
+        <View
+          style={[
+            styles.ctaButtonContainer,
+            { paddingBottom: 16 + insets.bottom },
+          ]}
+        >
           <Button
             title={
               isProcessingPayment ? 'Processing...' : 'Continue to Payment'

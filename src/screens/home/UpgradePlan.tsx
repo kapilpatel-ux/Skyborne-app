@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
@@ -91,6 +92,7 @@ const goldSubOptions = [
 ];
 
 const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
+  const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('gold-yoga');
   const [showGoldModal, setShowGoldModal] = useState(false);
   const [selectedGoldOption, setSelectedGoldOption] = useState<number | null>(null);
@@ -389,7 +391,7 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         plan: selectedPlan,
         email: email,
         phone: phone,
-        source: 'app',
+        source: 'app' as const,
         billingType: billingType,
       };
 
@@ -562,7 +564,10 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         </View>
 
         <ScrollView 
-          contentContainerStyle={styles.scrollContainer}
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { paddingBottom: 120 + insets.bottom },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.container}>
@@ -648,7 +653,12 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
         </ScrollView>
 
         {/* CTA Button - Fixed at Bottom */}
-        <View style={styles.ctaButtonContainer}>
+        <View
+          style={[
+            styles.ctaButtonContainer,
+            { paddingBottom: 32 + insets.bottom },
+          ]}
+        >
           <Button
             title={isProcessingPayment ? 'Processing...' : 'Continue to Payment'}
             onPress={handlePaymentTransaction}

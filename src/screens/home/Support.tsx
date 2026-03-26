@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  ImageSourcePropType,
   ActivityIndicator,
 } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
@@ -20,10 +19,14 @@ interface ContactOption {
   id: number;
   title: string;
   subtitle: string;
-  icon: string;
+  icon: number;
 }
 
 const SupportScreen = ({ navigation }: { navigation: any }) => {
+  const emailSupportIcon = require('../../assets/images/emailIcon.png');
+  const rightArrowIcon = require('../../assets/images/Right.png');
+  const faqQuestionIcon = require('../../assets/images/questionIcon.png');
+
   const dispatch = useDispatch<any>();
   const { items: faqItems, status, error } = useSelector(
     (state: RootState) => state.faq
@@ -41,7 +44,7 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
       id: 2,
       title: 'Email Support',
       subtitle: 'info@skybornedrop.com',
-      icon: Images.emailIcon,
+      icon: emailSupportIcon,
     },
   ];
 
@@ -70,7 +73,7 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
             <View key={option.id}>
               <TouchableOpacity style={styles.contactItem}>
                 <View style={styles.contactIconContainer}>
-                  <Image source={{ uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/emailIcon.png' }} 
+                  <Image source={option.icon}
                     style={styles.contactIcon} 
                     resizeMode="contain" 
                   />
@@ -79,7 +82,7 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
                   <Text style={styles.contactTitle}>{option.title}</Text>
                   <Text style={styles.contactSubtitle}>{option.subtitle}</Text>
                 </View>
-                <Image source={{uri:Images.rightIcon}} />
+                <Image source={rightArrowIcon} />
               </TouchableOpacity>
               {index < contactOptions.length - 1 && (
                 <View style={styles.divider} />
@@ -105,7 +108,7 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
           <View style={styles.faqList}>
             {faqItems.map((item) => (
               <View key={item.id} style={styles.faqCard}>
-                <Image source={{uri:Images.questionIcon}} style={styles.faqIcon} />
+                <Image source={faqQuestionIcon} style={styles.faqIcon} />
                 <View style={styles.faqContent}>
                   <Text style={styles.faqQuestion}>{item.question}</Text>
                   <Text style={styles.faqAnswer}>{item.answer}</Text>

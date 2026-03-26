@@ -204,7 +204,7 @@ const ProductsScreen = () => {
   );
   const [searchFocused, setSearchFocused] = useState(false);
 
-  const numColumns = width >= 900 ? 3 : width < 390 ? 1 : 2;
+  const numColumns = width >= 900 ? 3 : 2;
   const skeletonItems = useMemo(
     () => Array.from({ length: numColumns * 4 }, (_, index) => `skeleton-${index}`),
     [numColumns],

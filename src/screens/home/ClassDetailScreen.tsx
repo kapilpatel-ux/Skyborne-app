@@ -12,6 +12,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { ArrowLeft, Video, VideoOff } from 'lucide-react-native';
@@ -41,6 +42,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
   route,
   navigation,
 }) => {
+  const insets = useSafeAreaInsets();
   const classId = route?.params?.classId;
 
   const [classDetails, setClassDetails] = useState<any>(null);
@@ -512,11 +514,23 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
           </View>
 
           {/* Spacer for button */}
-          <View style={{ height: 100 }} />
+          <View
+            style={{
+              height: (showRecordingCta ? 132 : 120) + insets.bottom,
+            }}
+          />
         </ScrollView>
 
         {/* Join Class Button - Fixed at Bottom */}
-        <View style={styles.buttonContainer}>
+        <View
+          style={[
+            styles.buttonContainer,
+            {
+              paddingBottom:
+                (showRecordingCta ? 28 : 20) + insets.bottom,
+            },
+          ]}
+        >
           <TouchableOpacity
             style={[
               styles.joinButton,
@@ -860,7 +874,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   joinButton: {
-    width: 346.08,
+    width: '100%',
+    maxWidth: 346.08,
     height: 54.3,
     backgroundColor: '#B95E82',
     borderRadius: 40,

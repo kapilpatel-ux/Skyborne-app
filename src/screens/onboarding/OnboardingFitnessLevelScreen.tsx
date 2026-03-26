@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GradientBackground from '../../components/GradientBackground';
 import Button from '../../components/Button';
 import { useOnboardingStore } from '../../store/onboardingSlice';
@@ -28,6 +29,7 @@ const fitnessLevels = [
 
 const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
   const [selectedIndex, setSelectedIndex] = useState<number>(1); // Default to 'Intermediate' (index 1)
+  const insets = useSafeAreaInsets();
   const { setFitnessLevel } = useOnboardingStore();
 
   const FitnessCard = ({ level, isSelected, onPress }: any) => (
@@ -87,7 +89,7 @@ const OnboardingFitnessLevelScreen = ({ navigation }: any) => {
             ))}
           </View>
 
-          <View style={styles.buttonContainer}>
+          <View style={[styles.buttonContainer, { paddingBottom: 16 + insets.bottom }]}>
             <Button title="Continue" onPress={handleContinue} />
           </View>
         </View>

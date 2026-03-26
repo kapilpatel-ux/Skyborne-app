@@ -283,12 +283,14 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   exploreButton: {
-    width: 346.08,
+    width: '100%',
+    maxWidth: 346.08,
     height: 54.3,
     backgroundColor: '#B95E82',
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
   },
   exploreButtonText: {
     fontFamily: 'Satoshi-Medium',

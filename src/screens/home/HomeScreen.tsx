@@ -5,11 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   TextInput,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
 import GradientBackground from '../../components/GradientBackground';
 import { HomeImages } from '../../assets/images/home';
@@ -141,6 +141,7 @@ const formatDateWithTimezone = (
 };
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const MAX_WATER = 2.5;
   const STEP = 0.25;
 
@@ -582,7 +583,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { paddingBottom: 160 + insets.bottom },
+          ]}
         >
           {/* Top Header with Menu and Search */}
           <View style={styles.header}>
@@ -1091,7 +1095,7 @@ const styles = StyleSheet.create({
     color: '#050505',
   },
   wellnessCard: {
-    width: 380,
+    width: '100%',
     height: 250,
     backgroundColor: '#B95E82',
     borderRadius: 12,
@@ -1099,6 +1103,7 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     paddingRight: 12,
     marginBottom: 24,
+    alignSelf: 'center',
   },
   wellnessTitle: {
     fontFamily: 'Satoshi-Regular',

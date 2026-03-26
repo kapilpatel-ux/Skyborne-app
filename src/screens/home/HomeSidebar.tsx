@@ -7,6 +7,7 @@ import {
   Modal,
   Image,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
@@ -83,67 +84,73 @@ const HomeSidebar: React.FC<HomeSidebarProps> = ({
         {/* Sidebar Content - LEFT SIDE */}
         <View style={styles.sidebar}>
           <SafeAreaView style={styles.safeArea}>
-            {/* Close Button */}
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeIcon}>✕</Text>
-            </TouchableOpacity>
-
-            {/* User Profile Section */}
-            <View style={styles.profileSection}>
-              {user?.profileImage ? (
-                <Image
-                  source={{ uri: user.profileImage }}
-                  style={styles.profileImage}
-                />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {getInitials(user?.firstName, user?.lastName)}
-                  </Text>
-                </View>
-              )}
-              <Text style={styles.userName}>
-                {user?.firstName || 'Guest'} {user?.lastName || ''}
-              </Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.menuContainer}>
-              {menuItems.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.menuItem,
-                    activeScreen === item.id && styles.menuItemActive,
-                  ]}
-                  onPress={() => handleNavigation(item.screen)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.menuText,
-                      activeScreen === item.id && styles.menuTextActive,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                  {activeScreen === item.id && (
-                    <View style={styles.activeIndicator} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={styles.logoutContainer}>
-              <TouchableOpacity
-                style={styles.logoutItem}
-                activeOpacity={0.7}
-                onPress={() => setLogoutVisible(true)}
-              >
-                <Text style={styles.logoutText}>Logout</Text>
-                <LogOutIcon size={18} color="#B95E82" />
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Close Button */}
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text style={styles.closeIcon}>✕</Text>
               </TouchableOpacity>
-            </View>
+
+              {/* User Profile Section */}
+              <View style={styles.profileSection}>
+                {user?.profileImage ? (
+                  <Image
+                    source={{ uri: user.profileImage }}
+                    style={styles.profileImage}
+                  />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {getInitials(user?.firstName, user?.lastName)}
+                    </Text>
+                  </View>
+                )}
+                <Text style={styles.userName}>
+                  {user?.firstName || 'Guest'} {user?.lastName || ''}
+                </Text>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.menuContainer}>
+                {menuItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.menuItem,
+                      activeScreen === item.id && styles.menuItemActive,
+                    ]}
+                    onPress={() => handleNavigation(item.screen)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.menuText,
+                        activeScreen === item.id && styles.menuTextActive,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                    {activeScreen === item.id && (
+                      <View style={styles.activeIndicator} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.logoutContainer}>
+                <TouchableOpacity
+                  style={styles.logoutItem}
+                  activeOpacity={0.7}
+                  onPress={() => setLogoutVisible(true)}
+                >
+                  <Text style={styles.logoutText}>Logout</Text>
+                  <LogOutIcon size={18} color="#B95E82" />
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </SafeAreaView>
         </View>
 
@@ -186,6 +193,13 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 8,
   },
   closeButton: {
     alignSelf: 'flex-end',

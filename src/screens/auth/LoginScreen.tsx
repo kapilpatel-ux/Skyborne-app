@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform, BackHandler } from 'react-native';
 import { Formik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import TextInput from '../../components/TextInput';
@@ -20,6 +20,7 @@ import { IconImages } from '../../assets/icons';
 import { clearError, setUser } from '../../store/authSlice';
 import { socialLoginService } from '../../services/authService';
 import { normalizeErrorMessage } from '../../utils/errorUtils';
+import { useFocusEffect } from '@react-navigation/native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -52,6 +53,26 @@ export default function LoginScreen({ navigation }: Props) {
   const [loginError, setLoginError] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate('WelcomeScreen');
+        }
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
+
+      return () => subscription.remove();
+    }, [navigation]),
+  );
 
  useEffect(() => {
     configureGoogleSignIn();
@@ -267,7 +288,15 @@ const onSubmit = async (
       <View style={styles.screen}>
         {/* APP BAR */}
         <View style={styles.appBar}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('WelcomeScreen');
+              }
+            }}
+          >
             <Image
               source={{uri:'https://skyborne-images.s3.ap-south-1.amazonaws.com/back-arrow.png'}}
               style={{ width: 16, height: 16, marginHorizontal: 16 }}
@@ -341,6 +370,7 @@ const onSubmit = async (
                   <Text style={styles.label}>Password*</Text>
                   <View style={styles.passwordContainer}>
                     <TextInput
+                      style={styles.passwordInput}
                       secureTextEntry={!showPassword}
                       value={values.password}
                       onChangeText={(text) => {

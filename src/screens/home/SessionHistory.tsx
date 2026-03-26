@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   FlatList,
   TouchableOpacity,
   Image,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Star, Dumbbell, ArrowLeft, Video } from 'lucide-react-native';
 import { Images } from '../../assets/images';
 import { usePastSessionsViewModel } from '../../viewmodels/usePastSessionsViewModel';
@@ -18,6 +18,7 @@ import VideoPlayer from '../common/VideoPlayer';
 
 const ITEMS_PER_PAGE = 10;
 const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
+  const insets = useSafeAreaInsets();
   // Use usePastSessionsViewModel
   const { isLoading: isInitialLoading, fetchSessions } =
     usePastSessionsViewModel();
@@ -88,8 +89,8 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
     setIsLoadingMore(false);
   }, [fetchSessions, hasMoreItems, isLoadingMore, nextSkip]);
 
-  const handleSessionPress = (sessionId: string) => {
-    navigation.navigate('SessionDetails', { sessionId });
+  const handleSessionPress = (classId: string) => {
+    navigation.navigate('ClassDetails', { classId });
   };
 
   const handleWatchRecording = async (session: any) => {
@@ -250,7 +251,10 @@ const SessionHistoryScreen = ({ navigation }: { navigation: any }) => {
           renderEmptyState()
         ) : (
           <FlatList
-            contentContainerStyle={styles.sessionListContainer}
+            contentContainerStyle={[
+              styles.sessionListContainer,
+              { paddingBottom: 120 + insets.bottom },
+            ]}
             data={displayedItems}
             keyExtractor={item => item._id}
             renderItem={renderSessionItem}
@@ -351,12 +355,14 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   exploreButton: {
-    width: 346.08,
+    width: '100%',
+    maxWidth: 346.08,
     height: 54.3,
     backgroundColor: '#B95E82',
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
   },
   exploreButtonText: {
     fontFamily: 'Satoshi-Medium',

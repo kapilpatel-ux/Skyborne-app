@@ -8,7 +8,6 @@ import {
   SafeAreaView,
   ScrollView,
   Modal,
-  Dimensions,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import GradientBackground from '../../components/GradientBackground';
@@ -28,8 +27,6 @@ interface UserRegion {
   timezone: string;
   region: string;
 }
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const categories = [
   {
@@ -530,8 +527,7 @@ const styles = StyleSheet.create({
     color: '#050505',
   },
   wellnessCard: {
-    width: SCREEN_WIDTH - 32,
-    maxWidth: 380,
+    width: '100%',
     height: 250,
     backgroundColor: '#B95E82',
     borderRadius: 12,
@@ -539,6 +535,7 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     paddingRight: 12,
     marginBottom: 24,
+    alignSelf: 'center',
   },
   wellnessTitle: {
     fontFamily: 'Satoshi-Regular',
@@ -822,7 +819,8 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '100%',
     maxWidth: 337,
-    height: 404,
+    minHeight: 360,
+    maxHeight: '85%',
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     position: 'relative',
@@ -864,7 +862,8 @@ const styles = StyleSheet.create({
   viewPackagesButton: {
     position: 'absolute',
     bottom: 41,
-    width: 292,
+    width: '86%',
+    maxWidth: 292,
     height: 53,
     backgroundColor: '#B95E82',
     borderRadius: 500,

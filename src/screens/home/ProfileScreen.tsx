@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import LogoutModal from './../../components/LogoutModal';
@@ -17,6 +17,7 @@ import {
   Pressable,
   Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MessageCircleMore } from 'lucide-react-native';
 import { SvgUri } from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
@@ -26,6 +27,8 @@ import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 import { useState, useEffect } from 'react';
 import { removeAuthToken } from '../../services/authService';
 import { profileService } from '../../services/profileService';
+import { useDispatch } from 'react-redux';
+import { logout as logoutAction } from '../../store/authSlice';
 
 interface StatCard {
   id: number;
@@ -56,11 +59,13 @@ interface SettingItem {
 }
 
 const ProfileScreen = () => {
+  const insets = useSafeAreaInsets();
   type ProfileScreenNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
     'Profile'
   >;
   const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const dispatch = useDispatch();
   const COMMON_URL = 'https://skyborne-images.s3.ap-south-1.amazonaws.com';
 
   const { user, dashboardStats, loadProfile }: any = useProfileViewModel();
@@ -385,6 +390,10 @@ const ProfileScreen = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 160 + insets.bottom },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -583,8 +592,14 @@ const ProfileScreen = () => {
           onClose={() => setShowLogout(false)}
           onConfirm={async () => {
             await removeAuthToken();
+            dispatch(logoutAction());
             setShowLogout(false);
-            navigation.replace('Login');
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              }),
+            );
           }}
         />
       )}
@@ -641,6 +656,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   header: {
     flexDirection: 'row',

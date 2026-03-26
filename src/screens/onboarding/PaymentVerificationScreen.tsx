@@ -17,6 +17,7 @@ import {
   clearPaymentCache,
   getStoredPaymentDetails,
 } from '../../services/paymentService';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface PaymentData {
   orderRef: string;
@@ -37,6 +38,7 @@ const PaymentVerification = ({ navigation }: { navigation: any }) => {
   const [autoRetrying, setAutoRetrying] = useState(false);
   const dispatch = useDispatch();
 
+  const insets = useSafeAreaInsets();
   const hasVerified = useRef(false);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -174,7 +176,7 @@ const PaymentVerification = ({ navigation }: { navigation: any }) => {
   if (loading || autoRetrying) {
     return (
       <GradientBackground>
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { paddingBottom: 16 + insets.bottom }] }>
           <View style={styles.centerContent}>
             <ActivityIndicator size="large" color="#B95E82" />
             <Text style={styles.loadingText}>
@@ -208,7 +210,7 @@ const PaymentVerification = ({ navigation }: { navigation: any }) => {
   if (error) {
     return (
       <GradientBackground>
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { paddingBottom: 16 + insets.bottom }] }>
           <View style={styles.centerContent}>
             <Text style={styles.errorIcon}>⚠️</Text>
             <Text style={styles.errorTitle}>Verification Error</Text>
@@ -261,7 +263,7 @@ const PaymentVerification = ({ navigation }: { navigation: any }) => {
   if (paymentData && !paymentData.success) {
     return (
       <GradientBackground>
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { paddingBottom: 16 + insets.bottom }] }>
           <View style={styles.centerContent}>
             <Text style={styles.failedIcon}>❌</Text>
             <Text style={styles.failedTitle}>Payment {paymentData.status}</Text>
@@ -321,7 +323,7 @@ const PaymentVerification = ({ navigation }: { navigation: any }) => {
   // Payment success state
   return (
     <GradientBackground>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { paddingBottom: 16 + insets.bottom }] }>
         <View style={styles.centerContent}>
           <Text style={styles.successIcon}>✅</Text>
           <Text style={styles.successTitle}>Payment Successful!</Text>

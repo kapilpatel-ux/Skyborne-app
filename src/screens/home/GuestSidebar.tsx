@@ -7,6 +7,7 @@ import {
   Modal,
   Image,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
@@ -54,71 +55,77 @@ const GuestSidebar: React.FC<GuestSidebarProps> = ({
         {/* Sidebar Content */}
         <View style={styles.sidebar}>
           <SafeAreaView style={styles.safeArea}>
-            {/* Close Button */}
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeIcon}>✕</Text>
-            </TouchableOpacity>
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Close Button */}
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text style={styles.closeIcon}>✕</Text>
+              </TouchableOpacity>
 
-            {/* Guest Profile Section */}
-            <View style={styles.profileSection}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>👤</Text>
-              </View>
-              <Text style={styles.userName}>Guest Explorer</Text>
-              <Text style={styles.guestSubtext}>
-                Join us to unlock all features
-              </Text>
-            </View>
-
-            {/* Divider */}
-            <View style={styles.divider} />
-
-            {/* Menu Items */}
-            <View style={styles.menuContainer}>
-              {menuItems.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.menuItem,
-                    activeScreen === item.id && styles.menuItemActive,
-                  ]}
-                  onPress={() => handleNavigation(item.screen)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.menuText,
-                      activeScreen === item.id && styles.menuTextActive,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                  {activeScreen === item.id && (
-                    <View style={styles.activeIndicator} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Call to Action */}
-            <View style={styles.ctaContainer}>
-              <View style={styles.ctaCard}>
-                <Text style={styles.ctaTitle}>Ready to Start?</Text>
-                <Text style={styles.ctaDescription}>
-                  Sign up now and unlock your wellness journey
+              {/* Guest Profile Section */}
+              <View style={styles.profileSection}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>👤</Text>
+                </View>
+                <Text style={styles.userName}>Guest Explorer</Text>
+                <Text style={styles.guestSubtext}>
+                  Join us to unlock all features
                 </Text>
-                <TouchableOpacity
-                  style={styles.ctaButton}
-                  onPress={() => {
-                    onClose();
-                    navigation.navigate('Signup');
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.ctaButtonText}>Get Started</Text>
-                </TouchableOpacity>
               </View>
-            </View>
+
+              {/* Divider */}
+              <View style={styles.divider} />
+
+              {/* Menu Items */}
+              <View style={styles.menuContainer}>
+                {menuItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.menuItem,
+                      activeScreen === item.id && styles.menuItemActive,
+                    ]}
+                    onPress={() => handleNavigation(item.screen)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.menuText,
+                        activeScreen === item.id && styles.menuTextActive,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                    {activeScreen === item.id && (
+                      <View style={styles.activeIndicator} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Call to Action */}
+              <View style={styles.ctaContainer}>
+                <View style={styles.ctaCard}>
+                  <Text style={styles.ctaTitle}>Ready to Start?</Text>
+                  <Text style={styles.ctaDescription}>
+                    Sign up now and unlock your wellness journey
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.ctaButton}
+                    onPress={() => {
+                      onClose();
+                      navigation.navigate('Signup');
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.ctaButtonText}>Get Started</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </SafeAreaView>
         </View>
         {/* Backdrop - closes sidebar when tapped */}
@@ -155,6 +162,13 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 8,
   },
   closeButton: {
     alignSelf: 'flex-end',
