@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { SvgUri } from 'react-native-svg';
 import { SubscriptionImages } from '../../assets/images/subscriptions';
 import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 import { useState, useEffect } from 'react';
@@ -32,6 +33,7 @@ interface SettingOption {
   id: number;
   title: string;
   icon: ImageSourcePropType;
+  iconSvgUri?: string;
   page?: string;
   onPress?: () => void;
 }
@@ -240,6 +242,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       id: 1,
       title: 'Upgrade Plan',
       icon: SubscriptionImages.upgradeIcon,
+      iconSvgUri: SubscriptionImages.upgradeIconSvg,
       page: 'UpgradePlan',
     },
     ...(canEditCard
@@ -256,6 +259,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       id: 3,
       title: 'Payment History',
       icon: SubscriptionImages.paymentIcon,
+      iconSvgUri: SubscriptionImages.paymentHistoryIconSvg,
       page: 'PaymentHistory',
     },
     // {
@@ -264,9 +268,10 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
     //   icon: SubscriptionImages.paymentIcon,
     // },
     // {
-    //   id: 3,
+    //   id: 4,
     //   title: 'View invoices',
     //   icon: SubscriptionImages.invoicesIcon,
+    //   iconSvgUri: SubscriptionImages.invoicesIconSvg,
     // },
   ];
 
@@ -428,8 +433,11 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
                 }}
               >
                 <View style={styles.settingIconContainer}>
-                  {/* <Image source={option.icon}/> */}
-                  <Image source={option.icon} style={styles.settingIcon} />
+                  {option.iconSvgUri ? (
+                    <SvgUri width={24} height={24} uri={option.iconSvgUri} />
+                  ) : (
+                    <Image source={option.icon} style={styles.settingIcon} />
+                  )}
                 </View>
                 <Text style={styles.settingTitle}>{option.title}</Text>
                 <Image source={SubscriptionImages.rightIcon}  style={styles.rightArrow}/>

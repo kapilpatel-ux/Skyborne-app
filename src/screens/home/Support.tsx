@@ -10,8 +10,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
+import { SvgUri } from 'react-native-svg';
 import { useDispatch, useSelector } from 'react-redux';
-import { Images } from '../../assets/images';
 import { fetchFAQs } from '../../store/faqSlice'; 
 import { RootState } from '../../store';
 
@@ -19,13 +19,15 @@ interface ContactOption {
   id: number;
   title: string;
   subtitle: string;
-  icon: number;
+  iconSvgUri: string;
 }
 
 const SupportScreen = ({ navigation }: { navigation: any }) => {
-  const emailSupportIcon = require('../../assets/images/emailIcon.png');
   const rightArrowIcon = require('../../assets/images/Right.png');
-  const faqQuestionIcon = require('../../assets/images/questionIcon.png');
+  const emailSupportIconSvg =
+    'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Email+Support.svg';
+  const faqQuestionIconSvg =
+    'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Support.svg';
 
   const dispatch = useDispatch<any>();
   const { items: faqItems, status, error } = useSelector(
@@ -44,7 +46,7 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
       id: 2,
       title: 'Email Support',
       subtitle: 'info@skybornedrop.com',
-      icon: emailSupportIcon,
+      iconSvgUri: emailSupportIconSvg,
     },
   ];
 
@@ -73,9 +75,11 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
             <View key={option.id}>
               <TouchableOpacity style={styles.contactItem}>
                 <View style={styles.contactIconContainer}>
-                  <Image source={option.icon}
-                    style={styles.contactIcon} 
-                    resizeMode="contain" 
+                  <SvgUri
+                    width={34}
+                    height={34}
+                    uri={option.iconSvgUri}
+                    style={styles.contactIcon}
                   />
                 </View>
                 <View style={styles.contactTextContainer}>
@@ -108,7 +112,7 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
           <View style={styles.faqList}>
             {faqItems.map((item) => (
               <View key={item.id} style={styles.faqCard}>
-                <Image source={faqQuestionIcon} style={styles.faqIcon} />
+                <SvgUri width={18} height={18} uri={faqQuestionIconSvg} style={styles.faqIcon} />
                 <View style={styles.faqContent}>
                   <Text style={styles.faqQuestion}>{item.question}</Text>
                   <Text style={styles.faqAnswer}>{item.answer}</Text>
@@ -199,8 +203,8 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   contactIcon: {
-    width: 52,
-    height: 52,
+    width: 34,
+    height: 34,
   },
   contactTextContainer: {
     flex: 1,

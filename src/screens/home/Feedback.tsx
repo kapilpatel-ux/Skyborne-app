@@ -13,6 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SvgUri } from 'react-native-svg';
 import {
   Star
 } from 'lucide-react-native';
@@ -39,22 +40,22 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
     {
       id: 1,
       label: 'Energized',
-      icon: Images.energizedIcon,
+      icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Energized.svg',
     },
     {
       id: 2,
       label: 'Relaxed',
-      icon: Images.relaxedIcon,
+      icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Relaxed.svg',
     },
     {
       id: 3,
       label: 'Strong',
-      icon: Images.strongIcon,
+      icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Strong.svg',
     },
     {
       id: 4,
       label: 'Tired',
-      icon: Images.tiredIcon,
+      icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Tired.svg',
     },
   ];
 
@@ -220,7 +221,7 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
                   ]}
                   onPress={() => handleCommentChange(option.id)}
                 >
-                  <Image source={{uri:option.icon}} style={styles.feelingIcon} />
+                  <SvgUri width={24} height={24} uri={option.icon} style={styles.feelingIcon} />
                   <Text style={styles.feelingLabel}>{option.label}</Text>
                 </TouchableOpacity>
               ))}

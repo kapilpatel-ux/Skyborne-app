@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 import { ThemedText } from '../../components/ThemedText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
@@ -20,30 +21,36 @@ import {
 } from '@react-native-google-signin/google-signin';
 import Toast from 'react-native-toast-message';
 import { useSignup } from '../../store/SignupContext';
-import { IconImages, UserIcon } from '../../assets/icons';
+import { IconImages } from '../../assets/icons';
 import { normalizeErrorMessage } from '../../utils/errorUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AuthOptions'>;
 type AuthProviderProps = 'email' | 'google' | 'apple';
 
 type AuthButtonProps = {
-  icon: string | ImageSourcePropType;
+  icon?: string | ImageSourcePropType;
+  iconSvgUri?: string;
   text: string;
   onPress?: () => void;
 };
 
-const AuthButton = ({ icon, text, onPress }: AuthButtonProps) => (
+const AuthButton = ({ icon, iconSvgUri, text, onPress }: AuthButtonProps) => (
   <TouchableOpacity style={styles.authButton} onPress={onPress}>
-    {typeof icon === 'string' ? (
+    {iconSvgUri ? (
+      <SvgUri width={20} height={20} uri={iconSvgUri} style={styles.authButtonImage} />
+    ) : typeof icon === 'string' ? (
       <ThemedText style={styles.authButtonIcon}>{icon}</ThemedText>
-    ) : (
+    ) : icon ? (
       <Image source={icon} style={styles.authButtonImage} />
-    )}
+    ) : null}
     <ThemedText style={styles.authButtonText}>
       {text}
     </ThemedText>
   </TouchableOpacity>
 );
+
+const CONTINUE_AS_GUEST_ICON_SVG =
+  'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Continue+as+guest.svg';
 
 export default function AuthOptionsScreen({ navigation }: Props) {
   const { updateStepData } = useSignup();
@@ -198,7 +205,7 @@ export default function AuthOptionsScreen({ navigation }: Props) {
               onPress={handleAppleSignIn}
             /> */}
             <AuthButton
-              icon={UserIcon}
+              iconSvgUri={CONTINUE_AS_GUEST_ICON_SVG}
               text="Continue as Guest"
               onPress={handleGuestSignIn}
             />
