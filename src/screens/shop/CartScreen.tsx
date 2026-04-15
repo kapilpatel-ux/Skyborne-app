@@ -14,9 +14,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
+import { useFocusEffect } from '@react-navigation/native';
 import { Minus, Plus, Trash2, ShoppingBag, ChevronLeft, ArrowRight } from 'lucide-react-native';
 import { CartData, CartItem, shopService } from '../../services/shopService';
 import Toast from 'react-native-toast-message';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Cart'>;
 
@@ -34,10 +37,20 @@ const C = {
 
 const CartScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+  const loggedIn = useSelector((state: RootState) => state.auth.loggedIn);
   const [cart, setCart] = React.useState<CartData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [fetching, setFetching] = React.useState(false);
   const [clearing, setClearing] = React.useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      shopService.setForceGuestMode(!loggedIn);
+      return () => {
+        shopService.setForceGuestMode(false);
+      };
+    }, [loggedIn]),
+  );
 
   const loadCart = React.useCallback(async () => {
     try {
@@ -51,6 +64,12 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
       setFetching(false);
     }
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadCart();
+    }, [loadCart]),
+  );
 
   React.useEffect(() => { loadCart(); }, [loadCart]);
 
@@ -159,6 +178,16 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
   const items = cart?.items ?? [];
   const subtotal = cart?.total ?? 0;
 
+  const proceedToCheckout = () => {
+    if (!loggedIn) {
+      Toast.show({ type: 'info', text1: 'Please login to complete purchase' });
+      navigation.navigate('Login');
+      return;
+    }
+
+    navigation.navigate('Checkout');
+  };
+
   const Header = ({ showClear = false }: { showClear?: boolean }) => (
     <View style={styles.header}>
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
@@ -221,6 +250,13 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   if (!items.length) {
+    const emptyTitle = loggedIn ? 'Your cart is empty' : 'Your guest cart is empty';
+    const emptySub = loggedIn
+      ? "You haven't added anything yet.\nExplore our wellness essentials."
+      : "Add products as guest and login only when you're ready to checkout.";
+    const ctaLabel = loggedIn ? 'Browse Products' : 'Start Guest Shopping';
+    const ctaAction = () => navigation.navigate(loggedIn ? 'Products' : 'GuestShop');
+
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
@@ -229,12 +265,20 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.emptyIconWrap}>
             <ShoppingBag color={C.muted} size={40} strokeWidth={1.5} />
           </View>
-          <Text style={styles.emptyTitle}>Your cart is empty</Text>
-          <Text style={styles.emptySub}>{"You haven't added anything yet.\nExplore our wellness essentials."}</Text>
-          <TouchableOpacity style={styles.shopBtn} onPress={() => navigation.navigate('Products')}>
-            <Text style={styles.shopBtnText}>Browse Products</Text>
+          <Text style={styles.emptyTitle}>{emptyTitle}</Text>
+          <Text style={styles.emptySub}>{emptySub}</Text>
+          <TouchableOpacity style={styles.shopBtn} onPress={ctaAction}>
+            <Text style={styles.shopBtnText}>{ctaLabel}</Text>
             <ArrowRight size={16} color="#FFFFFF" strokeWidth={2} />
           </TouchableOpacity>
+
+          {!loggedIn && (
+            <TouchableOpacity
+              style={styles.loginBtn}
+              onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.loginBtnText}>Login</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </SafeAreaView>
     );
@@ -272,8 +316,8 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.summaryTotalValue}>${subtotal.toFixed(2)}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.checkoutBtn} onPress={() => navigation.navigate('Checkout')}>
-          <Text style={styles.checkoutBtnText}>Proceed to Checkout</Text>
+        <TouchableOpacity style={styles.checkoutBtn} onPress={proceedToCheckout}>
+          <Text style={styles.checkoutBtnText}>{loggedIn ? 'Proceed to Checkout' : 'Login to Checkout'}</Text>
           <ArrowRight size={18} color="#FFFFFF" strokeWidth={2.2} />
         </TouchableOpacity>
       </View>
@@ -320,6 +364,18 @@ const styles = StyleSheet.create({
   emptySub: { marginTop: 8, color: C.sub, fontSize: 15, textAlign: 'center', fontFamily: 'Satoshi-Regular', lineHeight: 22, marginBottom: 28 },
   shopBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, paddingHorizontal: 24, borderRadius: 24, backgroundColor: C.accent },
   shopBtnText: { color: '#FFFFFF', fontSize: 15, fontFamily: 'Satoshi-Bold' },
+  loginBtn: {
+    marginTop: 12,
+    height: 44,
+    paddingHorizontal: 22,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginBtnText: { color: C.accent, fontSize: 14, fontFamily: 'Satoshi-Bold' },
 
   listContent: { padding: 16, paddingBottom: 240, gap: 12 },
 

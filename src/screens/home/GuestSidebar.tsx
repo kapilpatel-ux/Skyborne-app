@@ -18,17 +18,20 @@ interface GuestSidebarProps {
   visible: boolean;
   onClose: () => void;
   navigation: NavigationProp;
-  activeScreen: 'Home' | 'Login' | 'Signup';
+  activeScreen: 'Home' | 'Shop' | 'Login' | 'Signup';
 }
 
+type GuestSidebarScreen = 'GuestHome' | 'GuestShop' | 'Login' | 'Signup';
+
 interface MenuItem {
-  id: 'Home' | 'Login' | 'Signup';
+  id: 'Home' | 'Shop' | 'Login' | 'Signup';
   label: string;
-  screen: keyof RootStackParamList;
+  screen: GuestSidebarScreen;
 }
 
 const menuItems: MenuItem[] = [
   { id: 'Home', label: 'Home', screen: 'GuestHome' },
+  { id: 'Shop', label: 'Shop', screen: 'GuestShop' },
   { id: 'Login', label: 'Login', screen: 'Login' },
   { id: 'Signup', label: 'Signup', screen: 'Signup' },
 ];
@@ -39,7 +42,7 @@ const GuestSidebar: React.FC<GuestSidebarProps> = ({
   navigation,
   activeScreen,
 }) => {
-  const handleNavigation = (screen: keyof RootStackParamList) => {
+  const handleNavigation = (screen: GuestSidebarScreen) => {
     onClose();
     navigation.navigate(screen);
   };
@@ -117,7 +120,7 @@ const GuestSidebar: React.FC<GuestSidebarProps> = ({
                     style={styles.ctaButton}
                     onPress={() => {
                       onClose();
-                      navigation.navigate('Signup');
+                      navigation.navigate('AuthOptions');
                     }}
                     activeOpacity={0.8}
                   >

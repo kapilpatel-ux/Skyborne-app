@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ChevronRight } from 'lucide-react-native';
-import { SvgUri } from 'react-native-svg';
 import { useSelector } from 'react-redux';
 import GradientBackground from '../../components/GradientBackground';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
@@ -38,37 +37,37 @@ const yogaKeyFeatures: KeyFeature[] = [
     id: '1',
     title: 'Live Classes',
     description: 'Daily guided flows led by certified instructors',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '2',
     title: 'On-Demand Sessions',
     description: 'Replay your favorite classes anytime, anywhere',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '3',
     title: 'Better Sleep',
     description: 'Improved rest and muscle recovery guaranteed',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '4',
     title: 'Expert Guidance',
     description: 'Personalized feedback from wellness experts',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '5',
     title: 'Community Support',
     description: 'Join a supportive community of yoga enthusiasts',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '6',
     title: 'Flexibility Training',
     description: 'Enhance mobility and reduce stress effectively',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
 ];
 
@@ -259,7 +258,10 @@ const YogaDetailsScreen: React.FC<YogaDetailsScreenProps> = ({ navigation }) => 
                   }
                 >
                   <View style={styles.featureCardHeader}>
-                    <SvgUri width={20} height={20} uri={feature.icon} style={styles.featureIcon} />
+                    <Image
+                      source={{ uri: feature.icon }}
+                      style={styles.featureIcon}
+                    />
                     <Text style={styles.featureCardTitle}>{feature.title}</Text>
                     <ChevronRight
                       size={20}

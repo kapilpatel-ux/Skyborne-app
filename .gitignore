@@ -1,20 +1,31 @@
 # node
 node_modules/
-package-lock.json
-
 
 # Android
-android/.gradle/
-android/app/build/
 android/build/
 android/local.properties
 
-# React Native Android generated assets
-android/app/src/main/res/drawable-*
-android/app/src/main/res/raw/
-android/app/build/
-android/.gradle/
+# General build folders 
+build/
+dist/
 
+# Metro / React Native cache
+.expo/
+.expo-shared/
+*.bundle
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Temp / cache files
+*.tmp
+*.temp
+*.swp
+
+#logs 
+*.log
 
 # Android generated resources (React Native)
 android/app/src/main/res/drawable-*
@@ -45,4 +56,11 @@ yarn-error.log*
 
 # OS
 .DS_Store
+android/.cxx/
 android/app/.cxx/
+
+# Local tool/cache artifacts
+.gradle-home/
+android/.kotlin/
+android/hs_err_pid*.log
+android/replay_pid*.log

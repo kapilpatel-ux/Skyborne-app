@@ -19,6 +19,8 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import { ChevronLeft, Lock, ArrowRight, MapPin, User, ShoppingBag } from 'lucide-react-native';
 import { CartData, shopService } from '../../services/shopService';
 import Toast from 'react-native-toast-message';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Checkout'>;
 type FormState = {
@@ -75,6 +77,7 @@ const InputField = ({
 );
 
 const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
+  const loggedIn = useSelector((state: RootState) => state.auth.loggedIn);
   const [cart, setCart] = React.useState<CartData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
@@ -106,6 +109,12 @@ const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
     showErrors && String(form[field] || '').trim().length === 0;
 
   const submit = async () => {
+
+    if (!loggedIn) {
+      Toast.show({ type: 'info', text1: 'Please login to complete purchase' });
+      navigation.navigate('Login');
+      return;
+    }
 
     console.log('👉 PAY BUTTON PRESSED');
 

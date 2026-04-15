@@ -12,7 +12,6 @@ import {
   Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { SvgUri } from 'react-native-svg';
 import { SubscriptionImages } from '../../assets/images/subscriptions';
 import { useProfileViewModel } from '../../viewmodels/useProfileViewModel';
 import { useState, useEffect } from 'react';
@@ -242,7 +241,6 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       id: 1,
       title: 'Upgrade Plan',
       icon: SubscriptionImages.upgradeIcon,
-      iconSvgUri: SubscriptionImages.upgradeIconSvg,
       page: 'UpgradePlan',
     },
     ...(canEditCard
@@ -259,7 +257,6 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
       id: 3,
       title: 'Payment History',
       icon: SubscriptionImages.paymentIcon,
-      iconSvgUri: SubscriptionImages.paymentHistoryIconSvg,
       page: 'PaymentHistory',
     },
     // {
@@ -348,7 +345,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
           <View style={styles.planHeader}>
             <Text style={styles.planLabel}>Current plan</Text>
             <View style={styles.diamondBadge}>
-              <Text style={styles.diamondText}>
+              <Text style={styles.diamondText} numberOfLines={1} ellipsizeMode="tail">
                 {displayPlan}
               </Text>
             </View>
@@ -433,11 +430,7 @@ const ManageSubscriptionsScreen = ({ navigation }: { navigation: any }) => {
                 }}
               >
                 <View style={styles.settingIconContainer}>
-                  {option.iconSvgUri ? (
-                    <SvgUri width={24} height={24} uri={option.iconSvgUri} />
-                  ) : (
-                    <Image source={option.icon} style={styles.settingIcon} />
-                  )}
+                  <Image source={option.icon} style={styles.settingIcon} />
                 </View>
                 <Text style={styles.settingTitle}>{option.title}</Text>
                 <Image source={SubscriptionImages.rightIcon}  style={styles.rightArrow}/>
@@ -481,7 +474,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 35,
+    paddingTop: 55,
     paddingBottom: 41,
   },
   backButton: {
@@ -513,39 +506,42 @@ const styles = StyleSheet.create({
   },
   // Current Plan Card
   planCard: {
-    marginHorizontal: 16,
-    height: 170,
+    minHeight: 230,
     borderRadius: 12,
-    paddingLeft: 22,
-    paddingRight: 12.26,
-    paddingVertical: 18,
+    paddingLeft: 18,
+    paddingRight: 18,
+    paddingVertical: 20,
     marginBottom: 27,
   },
   planHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
     marginBottom: 9,
+    
   },
   planLabel: {
+    flexShrink: 1,
     fontFamily: 'Satoshi-Regular',
     fontSize: 14,
     lineHeight: 19,
     color: '#FFFFFF',
+    
   },
   diamondBadge: {
-    height: 26.86,
-    // paddingHorizontal: 16,
-    paddingRight: 25.74,
-    paddingLeft: 23,
+    minHeight: 28,
+    maxWidth: '61%',
+    paddingHorizontal: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 158.478,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingRight: 34,
   },
   diamondText: {
     fontFamily: 'Satoshi-Medium',
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 14,
     color: '#FFFFFF',
     textAlign: 'center',

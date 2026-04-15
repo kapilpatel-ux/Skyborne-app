@@ -466,10 +466,8 @@ const WeeklyScheduleScreen: React.FC<WeeklyScheduleScreenProps> = ({
                     <View key={meeting._id}>
                       {/* Time Label */}
                       <View style={styles.timeRow}>
-                        <Text style={styles.timeLabel}>
-                          {time}
-                          {'\n'}
-                          {period}
+                        <Text style={styles.timeLabel} numberOfLines={1}>
+                          {period ? `${time} ${period}` : time}
                         </Text>
                         <View style={styles.timeDivider} />
                       </View>
@@ -568,6 +566,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 35,
     marginBottom: 25,
+    paddingTop: 25,
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',
@@ -579,7 +578,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 31,
     height: 43,
-    backgroundColor: 'rgba(173, 173, 173, 0.21)',
+    backgroundColor: 'rgba(27, 8, 8, 0.21)',
     borderRadius: 7,
     flexDirection: 'row',
     alignItems: 'center',
@@ -830,7 +829,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: 'right',
     color: '#000000',
-    width: 43,
+    width: 78,
     marginLeft: -6,
   },
   timeDivider: {

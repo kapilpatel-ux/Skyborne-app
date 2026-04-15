@@ -10,24 +10,20 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
-import { SvgUri } from 'react-native-svg';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchFAQs } from '../../store/faqSlice'; 
 import { RootState } from '../../store';
+import { Images } from '../../assets/images';
 
 interface ContactOption {
   id: number;
   title: string;
   subtitle: string;
-  iconSvgUri: string;
+  iconUri: string;
 }
 
 const SupportScreen = ({ navigation }: { navigation: any }) => {
   const rightArrowIcon = require('../../assets/images/Right.png');
-  const emailSupportIconSvg =
-    'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Email+Support.svg';
-  const faqQuestionIconSvg =
-    'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Support.svg';
 
   const dispatch = useDispatch<any>();
   const { items: faqItems, status, error } = useSelector(
@@ -46,7 +42,7 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
       id: 2,
       title: 'Email Support',
       subtitle: 'info@skybornedrop.com',
-      iconSvgUri: emailSupportIconSvg,
+      iconUri: Images.emailIcon,
     },
   ];
 
@@ -75,11 +71,10 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
             <View key={option.id}>
               <TouchableOpacity style={styles.contactItem}>
                 <View style={styles.contactIconContainer}>
-                  <SvgUri
-                    width={34}
-                    height={34}
-                    uri={option.iconSvgUri}
+                  <Image
+                    source={{ uri: option.iconUri }}
                     style={styles.contactIcon}
+                    resizeMode="contain"
                   />
                 </View>
                 <View style={styles.contactTextContainer}>
@@ -112,7 +107,11 @@ const SupportScreen = ({ navigation }: { navigation: any }) => {
           <View style={styles.faqList}>
             {faqItems.map((item) => (
               <View key={item.id} style={styles.faqCard}>
-                <SvgUri width={18} height={18} uri={faqQuestionIconSvg} style={styles.faqIcon} />
+                <Image
+                  source={{ uri: Images.questionIcon }}
+                  style={styles.faqIcon}
+                  resizeMode="contain"
+                />
                 <View style={styles.faqContent}>
                   <Text style={styles.faqQuestion}>{item.question}</Text>
                   <Text style={styles.faqAnswer}>{item.answer}</Text>

@@ -9,11 +9,14 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import { LogOut as LogOutIcon } from 'lucide-react-native';
 import LogoutModal from '../../components/LogoutModal';
 import { removeAuthToken } from '../../services/authService';
+import { useDispatch } from 'react-redux';
+import { logout as logoutAction } from '../../store/authSlice';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -50,6 +53,8 @@ const HomeSidebar: React.FC<HomeSidebarProps> = ({
   activeScreen,
   user,
 }) => {
+  const dispatch = useDispatch();
+
   const getInitials = (firstName?: string, lastName?: string) => {
     const first = firstName?.charAt(0).toUpperCase() ?? '';
     const last = lastName?.charAt(0).toUpperCase() ?? '';
@@ -59,11 +64,16 @@ const HomeSidebar: React.FC<HomeSidebarProps> = ({
   const [logoutVisible, setLogoutVisible] = useState(false);
 
   const handleLogoutConfirm = async () => {
+    await removeAuthToken();
+    dispatch(logoutAction());
     setLogoutVisible(false);
     onClose();
-
-    await removeAuthToken(); 
-    navigation.replace('Login'); 
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      }),
+    );
   };
 
   const handleNavigation = (

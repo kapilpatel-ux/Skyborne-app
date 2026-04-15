@@ -2,13 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 import { API_BASE_URL as ENV_API_BASE_URL } from '@env';
 
-const FALLBACK_API_BASE_URL =
-  'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
-
-const API_BASE_URL =
-  (typeof ENV_API_BASE_URL === 'string' && ENV_API_BASE_URL.trim().length > 0)
-    ? ENV_API_BASE_URL
-    : FALLBACK_API_BASE_URL;
+const API_BASE_URL = ENV_API_BASE_URL;
     
 export interface ApiResponse {
   success: boolean;

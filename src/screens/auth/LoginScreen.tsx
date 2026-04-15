@@ -15,6 +15,7 @@ import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { GOOGLE_KEY } from '@env';
 import { useDispatch } from 'react-redux';
 import { IconImages } from '../../assets/icons';
 import { clearError, setUser } from '../../store/authSlice';
@@ -82,11 +83,16 @@ export default function LoginScreen({ navigation }: Props) {
 
   const configureGoogleSignIn = () => {
     try {
-      const webClientId = process.env.GOOGLE_KEY || '';
-      GoogleSignin.configure({
-        webClientId: webClientId,
+      const webClientId = GOOGLE_KEY || '';
+      const iosClientId =
+        '398904495705-5sfusc2amh3d00j4nmno4iqmth1o68kr.apps.googleusercontent.com';
+      const configureOptions = {
+        iosClientId,
         offlineAccess: false,
-      });
+        ...(Platform.OS === 'android' && webClientId ? { webClientId } : {}),
+      };
+
+      GoogleSignin.configure(configureOptions);
     } catch (error) {
       console.error('Configuration error:', error);
     }

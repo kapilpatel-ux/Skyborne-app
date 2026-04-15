@@ -44,6 +44,7 @@ import CartScreen from '../screens/shop/CartScreen';
 import CheckoutScreen from '../screens/shop/CheckoutScreen';
 import MyOrdersScreen from '../screens/shop/MyOrdersScreen';
 import ProductDetailsScreen from '../screens/shop/ProductDetailsScreen';
+import GuestShopScreen from '../screens/shop/GuestShopScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -65,6 +66,7 @@ export type RootStackParamList = {
   Schedule: undefined;
   ViewAll: undefined;
   Products: undefined;
+  GuestShop: undefined;
   ProductDetails: { productId: string };
   Cart: undefined;
   Checkout: undefined;
@@ -150,6 +152,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Explore" component={ExploreScreen} />
         <Stack.Screen name="Products" component={ProductsScreen} />
+        <Stack.Screen name="GuestShop" component={GuestShopScreen} />
         <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} />
         <Stack.Screen name="Cart" component={CartScreen} />
         <Stack.Screen name="Checkout" component={CheckoutScreen} />

@@ -28,6 +28,22 @@ class SocketService {
   private maxReconnectAttempts: number = 5;
 
   /**
+   * Socket server should use host origin, not REST API path (e.g. /api/v1).
+   */
+  private getSocketServerUrl(serverUrl: string): string {
+    try {
+      const parsedUrl = new URL(serverUrl);
+      parsedUrl.pathname = "";
+      parsedUrl.search = "";
+      parsedUrl.hash = "";
+      return parsedUrl.toString().replace(/\/$/, "");
+    } catch {
+      // Fallback for malformed/relative values.
+      return serverUrl.replace(/\/api\/v\d+\/?$/, "").replace(/\/$/, "");
+    }
+  }
+
+  /**
    * Initialize and connect socket to server
    */
   async connect(serverUrl: string, userId: string): Promise<void> {
@@ -45,15 +61,20 @@ class SocketService {
       this.isConnecting = true;
       this.userId = userId;
 
-      console.log(`🔌 Connecting socket to ${serverUrl} for user: ${userId}`);
+      const socketServerUrl = this.getSocketServerUrl(serverUrl);
 
-      this.socket = io(serverUrl, {
+      console.log(`🔌 Connecting socket to ${socketServerUrl} for user: ${userId}`);
+
+      this.socket = io(socketServerUrl, {
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         reconnectionAttempts: this.maxReconnectAttempts,
-        transports: ["websocket", "polling"],
+        transports: ["polling", "websocket"],
         autoConnect: true,
+        path: "/socket.io",
+        timeout: 20000,
+        upgrade: true,
         auth: {
           userId: userId,
         },
@@ -73,7 +94,24 @@ class SocketService {
       });
 
       this.socket.on("connect_error", (error: any) => {
-        console.error("❌ Socket connection error:", error.message);
+        console.error("❌ Socket connection error:", {
+          message: error?.message,
+          description: error?.description,
+          context: error?.context,
+          type: error?.type,
+          data: error?.data,
+        });
+        this.isConnecting = false;
+      });
+
+      this.socket.on("reconnect_attempt", (attempt: number) => {
+        this.reconnectAttempts = attempt;
+        console.log(`🔄 Socket reconnect attempt ${attempt}/${this.maxReconnectAttempts}`);
+      });
+
+      this.socket.on("reconnect_failed", () => {
+        console.error("❌ Socket reconnection failed after max attempts");
+        this.isConnecting = false;
       });
 
       // ===== CUSTOM EVENTS =====

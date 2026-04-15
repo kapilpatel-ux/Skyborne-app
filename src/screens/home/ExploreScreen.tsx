@@ -627,6 +627,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 35,
     marginBottom: 25,
+    paddingTop: 25,
   },
   headerTitle: {
     fontFamily: 'Satoshi-Bold',

@@ -1,0 +1,20 @@
+diff --git a/node_modules/@react-native-community/cli-tools/build/startServerInNewWindow.js b/node_modules/@react-native-community/cli-tools/build/startServerInNewWindow.js
+index 755bf75..77c245e 100644
+--- a/node_modules/@react-native-community/cli-tools/build/startServerInNewWindow.js
++++ b/node_modules/@react-native-community/cli-tools/build/startServerInNewWindow.js
+@@ -107,13 +107,13 @@ function startServerInNewWindow(port, projectRoot, reactNativePath, terminal) {
+   }
+   if (process.platform === 'linux') {
+     try {
+-      return _execa().default.sync(terminal, ['-e', `sh ${launchPackagerScript}`], {
++      return _execa().default.sync(terminal, ['-e', `bash ${launchPackagerScript}`], {
+         ...procConfig,
+         detached: true
+       });
+     } catch (error) {
+       // By default, the child shell process will be attached to the parent
+-      return _execa().default.sync('sh', [launchPackagerScript], procConfig);
++      return _execa().default.sync('bash', [launchPackagerScript], procConfig);
+     }
+   }
+   if (isWindows) {

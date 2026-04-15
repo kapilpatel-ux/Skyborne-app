@@ -8,13 +8,7 @@ import { API_BASE_URL as ENV_API_BASE_URL } from '@env';
 dayjs.extend(utc);
 dayjs.extend(timezonePlugin);
 
-const FALLBACK_API_BASE_URL =
-  'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
-
-const API_BASE_URL =
-  typeof ENV_API_BASE_URL === 'string' && ENV_API_BASE_URL.trim().length > 0
-    ? ENV_API_BASE_URL
-    : FALLBACK_API_BASE_URL;
+const API_BASE_URL = ENV_API_BASE_URL;
 
 type LoggedInUserRegion = {
   region: string | null;
@@ -53,6 +47,48 @@ const normalizeKey = (value: unknown): string => {
 const safeUpper = (value: unknown): string =>
   typeof value === 'string' ? value.trim().toUpperCase() : '';
 
+const decodeJwtPayload = (payloadPart: string): Record<string, any> => {
+  const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+
+  const decodeBase64 = (base64Value: string): string => {
+    const atobFn = (globalThis as {atob?: (input: string) => string}).atob;
+    if (typeof atobFn === 'function') {
+      return atobFn(base64Value);
+    }
+
+    /* eslint-disable no-bitwise */
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let output = '';
+    let index = 0;
+
+    while (index < base64Value.length) {
+      const encoded1 = chars.indexOf(base64Value.charAt(index++));
+      const encoded2 = chars.indexOf(base64Value.charAt(index++));
+      const encoded3 = chars.indexOf(base64Value.charAt(index++));
+      const encoded4 = chars.indexOf(base64Value.charAt(index++));
+
+      const byte1 = (encoded1 << 2) | (encoded2 >> 4);
+      const byte2 = ((encoded2 & 15) << 4) | (encoded3 >> 2);
+      const byte3 = ((encoded3 & 3) << 6) | encoded4;
+
+      output += String.fromCharCode(byte1);
+      if (encoded3 !== 64) {
+        output += String.fromCharCode(byte2);
+      }
+      if (encoded4 !== 64) {
+        output += String.fromCharCode(byte3);
+      }
+    }
+
+    /* eslint-enable no-bitwise */
+    return output;
+  };
+
+  const decodedBinary = decodeBase64(padded);
+  return JSON.parse(decodedBinary);
+};
+
 const readPersistedAuthUser = async (): Promise<any | null> => {
   try {
     const raw = await AsyncStorage.getItem('persist:root');
@@ -64,6 +100,40 @@ const readPersistedAuthUser = async (): Promise<any | null> => {
     return auth?.user || null;
   } catch {
     return null;
+  }
+};
+
+/**
+ * Check if JWT token is valid (basic check)
+ * Note: This is a client-side check only - server validation is still needed
+ */
+const isTokenValid = (token: string): boolean => {
+  if (!token || token.length < 10) return false;
+  
+  try {
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    
+    // Decode payload
+    const payload = decodeJwtPayload(parts[1]);
+    
+    // Check expiration
+    if (payload.exp) {
+      const expirationTime = payload.exp * 1000; // Convert to milliseconds
+      const currentTime = Date.now();
+      
+      if (currentTime > expirationTime) {
+        console.warn('⚠️ Token has expired at', new Date(expirationTime).toISOString());
+        return false;
+      }
+    }
+    
+    console.log('✅ Token is valid, expires at', new Date((payload.exp || 0) * 1000).toISOString());
+    return true;
+  } catch (error) {
+    console.warn('⚠️ Could not validate token format:', error);
+    return false;
   }
 };
 
@@ -128,15 +198,35 @@ export const fetchLoggedInUserRegion = async (
 ): Promise<LoggedInUserRegion> => {
   try {
     const token = await AsyncStorage.getItem('@auth_token');
+    
+    if (!token) {
+      console.warn('⚠️ No authentication token found in AsyncStorage');
+      return { region: null, code: null };
+    }
+
+    // Validate token before making request
+    if (!isTokenValid(token)) {
+      console.error('❌ Token is invalid or expired - cannot fetch user region');
+      return { region: null, code: null };
+    }
+
+    // Log token info (first 20 chars to avoid leaking full token)
+    const tokenPreview = token.substring(0, 20) + '...';
+    console.log('🔑 Making /me request with token:', tokenPreview, 'to', API_BASE_URL);
+
     const response = await axios.get(`${API_BASE_URL}${path}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 5000, // 5 second timeout
     });
 
     const user = response?.data?.user || response?.data?.data?.user || null;
     const regionObj =
       user?.region && typeof user.region === 'object' ? user.region : null;
 
-    return {
+    const result = {
       region:
         regionObj?.name ||
         user?.regionName ||
@@ -144,8 +234,23 @@ export const fetchLoggedInUserRegion = async (
         null,
       code: regionObj?.code || user?.regionCode || user?.code || null,
     };
-  } catch (error) {
-    console.error('❌ Failed to fetch logged-in user region:', error);
+
+    console.log('✅ Successfully fetched user region:', result);
+    return result;
+  } catch (error: any) {
+    const statusCode = error?.response?.status;
+    const errorMsg = error?.response?.data?.message || error?.message || 'Unknown error';
+    
+    if (statusCode === 401) {
+      console.error('❌ Authentication failed (401):', errorMsg, '- Token may be invalid or expired');
+    } else if (statusCode === 404) {
+      console.error('❌ User not found (404):', errorMsg, '- Ensure user exists in database');
+    } else if (statusCode === 500) {
+      console.error('❌ Server error (500):', errorMsg);
+    } else {
+      console.error('❌ Failed to fetch logged-in user region:', `Status ${statusCode}`, errorMsg);
+    }
+    
     return { region: null, code: null };
   }
 };
@@ -159,13 +264,86 @@ export const fetchLoggedInUserCountryRegion = async (): Promise<LoggedInUserCoun
     const token = await AsyncStorage.getItem('@auth_token');
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+    if (!token) {
+      console.warn('⚠️ No authentication token found - using timezone-based fallback');
+      const { region } = getUserRegion();
+      return {
+        countryCode: null,
+        country: null,
+        regionName: region,
+        regionCode: null,
+        countryDetails: null,
+      };
+    }
+
+    console.log('🔄 Fetching user country/region from API_BASE_URL:', API_BASE_URL);
+
     const [userRes, countriesRes] = await Promise.all([
-      axios.get(`${API_BASE_URL}/me`, { headers }),
+      axios.get(`${API_BASE_URL}/me`, { 
+        headers,
+        timeout: 5000,
+      }).catch(err => {
+        console.warn('⚠️ Failed to fetch /me endpoint:', err?.response?.status, err?.message);
+        return null;
+      }),
       axios.get(`${API_BASE_URL}/countries`, {
         headers,
         params: { page: 1, limit: 1000, search: '' },
+        timeout: 5000,
+      }).catch(err => {
+        console.warn('⚠️ Failed to fetch countries list:', err?.message);
+        return null;
       }),
     ]);
+
+    // If /me failed but we got countries list, use fallback
+    if (!userRes) {
+      console.warn('⚠️ /me endpoint failed (404), attempting fallback to persisted user data');
+      const persistedUser = await readPersistedAuthUser();
+      
+      // If we have persisted user data, try to match country to region
+      if (persistedUser?.countryCode || persistedUser?.country) {
+        const userCountryCodeRaw = persistedUser?.countryCode || '';
+        const userCountryNameRaw = typeof persistedUser?.country === 'object' 
+          ? persistedUser?.country?.name 
+          : persistedUser?.country;
+        
+        if (countriesRes) {
+          const countries: CountryItem[] = countriesRes?.data?.data?.countries || [];
+          const matchedCountry = countries.find((item) => safeUpper(item?.code) === safeUpper(userCountryCodeRaw));
+          const matchedRegion = matchedCountry?.region;
+          const regionName =
+            matchedRegion && typeof matchedRegion !== 'string'
+              ? matchedRegion.name || null
+              : null;
+          const regionCode =
+            matchedRegion && typeof matchedRegion !== 'string'
+              ? matchedRegion.code || null
+              : null;
+
+          const result = {
+            countryCode: userCountryCodeRaw || null,
+            country: userCountryNameRaw,
+            regionName,
+            regionCode,
+            countryDetails: matchedCountry || null,
+          };
+          console.log('✅ Using persisted user data for country/region:', result);
+          return result;
+        }
+      }
+      
+      // If no persisted data or countries list failed, use timezone fallback
+      console.log('⚠️ No persisted user data, falling back to timezone-based detection');
+      const { region } = getUserRegion();
+      return {
+        countryCode: null,
+        country: null,
+        regionName: region,
+        regionCode: null,
+        countryDetails: null,
+      };
+    }
 
     const user = userRes?.data?.user || userRes?.data?.data?.user || null;
     const persistedUser = await readPersistedAuthUser();
@@ -193,6 +371,19 @@ export const fetchLoggedInUserCountryRegion = async (): Promise<LoggedInUserCoun
     const country = typeof userCountryNameRaw === 'string' ? userCountryNameRaw : null;
     const countryId = String(userCountryIdRaw || '').trim();
 
+    // If countries list is not available, fall back to timezone
+    if (!countriesRes) {
+      console.warn('⚠️ Countries list unavailable, using timezone-based region');
+      const { region } = getUserRegion();
+      return {
+        countryCode: countryCode || null,
+        country,
+        regionName: region,
+        regionCode: null,
+        countryDetails: null,
+      };
+    }
+
     const countries: CountryItem[] = countriesRes?.data?.data?.countries || [];
     let matchedCountry =
       countries.find((item) => safeUpper(item?.code) === countryCode) ||
@@ -206,20 +397,26 @@ export const fetchLoggedInUserCountryRegion = async (): Promise<LoggedInUserCoun
 
     if (!matchedCountry && (country || countryCode)) {
       const searchKey = (country || countryCode).trim();
-      const searchRes = await axios.get(`${API_BASE_URL}/countries`, {
-        headers,
-        params: { page: 1, limit: 50, search: searchKey },
-      });
-      const searchedCountries: CountryItem[] = searchRes?.data?.data?.countries || [];
-      matchedCountry =
-        searchedCountries.find((item) => safeUpper(item?.code) === countryCode) ||
-        searchedCountries.find(
-          (item) =>
-            normalizeKey(item?.name) !== '' &&
-            normalizeKey(item?.name) === normalizeKey(country)
-        ) ||
-        searchedCountries.find((item) => String(item?._id || '').trim() === countryId) ||
-        null;
+      try {
+        const searchRes = await axios.get(`${API_BASE_URL}/countries`, {
+          headers,
+          params: { page: 1, limit: 50, search: searchKey },
+          timeout: 5000,
+        });
+        const searchedCountries: CountryItem[] = searchRes?.data?.data?.countries || [];
+        matchedCountry =
+          searchedCountries.find((item) => safeUpper(item?.code) === countryCode) ||
+          searchedCountries.find(
+            (item) =>
+              normalizeKey(item?.name) !== '' &&
+              normalizeKey(item?.name) === normalizeKey(country)
+          ) ||
+          searchedCountries.find((item) => String(item?._id || '').trim() === countryId) ||
+          null;
+      } catch (searchError) {
+        console.warn('⚠️ Country search failed:', searchError);
+        // Continue without search result
+      }
     }
 
     const regionRaw = matchedCountry?.region;
@@ -233,22 +430,42 @@ export const fetchLoggedInUserCountryRegion = async (): Promise<LoggedInUserCoun
       regionCode: regionObj?.code || null,
       countryDetails: matchedCountry,
     };
-    console.log('🌍 Country to region mapping:', {
-      userCountryCode: countryCode || null,
-      userCountry: country || null,
-      matchedCountry: result.countryDetails?.name || null,
-      mappedRegionCode: result.regionCode,
+    
+    console.log('✅ Successfully fetched country/region from API:', {
+      userCountryCode: countryCode,
+      userCountry: country,
+      mappedRegion: regionObj?.name,
     });
     return result;
-  } catch (error) {
-    console.error('❌ Failed to fetch logged-in user country/region:', error);
-    return {
-      countryCode: null,
-      country: null,
-      regionName: null,
-      regionCode: null,
-      countryDetails: null,
-    };
+  } catch (error: any) {
+    const errorMsg = error?.response?.status === 404 
+      ? 'User not found (404)'
+      : error?.message || 'Unknown error';
+    const statusCode = error?.response?.status || error?.code || 'unknown';
+    console.warn('⚠️ Error in fetchLoggedInUserCountryRegion:', errorMsg, `(${statusCode})`);
+    
+    // Final fallback to timezone-based detection
+    try {
+      const { region } = getUserRegion();
+      console.log('📍 Using timezone-based fallback region:', region);
+      return {
+        countryCode: null,
+        country: null,
+        regionName: region,
+        regionCode: null,
+        countryDetails: null,
+      };
+    } catch (fallbackError) {
+      console.error('❌ Even fallback region detection failed:', fallbackError);
+      // Return a safe default (APAC)
+      return {
+        countryCode: null,
+        country: null,
+        regionName: 'APAC',
+        regionCode: null,
+        countryDetails: null,
+      };
+    }
   }
 };
 

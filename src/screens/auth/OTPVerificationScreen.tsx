@@ -33,6 +33,7 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const inputs = useRef<TextInput[]>([]);
   const otpSentRef = useRef(false);
+  const lastAutoSubmittedCodeRef = useRef<string | null>(null);
 
   const userEmail = route.params?.email;
 
@@ -209,6 +210,22 @@ export default function OTPVerificationScreen({ navigation, route }: Props) {
       setIsVerifying(false);
     }
   };
+
+  // Auto-verify as soon as 6 digits are available.
+  useEffect(() => {
+    const code = otp.join('');
+
+    if (code.length < 6) {
+      lastAutoSubmittedCodeRef.current = null;
+      return;
+    }
+
+    if (isVerifying || isSendingOtp) return;
+    if (lastAutoSubmittedCodeRef.current === code) return;
+
+    lastAutoSubmittedCodeRef.current = code;
+    onVerify();
+  }, [otp, isVerifying, isSendingOtp]);
 
   return (
     <GradientBackground>

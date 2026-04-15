@@ -547,7 +547,7 @@ const ClassDetailsScreen: React.FC<ClassDetailsScreenProps> = ({
                 {showRecordingCta
                   ? 'Watch Recording'
                   : isJoinButtonDisabled
-                    ? 'Join session'
+                    ? 'Join soon'
                     : 'Join class'}
               </Text>
             )}
@@ -866,8 +866,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 1000,
-    elevation: 10,
     paddingHorizontal: 22,
     paddingTop: 16,
     paddingBottom: 24,
@@ -884,7 +882,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   joinButtonDisabled: {
-    opacity: 0.9,
+    opacity: 0.6,
   },
   joinButtonText: {
     fontFamily: 'Satoshi-Medium',

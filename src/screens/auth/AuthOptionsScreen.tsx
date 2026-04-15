@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   Image,
   ImageSourcePropType,
-  Alert,
   Platform,
 } from 'react-native';
 import { SvgUri } from 'react-native-svg';
@@ -19,10 +18,12 @@ import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { appleAuth } from '@invertase/react-native-apple-authentication';
 import Toast from 'react-native-toast-message';
 import { useSignup } from '../../store/SignupContext';
 import { IconImages } from '../../assets/icons';
 import { normalizeErrorMessage } from '../../utils/errorUtils';
+import { GOOGLE_KEY } from '@env';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AuthOptions'>;
 type AuthProviderProps = 'email' | 'google' | 'apple';
@@ -61,19 +62,17 @@ export default function AuthOptionsScreen({ navigation }: Props) {
 
   const configureGoogleSignIn = () => {
     try {
-      const webClientId = process.env.GOOGLE_KEY || '';
+      const webClientId = GOOGLE_KEY || '';
+      const iosClientId =
+        '398904495705-5sfusc2amh3d00j4nmno4iqmth1o68kr.apps.googleusercontent.com';
 
-      GoogleSignin.configure({
-        // IMPORTANT: This must be your WEB client ID from Google Cloud Console
-        // NOT the Android or iOS client ID
-        webClientId: webClientId,
-
-        // Optional: Only needed if you want offline access
+      const configureOptions = {
+        iosClientId,
         offlineAccess: false,
+        ...(Platform.OS === 'android' && webClientId ? { webClientId } : {}),
+      };
 
-        // Optional: iOS client ID (only if you have one)
-        // iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
-      });
+      GoogleSignin.configure(configureOptions);
     } catch (error) {
       console.error('Configuration error:', error);
     }
@@ -173,8 +172,81 @@ export default function AuthOptionsScreen({ navigation }: Props) {
   };
 
   const handleAppleSignIn = async () => {
-    // TODO: Implement Apple Sign-In
-    Alert.alert('Info', 'Apple Sign-In coming soon');
+    try {
+      if (!appleAuth.isSupported) {
+        Toast.show({
+          type: 'info',
+          text1: 'Not Supported',
+          text2: 'Apple Sign-In is not available on this device',
+        });
+        return;
+      }
+
+      const appleResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL],
+      });
+
+      const email = appleResponse.email;
+
+      if (!email) {
+        Toast.show({
+          type: 'error',
+          text1: 'Email Not Available',
+          text2:
+            'Apple only shares email on first authorization. Remove app access in Apple ID settings and try again.',
+        });
+        return;
+      }
+
+      const appleData = {
+        firstName: '',
+        lastName: '',
+        email,
+        authProvider: 'apple' as AuthProviderProps,
+        appleId: appleResponse.user,
+      };
+
+      console.log(
+        '[AuthOptions] Apple account used for email prefill only:',
+        appleData,
+      );
+
+      updateStepData('step2', appleData);
+      navigation.navigate('OTP', { email: appleData.email });
+
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: `Continue OTP verification for ${appleData.email}`,
+      });
+    } catch (error: any) {
+      if (error?.code === appleAuth.Error.CANCELED) {
+        Toast.show({
+          type: 'info',
+          text1: 'Cancelled',
+          text2: 'Apple Sign-In was cancelled',
+        });
+        return;
+      }
+
+      if (String(error?.code) === '1000') {
+        Toast.show({
+          type: 'error',
+          text1: 'Apple Sign-In Configuration Error',
+          text2:
+            'Enable Sign In with Apple capability for this app ID and ensure your iPhone Apple ID is signed in.',
+        });
+        return;
+      }
+
+      console.error('Apple Sign-In Error:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Sign-in Failed',
+        text2: normalizeErrorMessage(error?.message, 'Unknown error occurred'),
+      });
+    }
   };
 
   return (
@@ -199,11 +271,13 @@ export default function AuthOptionsScreen({ navigation }: Props) {
           </ThemedText>
 
           <View style={styles.authButtonsContainer}>
-            {/* <AuthButton
+            {Platform.OS === 'ios' && (
+            <AuthButton
               icon={IconImages?.apple}
               text="Continue with Apple"
               onPress={handleAppleSignIn}
-            /> */}
+            />
+            )}
             <AuthButton
               iconSvgUri={CONTINUE_AS_GUEST_ICON_SVG}
               text="Continue as Guest"

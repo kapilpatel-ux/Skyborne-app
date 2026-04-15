@@ -20,10 +20,12 @@ import {
   fetchLoggedInUserCountryRegion,
   getUserRegion,
 } from '../../utils/timezoneUtils';
+import { useFocusEffect } from '@react-navigation/native';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import HomeSidebar from './HomeSidebar';
 import { Meeting, UserProfile } from '../../services/homeService';
 import { weeklyScheduleService } from '../../services/WeeklyScheduleService';
+import { ShopCategory, ShopProduct, shopService } from '../../services/shopService';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -159,6 +161,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [weeklyMeetings, setWeeklyMeetings] = useState<Meeting[]>([]);
   const [isWeeklyMeetingsLoading, setIsWeeklyMeetingsLoading] = useState(false);
+  const [homeProducts, setHomeProducts] = useState<ShopProduct[]>([]);
+  const [homeCategories, setHomeCategories] = useState<ShopCategory[]>([]);
+  const [isHomeProductsLoading, setIsHomeProductsLoading] = useState(false);
 
   const percentage = Math.round((currentWater / MAX_WATER) * 100);
 
@@ -223,6 +228,78 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       isMounted = false;
     };
   }, []);
+
+  const getProductCategoryLabel = useCallback(
+    (product: ShopProduct) => {
+      const category = product?.category as any;
+
+      if (category && typeof category === 'object') {
+        const direct = category?.title || category?.name || category?.label;
+        if (direct) return String(direct);
+
+        const categoryId = category?._id || category?.id;
+        if (categoryId) {
+          const byId = homeCategories.find(c => c._id === categoryId);
+          if (byId) return String(byId.title || byId.name || 'Category');
+        }
+      }
+
+      if (typeof category === 'string') {
+        const byId = homeCategories.find(c => c._id === category);
+        if (byId) return String(byId.title || byId.name || 'Category');
+      }
+
+      return String((product as any)?.categoryTitle || (product as any)?.categoryName || 'Category');
+    },
+    [homeCategories],
+  );
+
+  const loadHomeProducts = useCallback(async () => {
+    try {
+      setIsHomeProductsLoading(true);
+
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        shopService.getPublishedProducts({
+          page: 1,
+          limit: 30,
+          sortBy: 'newest',
+        }),
+        shopService.getActiveEcomCategories(),
+      ]);
+
+      const products = productsResponse?.products ?? [];
+      const categories = categoriesResponse ?? [];
+
+      const shuffled = [...products].sort(() => Math.random() - 0.5);
+
+      setHomeCategories(categories);
+      setHomeProducts(shuffled.slice(0, 3));
+    } catch (err) {
+      console.error('Failed to load home products:', err);
+      setHomeProducts([]);
+      setHomeCategories([]);
+    } finally {
+      setIsHomeProductsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (isMounted) {
+      loadHomeProducts();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [loadHomeProducts]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadHomeProducts();
+    }, [loadHomeProducts]),
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -570,6 +647,43 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     );
   };
 
+  const HomeProductCard = ({ product }: { product: ShopProduct }) => {
+    const categoryLabel = getProductCategoryLabel(product);
+
+    return (
+      <TouchableOpacity
+        style={styles.homeProductCard}
+        onPress={() => navigation.navigate('ProductDetails', { productId: product._id })}
+        activeOpacity={0.85}
+      >
+        <Image
+          source={{ uri: product.image }}
+          style={styles.homeProductImage}
+          resizeMode="cover"
+        />
+        <View style={styles.homeProductGradientOverlay} />
+
+        <View style={styles.homeProductCategoryPill}>
+          <Text style={styles.homeProductCategoryText} numberOfLines={1}>
+            {capitalizeWords(String(categoryLabel || 'Category'))}
+          </Text>
+        </View>
+
+        <View style={styles.homeProductContentWrap}>
+          <Text style={styles.homeProductTitle} numberOfLines={2}>
+            {capitalizeWords(product?.name || '')}
+          </Text>
+          <View style={styles.homeProductBottomRow}>
+            <Text style={styles.homeProductPrice}>${Number(product?.price ?? 0).toFixed(2)}</Text>
+            <View style={styles.homeProductCtaPill}>
+              <Text style={styles.homeProductCtaText}>Shop now</Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   const canShowEmptyState =
     hasLoaded &&
     !isLoading &&
@@ -848,6 +962,38 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyMessage}>No upcoming session</Text>
               </View>
+            </View>
+          )}
+
+          {/* Shop Products Section */}
+          {!showSearchBar && (
+            <View style={styles.homeProductsSection}>
+              <View style={styles.homeProductsHeader}>
+                <Text style={styles.homeProductsTitle}>Shop Picks for You</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Products')}>
+                  <Text style={styles.homeProductsSeeAll}>View all</Text>
+                </TouchableOpacity>
+              </View>
+
+              {isHomeProductsLoading ? (
+                <View style={styles.inlineLoader}>
+                  <ActivityIndicator size="small" color="#B95E82" />
+                </View>
+              ) : homeProducts.length > 0 ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.homeProductsScroll}
+                >
+                  {homeProducts.map(product => (
+                    <HomeProductCard key={product._id} product={product} />
+                  ))}
+                </ScrollView>
+              ) : (
+                <View style={styles.homeProductsEmptyCard}>
+                  <Text style={styles.homeProductsEmptyText}>No products found right now</Text>
+                </View>
+              )}
             </View>
           )}
 
@@ -1255,6 +1401,114 @@ const styles = StyleSheet.create({
   },
   upcomingSection: {
     marginTop: 40,
+  },
+  homeProductsSection: {
+    marginTop: 34,
+  },
+  homeProductsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  homeProductsTitle: {
+    fontFamily: 'Satoshi-Bold',
+    fontSize: 20,
+    color: '#494949',
+  },
+  homeProductsSeeAll: {
+    fontFamily: 'Satoshi-Medium',
+    fontSize: 15,
+    color: '#B95E82',
+  },
+  homeProductsScroll: {
+    paddingRight: 6,
+  },
+  homeProductCard: {
+    width: 195,
+    height: 230,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginRight: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EFE1E8',
+  },
+  homeProductImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F3EFF2',
+  },
+  homeProductGradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0)',
+  },
+  homeProductCategoryPill: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    maxWidth: 120,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  homeProductCategoryText: {
+    color: '#3F3F3F',
+    fontSize: 11,
+    fontFamily: 'Satoshi-Bold',
+  },
+  homeProductContentWrap: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  homeProductTitle: {
+    color: '#2A2A2A',
+    fontSize: 14,
+    fontFamily: 'Satoshi-Bold',
+    lineHeight: 18,
+  },
+  homeProductBottomRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  homeProductPrice: {
+    color: '#B95E82',
+    fontSize: 15,
+    fontFamily: 'Satoshi-Bold',
+  },
+  homeProductCtaPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: '#B95E82',
+  },
+  homeProductCtaText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontFamily: 'Satoshi-Bold',
+  },
+  homeProductsEmptyCard: {
+    borderRadius: 12,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#ECECEC',
+  },
+  homeProductsEmptyText: {
+    color: '#8E8E8E',
+    fontSize: 14,
+    fontFamily: 'Satoshi-Medium',
   },
   upcomingTitle: {
     fontFamily: 'Satoshi-Bold',

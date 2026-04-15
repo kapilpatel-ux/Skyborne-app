@@ -25,7 +25,12 @@ import {
   ShopProduct,
   shopService,
 } from '../../services/shopService';
-import { Search, ShoppingCart, SlidersHorizontal } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  Search,
+  ShoppingCart,
+  SlidersHorizontal,
+} from 'lucide-react-native';
 
 type ProductsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -35,6 +40,8 @@ type ProductListItem = ShopProduct | string;
 
 type ProductsHeaderProps = {
   navigation: ProductsNavigationProp;
+  showBackButton: boolean;
+  onBackPress: () => void;
   cartCount: number;
   searchInput: string;
   setSearchInput: (value: string) => void;
@@ -53,6 +60,8 @@ type ProductsHeaderProps = {
 const ProductsHeader: React.FC<ProductsHeaderProps> = React.memo(
   ({
     navigation,
+    showBackButton,
+    onBackPress,
     cartCount,
     searchInput,
     setSearchInput,
@@ -70,9 +79,16 @@ const ProductsHeader: React.FC<ProductsHeaderProps> = React.memo(
     <>
       {/* Hero */}
       <View style={styles.heroSection}>
-        <View style={styles.heroTextWrap}>
-          {/* <Text style={styles.heroEyebrow}>✦  Skyborne Shop</Text> */}
-          <Text style={styles.heroTitle}>Curated Wellness</Text>
+        <View style={styles.heroLeftWrap}>
+          {showBackButton ? (
+            <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
+              <ChevronLeft color={C.text} size={20} strokeWidth={2.2} />
+            </TouchableOpacity>
+          ) : null}
+          <View style={styles.heroTextWrap}>
+            {/* <Text style={styles.heroEyebrow}>✦  Skyborne Shop</Text> */}
+            <Text style={styles.heroTitle}>Curated Wellness</Text>
+          </View>
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate('Cart')}
@@ -122,13 +138,17 @@ const ProductsHeader: React.FC<ProductsHeaderProps> = React.memo(
           </Text>
         </TouchableOpacity>
         {categories.map(item => {
+          const categoryId = item._id || item.id;
+          if (!categoryId) {
+            return null;
+          }
           const label = item.title || item.name || 'Category';
-          const isActive = category === item._id;
+          const isActive = category === categoryId;
           return (
             <TouchableOpacity
-              key={item._id}
+              key={categoryId}
               style={[styles.chip, isActive && styles.chipActive]}
-              onPress={() => setCategory(item._id)}
+              onPress={() => setCategory(categoryId)}
             >
               <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
                 {label}
@@ -182,7 +202,15 @@ const C = {
   price: '#B95E82',
 };
 
-const ProductsScreen = () => {
+type ProductsScreenProps = {
+  showBottomNav?: boolean;
+  showBackButton?: boolean;
+};
+
+const ProductsScreen: React.FC<ProductsScreenProps> = ({
+  showBottomNav = true,
+  showBackButton = false,
+}) => {
   const navigation = useNavigation<ProductsNavigationProp>();
   const { width } = useWindowDimensions();
 
@@ -203,6 +231,42 @@ const ProductsScreen = () => {
     {},
   );
   const [searchFocused, setSearchFocused] = useState(false);
+
+  const deriveCategoriesFromProducts = useCallback((items: ShopProduct[]): ShopCategory[] => {
+    const map = new Map<string, ShopCategory>();
+
+    items.forEach(product => {
+      const value = product?.category;
+      if (!value) {
+        return;
+      }
+
+      if (typeof value === 'string') {
+        const existing = map.get(value);
+        map.set(value, {
+          _id: existing?._id || value,
+          title: existing?.title || existing?.name || (product as any)?.categoryTitle || (product as any)?.categoryName || 'Category',
+          name: existing?.name,
+        });
+        return;
+      }
+
+      const categoryObj = value as any;
+      const categoryId = categoryObj?._id || categoryObj?.id;
+      if (!categoryId) {
+        return;
+      }
+
+      map.set(categoryId, {
+        _id: categoryObj?._id || categoryId,
+        id: categoryObj?.id,
+        title: categoryObj?.title || categoryObj?.name || categoryObj?.label || (product as any)?.categoryTitle || (product as any)?.categoryName || 'Category',
+        name: categoryObj?.name,
+      });
+    });
+
+    return Array.from(map.values());
+  }, []);
 
   const numColumns = width >= 900 ? 3 : 2;
   const skeletonItems = useMemo(
@@ -247,9 +311,15 @@ const ProductsScreen = () => {
 
   const loadCategories = useCallback(async () => {
     try {
-      const data = await shopService.getActiveServices();
+      const data = await shopService.getActiveEcomCategories();
+      console.log('[ProductsScreen] all categories from API:', data);
+      console.log(
+        '[ProductsScreen] category labels:',
+        data.map(item => ({ id: item._id, title: item.title, name: item.name })),
+      );
       setCategories(data);
-    } catch {
+    } catch (error) {
+      console.log('[ProductsScreen] category load error:', error);
       setCategories([]);
     }
   }, []);
@@ -265,6 +335,7 @@ const ProductsScreen = () => {
         const response = await shopService.getPublishedProducts({
           search: debouncedSearch || undefined,
           categoryId: category || undefined,
+          category: category || undefined,
           sortBy,
           page: nextPage,
           limit: pageLimit,
@@ -272,6 +343,12 @@ const ProductsScreen = () => {
         const data = response.products;
         const pagination = response.pagination;
         setProducts(prev => (append ? [...prev, ...data] : data));
+        if (!categories.length) {
+          const derivedCategories = deriveCategoriesFromProducts(data);
+          if (derivedCategories.length) {
+            setCategories(derivedCategories);
+          }
+        }
         if (pagination) {
           setHasNextPage(Boolean(pagination.hasNextPage));
         } else {
@@ -293,7 +370,7 @@ const ProductsScreen = () => {
         setLoadingMore(false);
       }
     },
-    [debouncedSearch, category, sortBy],
+    [debouncedSearch, category, sortBy, categories.length, deriveCategoriesFromProducts],
   );
 
   useEffect(() => {
@@ -311,6 +388,14 @@ const ProductsScreen = () => {
       loadCartCount();
     }, [loadCartCount]),
   );
+
+  const handleBackPress = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    navigation.navigate('GuestHome');
+  }, [navigation]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -416,16 +501,54 @@ const ProductsScreen = () => {
     [],
   );
 
+  const resolveCategoryLabel = useCallback(
+    (categoryValue: ShopProduct['category']) => {
+      if (!categoryValue) return '';
+
+      if (typeof categoryValue === 'object') {
+        const categoryObj = categoryValue as any;
+        const directLabel =
+          categoryObj?.title || categoryObj?.name || categoryObj?.label || '';
+
+        if (directLabel) {
+          return directLabel;
+        }
+
+        const objectId = categoryObj?._id || categoryObj?.id;
+        if (objectId) {
+          const byId = categories.find(
+            item => item._id === objectId || item.id === objectId,
+          );
+          if (byId) {
+            return byId.title || byId.name || '';
+          }
+        }
+
+        return '';
+      }
+
+      if (typeof categoryValue === 'string') {
+        const byId = categories.find(
+          item => item._id === categoryValue || item.id === categoryValue,
+        );
+        if (byId) {
+          return byId.title || byId.name || '';
+        }
+      }
+
+      return '';
+    },
+    [categories],
+  );
+
   // ─── Product Card ─────────────────────────────────────────────────────────
   const renderProduct = ({ item, index }: { item: ShopProduct; index: number }) => {
     const isAdding = addingProductId === item._id;
     const quantity = cartQuantities[item._id] ?? 0;
-    const cardWidthStyle =
-      numColumns === 1
-        ? styles.cardSingle
-        : numColumns === 3
-          ? styles.cardTriple
-          : styles.cardDouble;
+    const cardWidthStyle = numColumns === 3 ? styles.cardTriple : styles.cardDouble;
+    const categoryLabel =
+      resolveCategoryLabel(item.category) ||
+      ((item as any)?.categoryTitle ?? (item as any)?.categoryName ?? 'Category');
 
     return (
       <TouchableOpacity
@@ -444,6 +567,10 @@ const ProductsScreen = () => {
             style={styles.cardImage}
             resizeMode="cover"
           />
+          {/* Category Badge */}
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>{categoryLabel}</Text>
+          </View>
         </View>
 
         <View style={styles.cardBody}>
@@ -494,12 +621,7 @@ const ProductsScreen = () => {
   };
 
   const renderSkeletonCard = ({ index }: { index: number }) => {
-    const cardWidthStyle =
-      numColumns === 1
-        ? styles.cardSingle
-        : numColumns === 3
-          ? styles.cardTriple
-          : styles.cardDouble;
+    const cardWidthStyle = numColumns === 3 ? styles.cardTriple : styles.cardDouble;
     return (
       <View
         style={[
@@ -541,6 +663,8 @@ const ProductsScreen = () => {
         ListHeaderComponent={
           <ProductsHeader
             navigation={navigation}
+            showBackButton={showBackButton}
+            onBackPress={handleBackPress}
             cartCount={cartCount}
             searchInput={searchInput}
             setSearchInput={setSearchInput}
@@ -585,7 +709,7 @@ const ProductsScreen = () => {
         }
       />
 
-      <BottomNav active="Products" />
+      {showBottomNav ? <BottomNav active="Products" /> : null}
     </SafeAreaView>
   );
 };
@@ -602,11 +726,33 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 36,
+    paddingTop: Platform.OS === 'android' ? 55 : 38,
     paddingBottom: 16,
+  },
+  heroLeftWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
   },
   heroTextWrap: {
     flex: 1,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   heroEyebrow: {
     fontSize: 11,
@@ -817,6 +963,21 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: '100%',
+  },
+  categoryBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(185, 94, 130, 0.9)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  categoryBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontFamily: 'Satoshi-Bold',
+    letterSpacing: 0.3,
   },
   cardBody: {
     padding: 14,

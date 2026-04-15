@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ChevronRight } from 'lucide-react-native';
-import { SvgUri } from 'react-native-svg';
 import { useSelector } from 'react-redux';
 import GradientBackground from '../../components/GradientBackground';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
@@ -37,37 +36,37 @@ const fitnessKeyFeatures: KeyFeature[] = [
     id: '1',
     title: 'Strength Training',
     description: 'Build muscle tone and increase physical power with guided resistance exercises',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '2',
     title: 'Cardio Workouts',
     description: 'Boost heart health and stamina with dynamic cardiovascular sessions',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '3',
     title: 'HIIT Sessions',
     description: 'Maximize calorie burn with high-intensity interval training',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '4',
     title: 'Mobility Training',
     description: 'Improve flexibility, balance, and range of motion for better movement',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '5',
     title: 'Expert Trainers',
     description: 'Get personalized guidance on form, intensity, and recovery',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '6',
     title: 'Progress Tracking',
     description: 'Monitor your fitness journey with measurable improvements',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
 ];
 
@@ -316,7 +315,10 @@ const FitnessDetailsScreen: React.FC<FitnessDetailsScreenProps> = ({
                   }
                 >
                   <View style={styles.featureCardHeader}>
-                    <SvgUri width={20} height={20} uri={feature.icon} style={styles.featureIcon} />
+                    <Image
+                      source={{ uri: feature.icon }}
+                      style={styles.featureIcon}
+                    />
                     <Text style={styles.featureCardTitle}>{feature.title}</Text>
                     <ChevronRight
                       size={20}

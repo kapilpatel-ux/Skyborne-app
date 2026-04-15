@@ -13,7 +13,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SvgUri } from 'react-native-svg';
 import {
   Star
 } from 'lucide-react-native';
@@ -40,22 +39,22 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
     {
       id: 1,
       label: 'Energized',
-      icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Energized.svg',
+      icon: Images.energizedIcon,
     },
     {
       id: 2,
       label: 'Relaxed',
-      icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Relaxed.svg',
+      icon: Images.relaxedIcon,
     },
     {
       id: 3,
       label: 'Strong',
-      icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Strong.svg',
+      icon: Images.strongIcon,
     },
     {
       id: 4,
       label: 'Tired',
-      icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Tired.svg',
+      icon: Images.tiredIcon,
     },
   ];
 
@@ -221,7 +220,7 @@ const FeedbackScreen = ({ navigation }: { navigation: any }) => {
                   ]}
                   onPress={() => handleCommentChange(option.id)}
                 >
-                  <SvgUri width={24} height={24} uri={option.icon} style={styles.feelingIcon} />
+                  <Image source={{ uri: option.icon }} style={styles.feelingIcon} resizeMode="contain" />
                   <Text style={styles.feelingLabel}>{option.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -296,7 +295,7 @@ const styles = StyleSheet.create({
   // Close Button
   closeButton: {
     position: 'absolute',
-    top: 45,
+    top: 16,
     right: 16,
     width: 32,
     height: 32,
@@ -312,8 +311,8 @@ const styles = StyleSheet.create({
   successAnimation: {
     width: 150,
     height: 150,
-    marginTop: 80,
-    marginBottom: 20,
+    marginTop: 30,
+    marginBottom: 16,
   },
   // Title and Description
   title: {

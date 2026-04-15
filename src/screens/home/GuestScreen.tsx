@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+  ActivityIndicator,
+  Platform,
   View,
   Text,
   StyleSheet,
@@ -9,13 +11,18 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GradientBackground from '../../components/GradientBackground';
 import { HomeImages } from '../../assets/images/home';
 import { getUserRegion, getRegionDateFromISO } from '../../utils/timezoneUtils';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import { ExploreImages } from '../../assets/images/explore';
 import GuestSidebar from './GuestSidebar';
+import { ShopProduct, shopService } from '../../services/shopService';
+import Toast from 'react-native-toast-message';
+import { ShoppingCart } from 'lucide-react-native';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -56,15 +63,40 @@ const categories = [
 ];
 
 const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null);
   const [isRegionLoading, setIsRegionLoading] = useState(true);
   const [upcomingMeetings, setUpcomingMeetings] = useState<any[]>([]);
   const [todayMeetings, setTodayMeetings] = useState<any[]>(categories);
   const [unlockModalVisible, setUnlockModalVisible] = useState(false);
+  const [guestProducts, setGuestProducts] = useState<ShopProduct[]>([]);
+  const [addingProductId, setAddingProductId] = useState<string | null>(null);
+  const [cartCount, setCartCount] = useState(0);
+  const [cartQuantities, setCartQuantities] = useState<Record<string, number>>({});
 
   const handleNavigate = () => {
     navigation.navigate('Login');
+  };
+
+  const syncCartState = (items?: Array<{ product: string; quantity: number }>) => {
+    const nextItems = items ?? [];
+    setCartCount(nextItems.length);
+    const qtyMap = nextItems.reduce((acc, item) => {
+      acc[item.product] = item.quantity;
+      return acc;
+    }, {} as Record<string, number>);
+    setCartQuantities(qtyMap);
+  };
+
+  const loadGuestCartCount = async () => {
+    try {
+      const cart = await shopService.getMyCart();
+      syncCartState(cart?.items as any);
+    } catch {
+      setCartCount(0);
+      setCartQuantities({});
+    }
   };
 
   // Initialize user region on mount - critical for timezone handling
@@ -93,6 +125,106 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setUnlockModalVisible(false);
     // Navigate to packages screen or show packages
     navigation.navigate('Login');
+  };
+
+  useEffect(() => {
+    const loadGuestProducts = async () => {
+      try {
+        const response = await shopService.getPublishedProducts({
+          page: 1,
+          limit: 3,
+          sortBy: 'newest',
+        });
+        setGuestProducts(response.products ?? []);
+      } catch {
+        setGuestProducts([]);
+      }
+    };
+
+    loadGuestProducts();
+    loadGuestCartCount();
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadGuestCartCount();
+    }, []),
+  );
+
+  const updateQuantityLocal = (productId: string, quantity: number) => {
+    setCartQuantities(prev => ({
+      ...prev,
+      [productId]: quantity,
+    }));
+  };
+
+  const removeQuantityLocal = (productId: string) => {
+    setCartQuantities(prev => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
+  };
+
+  const handleAddGuestProductToCart = async (productId: string) => {
+    try {
+      setAddingProductId(productId);
+      const cart = await shopService.addToCart({ productId, quantity: 1 });
+      syncCartState(cart?.items as any);
+      Toast.show({ type: 'success', text1: 'Added to cart' });
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Unable to add product',
+        text2: error?.response?.data?.message ?? error?.message,
+      });
+    } finally {
+      setAddingProductId(null);
+    }
+  };
+
+  const handleIncrement = async (productId: string, currentQty: number) => {
+    const nextQty = currentQty + 1;
+    try {
+      setAddingProductId(productId);
+      updateQuantityLocal(productId, nextQty);
+      const cart = await shopService.updateCartItem(productId, nextQty);
+      syncCartState(cart?.items as any);
+    } catch (error: any) {
+      updateQuantityLocal(productId, currentQty);
+      Toast.show({
+        type: 'error',
+        text1: 'Oops! Try again',
+        text2: error?.response?.data?.message ?? error?.message,
+      });
+    } finally {
+      setAddingProductId(null);
+    }
+  };
+
+  const handleDecrement = async (productId: string, currentQty: number) => {
+    const nextQty = currentQty - 1;
+    try {
+      setAddingProductId(productId);
+      if (nextQty <= 0) {
+        removeQuantityLocal(productId);
+        const cart = await shopService.removeCartItem(productId);
+        syncCartState(cart?.items as any);
+      } else {
+        updateQuantityLocal(productId, nextQty);
+        const cart = await shopService.updateCartItem(productId, nextQty);
+        syncCartState(cart?.items as any);
+      }
+    } catch (error: any) {
+      updateQuantityLocal(productId, currentQty);
+      Toast.show({
+        type: 'error',
+        text1: 'Oops! Try again',
+        text2: error?.response?.data?.message ?? error?.message,
+      });
+    } finally {
+      setAddingProductId(null);
+    }
   };
 
   const DynamicSessionCard = ({ meeting }: any) => {
@@ -256,6 +388,83 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
           }
 
+          <View style={styles.guestProductsSection}>
+            <View style={styles.guestProductsHeader}>
+              <Text style={styles.guestProductsTitle}>Popular Products</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('GuestShop')}>
+                <Text style={styles.guestProductsSeeAll}>See all</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.guestProductsScroll}>
+              {guestProducts.map(product => {
+                const qty = cartQuantities[product._id] ?? 0;
+                const busy = addingProductId === product._id;
+                return (
+                  <TouchableOpacity
+                    key={product._id}
+                    style={styles.guestProductCard}
+                    activeOpacity={0.85}
+                    disabled={busy}
+                    onPress={() => navigation.navigate('ProductDetails', { productId: product._id })}>
+                    <Image
+                      source={{ uri: product.image }}
+                      style={styles.guestProductImage}
+                      resizeMode="cover"
+                    />
+                    <Text style={styles.guestProductName} numberOfLines={1}>
+                      {product.name}
+                    </Text>
+                    <View style={styles.guestProductBottomRow}>
+                      <Text style={styles.guestProductPrice}>${product.price}</Text>
+
+                      {qty > 0 ? (
+                        <View style={styles.guestQtyWrap}>
+                          <TouchableOpacity
+                            style={[styles.guestQtyBtn, busy && styles.guestQtyBtnDisabled]}
+                            disabled={busy}
+                            onPress={event => {
+                              event.stopPropagation();
+                              handleDecrement(product._id, qty);
+                            }}>
+                            <Text style={styles.guestQtyBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <Text style={styles.guestQtyValue}>{qty}</Text>
+                          <TouchableOpacity
+                            style={[styles.guestQtyBtn, busy && styles.guestQtyBtnDisabled]}
+                            disabled={busy}
+                            onPress={event => {
+                              event.stopPropagation();
+                              handleIncrement(product._id, qty);
+                            }}>
+                            <Text style={styles.guestQtyBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={[styles.guestAddBtn, busy && styles.guestAddBtnDisabled]}
+                          disabled={busy}
+                          onPress={event => {
+                            event.stopPropagation();
+                            handleAddGuestProductToCart(product._id);
+                          }}>
+                          {busy ? (
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                          ) : (
+                            <Text style={styles.guestAddBtnText}>+ Cart</Text>
+                          )}
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+
           {/* Upcoming Sessions Results */}
           {upcomingMeetings.length > 0 && (
             <>
@@ -267,7 +476,9 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 Upcoming Classes
               </Text>
               {upcomingMeetings.map((meeting, idx) => (
-                <DynamicClassCard key={`${meeting._id}-${idx}`} />
+                <DynamicClassCard
+                  key={meeting?._id ?? meeting?.id ?? meeting?.title ?? idx}
+                />
               ))}
             </>
           )}
@@ -286,8 +497,11 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.sessionsScroll}
                 style={styles.sessionsContainer}>
-                {todayMeetings.map(meeting => (
-                  <DynamicSessionCard key={meeting._id} meeting={meeting} />
+                {todayMeetings.map((meeting, idx) => (
+                  <DynamicSessionCard
+                    key={meeting?._id ?? meeting?.id ?? meeting?.title ?? idx}
+                    meeting={meeting}
+                  />
                 ))}
               </ScrollView>
             </>
@@ -312,6 +526,25 @@ const GuestScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         navigation={navigation}
         activeScreen="Home"
       />
+
+      {cartCount > 0 && (
+        <TouchableOpacity
+          style={[
+            styles.cartFab,
+            {
+              bottom:
+                Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 12) +
+                20,
+            },
+          ]}
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('Cart')}>
+          <ShoppingCart color="#FFFFFF" size={20} strokeWidth={2} />
+          <View style={styles.cartFabBadge}>
+            <Text style={styles.cartFabBadgeText}>{cartCount > 9 ? '9+' : cartCount}</Text>
+          </View>
+        </TouchableOpacity>
+      )}
 
       {/* Unlock Modal */}
       <UnlockModal />
@@ -449,6 +682,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 35,
     marginBottom: 20,
+    paddingTop: 20,
   },
   headerTitle: {
     flex: 1,
@@ -562,7 +796,7 @@ const styles = StyleSheet.create({
   },
   getStartedImage: {
     width: 215,
-    height: 329,
+    height: 330,
   },
   scoreSubText: {
     fontFamily: 'Satoshi-Regular',
@@ -590,7 +824,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '45%',
-    height: 180,
+    height: 189,
     marginTop: 0,
     marginRight: 17,
     justifyContent: 'center',
@@ -682,6 +916,144 @@ const styles = StyleSheet.create({
   },
   upcomingSection: {
     marginTop: 40,
+  },
+  guestProductsSection: {
+    marginTop: 16,
+  },
+  guestProductsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  guestProductsTitle: {
+    fontSize: 18,
+    color: '#494949',
+    fontFamily: 'Satoshi-Bold',
+  },
+  guestProductsSeeAll: {
+    fontSize: 13,
+    color: '#B95E82',
+    fontFamily: 'Satoshi-Bold',
+  },
+  guestProductsScroll: {
+    paddingRight: 6,
+  },
+  guestProductCard: {
+    width: 150,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#F0E6EB',
+    padding: 10,
+    marginRight: 10,
+  },
+  guestProductImage: {
+    width: '100%',
+    height: 100,
+    borderRadius: 10,
+    backgroundColor: '#F5F1EE',
+  },
+  guestProductName: {
+    marginTop: 8,
+    fontSize: 13,
+    color: '#494949',
+    fontFamily: 'Satoshi-Bold',
+  },
+  guestProductPrice: {
+    marginTop: 4,
+    fontSize: 14,
+    color: '#B95E82',
+    fontFamily: 'Satoshi-Bold',
+  },
+  guestProductBottomRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  guestAddBtn: {
+    minWidth: 64,
+    height: 28,
+    borderRadius: 999,
+    backgroundColor: '#B95E82',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  guestAddBtnDisabled: {
+    opacity: 0.75,
+  },
+  guestAddBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: 'Satoshi-Bold',
+  },
+  guestQtyWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EED6E1',
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: '#FFF',
+  },
+  guestQtyBtn: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#B95E82',
+  },
+  guestQtyBtnDisabled: {
+    opacity: 0.75,
+  },
+  guestQtyBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'Satoshi-Bold',
+    lineHeight: 16,
+  },
+  guestQtyValue: {
+    minWidth: 26,
+    textAlign: 'center',
+    color: '#494949',
+    fontSize: 13,
+    fontFamily: 'Satoshi-Bold',
+  },
+  cartFab: {
+    position: 'absolute',
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#B95E82',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 7,
+  },
+  cartFabBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EED6E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  cartFabBadgeText: {
+    color: '#B95E82',
+    fontSize: 10,
+    fontFamily: 'Satoshi-Bold',
   },
   upcomingTitle: {
     fontSize: 20,

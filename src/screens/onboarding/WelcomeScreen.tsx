@@ -19,7 +19,7 @@ export default function WelcomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const handleGetStarted = () => {
     console.log('Get Started Pressed!');
-    navigation.replace('AuthOptions');
+    navigation.navigate('AuthOptions');
   };
 
   return (

@@ -29,6 +29,9 @@ import SocketService from '../../services/socketService';
 import { fetchUserProfile } from '../../store/homeSlice';
 import { RootState } from '../../store';
 import { SubscriptionImages } from '../../assets/images/subscriptions';
+import { API_BASE_URL as ENV_API_BASE_URL } from '@env';
+
+const API_BASE_URL = ENV_API_BASE_URL;
 
 // ✅ COMPLETE PLAN CONFIGURATION WITH MONTHLY/YEARLY PRICING
 const PLAN_CONFIG = {
@@ -92,6 +95,11 @@ const goldSubOptions = [
 ];
 
 const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
+  const shouldRedirectToLogin = (message?: string) =>
+    (message || '')
+      .toLowerCase()
+      .includes('active stripe subscription already exists');
+
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('gold-yoga');
   const [showGoldModal, setShowGoldModal] = useState(false);
@@ -113,8 +121,7 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
 
   useEffect(() => {
     if (user?.id) {
-      const apiUrl = process.env.REACT_APP_API_URL || 'https://svdevelopment-03-skyborne-backend.onrender.com/api/v1';
-      SocketService.connect(apiUrl, user.id);
+      SocketService.connect(API_BASE_URL, user.id);
     }
 
     return () => {
@@ -257,6 +264,8 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
    */
   const handlePaymentError = (errorData: any) => {
     console.error('❌ Payment error:', errorData);
+    const errorMessage =
+      errorData?.message || 'Your payment could not be processed';
 
     if (pollingInterval) {
       clearInterval(pollingInterval);
@@ -271,7 +280,7 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
     Toast.show({
       type: 'error',
       text1: 'Payment Failed',
-      text2: errorData?.message || 'Your payment could not be processed',
+      text2: errorMessage,
     });
 
     setIsProcessingPayment(false);
@@ -279,6 +288,18 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
 
     SocketService.socket?.off('payment-success', handlePaymentSuccess);
     SocketService.socket?.off('payment-error', handlePaymentError);
+
+    if (shouldRedirectToLogin(errorMessage)) {
+      Toast.show({
+        type: 'info',
+        text1: 'Session Update Required',
+        text2: 'Please log in again to continue.',
+      });
+
+      setTimeout(() => {
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      }, 500);
+    }
   };
 
   /**
@@ -449,16 +470,30 @@ const UpgradePlanScreen = ({ navigation }: { navigation: any }) => {
 
     } catch (error: any) {
       console.error('❌ Payment transaction error:', error);
+      const errorMessage = error?.message || 'An error occurred';
+
       Toast.show({
         type: 'error',
         text1: 'Payment Error',
-        text2: error.message || 'An error occurred',
+        text2: errorMessage,
       });
       setIsProcessingPayment(false);
       setIsListeningForPayment(false);
 
       SocketService.socket?.off('payment-success', handlePaymentSuccess);
       SocketService.socket?.off('payment-error', handlePaymentError);
+
+      if (shouldRedirectToLogin(errorMessage)) {
+        Toast.show({
+          type: 'info',
+          text1: 'Session Update Required',
+          text2: 'Please log in again to continue.',
+        });
+
+        setTimeout(() => {
+          navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+        }, 500);
+      }
     }
   };
 

@@ -16,6 +16,7 @@ import {
   Modal,
   Pressable,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MessageCircleMore } from 'lucide-react-native';
@@ -67,6 +68,7 @@ const ProfileScreen = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const dispatch = useDispatch();
   const COMMON_URL = 'https://skyborne-images.s3.ap-south-1.amazonaws.com';
+  const usePngIcons = Platform.OS === 'ios';
 
   const { user, dashboardStats, loadProfile }: any = useProfileViewModel();
   const [showLogout, setShowLogout] = useState(false);
@@ -345,6 +347,7 @@ const ProfileScreen = () => {
       id: 1,
       title: 'Subscription',
       subtitle: displayPlan,
+      icon: { uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/profile/SubscriptionIcon.png' },
       iconSvgUri: ProfileImages.subscriptionIconSvg,
       iconBgColor: '#FFE8E8',
       screen: 'ManageSubscription',
@@ -353,6 +356,7 @@ const ProfileScreen = () => {
       id: 2,
       title: 'History',
       subtitle: 'View past Sessions',
+      icon: { uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/profile/HistoryIcon.png' },
       iconSvgUri: ProfileImages.historyIconSvg,
       iconBgColor: '#FFE8E8',
       screen: 'SessionHistory',
@@ -368,6 +372,7 @@ const ProfileScreen = () => {
       id: 4,
       title: 'Support',
       subtitle: 'Get help',
+      icon: { uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/profile/Support.png' },
       iconSvgUri: ProfileImages.supportIconSvg,
       iconBgColor: '#FFE8E8',
       screen: 'Support',
@@ -376,6 +381,7 @@ const ProfileScreen = () => {
       id: 5,
       title: 'My Orders',
       subtitle: 'Track your orders',
+      icon: { uri: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/profile/HistoryIcon.png' },
       iconSvgUri: ProfileImages.historyIconSvg,
       iconBgColor: '#FFE8E8',
       screen: 'MyOrders',
@@ -484,7 +490,7 @@ const ProfileScreen = () => {
                 index % 2 === 0 ? styles.statCardLeft : styles.statCardRight,
               ]}
             >
-              {stat.iconSvgUri ? (
+              {!usePngIcons && stat.iconSvgUri ? (
                 <SvgUri width={30} height={30} uri={stat.iconSvgUri} />
               ) : (
                 <Image source={stat?.icon} style={styles.statIcon} />
@@ -562,7 +568,7 @@ const ProfileScreen = () => {
                 >
                   {item.id === 3 ? (
                     <MessageCircleMore size={22} color="#B95E82" />
-                  ) : item.iconSvgUri ? (
+                  ) : !usePngIcons && item.iconSvgUri ? (
                     <SvgUri width={24} height={24} uri={item.iconSvgUri} />
                   ) : (
                     <Image source={item.icon} style={styles.settingIcon} />
@@ -665,7 +671,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 35,
+    paddingTop: 55,
     paddingBottom: 39,
   },
   avatar: {

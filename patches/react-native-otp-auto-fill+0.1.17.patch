@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-otp-auto-fill/android/build.gradle b/node_modules/react-native-otp-auto-fill/android/build.gradle
-index fa31c78..cba077a 100644
+index fa31c78..7db735e 100644
 --- a/node_modules/react-native-otp-auto-fill/android/build.gradle
 +++ b/node_modules/react-native-otp-auto-fill/android/build.gradle
 @@ -2,7 +2,7 @@ buildscript {
@@ -7,16 +7,31 @@ index fa31c78..cba077a 100644
          repositories {
              google()
 -            jcenter()
-+                mavenCentral()
++            mavenCentral()
          }
  
          dependencies {
+@@ -18,11 +18,11 @@ def safeExtGet(prop, fallback) {
+ }
+ 
+ android {
+-    compileSdkVersion safeExtGet('OtpAutoFill_compileSdkVersion', 29)
+-    buildToolsVersion safeExtGet('OtpAutoFill_buildToolsVersion', '29.0.2')
++    compileSdkVersion safeExtGet('OtpAutoFill_compileSdkVersion', 36)
++    buildToolsVersion safeExtGet('OtpAutoFill_buildToolsVersion', '36.0.0')
+     defaultConfig {
+         minSdkVersion safeExtGet('OtpAutoFill_minSdkVersion', 21)
+-        targetSdkVersion safeExtGet('OtpAutoFill_targetSdkVersion', 29)
++        targetSdkVersion safeExtGet('OtpAutoFill_targetSdkVersion', 36)
+         versionCode 1
+         versionName "1.0"
+ 
 @@ -49,7 +49,7 @@ repositories {
          url("$rootDir/../node_modules/react-native/android")
      }
      google()
 -    jcenter()
-+       mavenCentral()
++    mavenCentral()
  }
  
  dependencies {

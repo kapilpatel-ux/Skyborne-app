@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ChevronRight } from 'lucide-react-native';
-import { SvgUri } from 'react-native-svg';
 import { useSelector } from 'react-redux';
 import GradientBackground from '../../components/GradientBackground';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
@@ -38,37 +37,37 @@ const zumbaKeyFeatures: KeyFeature[] = [
     id: '1',
     title: 'High-Energy Classes',
     description: 'Dynamic dance workouts that feel like a party',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '2',
     title: 'On-Demand Replays',
     description: 'Dance anytime with your favorite routines available 24/7',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '3',
     title: 'Calorie Burning',
     description: 'Effective cardio that burns calories while having fun',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '4',
     title: 'Certified Instructors',
     description: 'Easy-to-follow guidance from experienced Zumba coaches',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '5',
     title: 'Dance Community',
     description: 'Join a vibrant community of dance fitness enthusiasts',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
   {
     id: '6',
     title: 'Coordination Boost',
     description: 'Improve rhythm, balance, and body coordination',
-    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/svgicons/Subscription.svg',
+    icon: 'https://skyborne-images.s3.ap-south-1.amazonaws.com/time.png',
   },
 ];
 
@@ -287,7 +286,10 @@ const ZumbaDetailsScreen: React.FC<ZumbaDetailsScreenProps> = ({
                   }
                 >
                   <View style={styles.featureCardHeader}>
-                    <SvgUri width={20} height={20} uri={feature.icon} style={styles.featureIcon} />
+                    <Image
+                      source={{ uri: feature.icon }}
+                      style={styles.featureIcon}
+                    />
                     <Text style={styles.featureCardTitle}>{feature.title}</Text>
                     <ChevronRight
                       size={20}

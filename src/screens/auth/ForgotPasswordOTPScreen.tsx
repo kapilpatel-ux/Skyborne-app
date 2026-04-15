@@ -25,6 +25,7 @@ const ForgotPasswordOTPScreen = ({ navigation, route }: { navigation: any; route
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
+  const lastAutoSubmittedCodeRef = useRef<string | null>(null);
   
   const { verifyPasswordResetOTP, sendPasswordResetOTP, isLoading } = useForgotPasswordViewModel();
   
@@ -157,6 +158,22 @@ const ForgotPasswordOTPScreen = ({ navigation, route }: { navigation: any; route
       });
     }
   };
+
+  // Auto-verify when OTP input is complete.
+  useEffect(() => {
+    const code = otp.join('');
+
+    if (code.length < 6) {
+      lastAutoSubmittedCodeRef.current = null;
+      return;
+    }
+
+    if (isLoading) return;
+    if (lastAutoSubmittedCodeRef.current === code) return;
+
+    lastAutoSubmittedCodeRef.current = code;
+    handleVerifyOTP();
+  }, [otp, isLoading]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
